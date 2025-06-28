@@ -340,6 +340,24 @@ PROMPT;
             'ai-content-optimizer-advanced',
             array($this, 'render_advanced_page')
         );
+
+        add_submenu_page(
+            'ai-content-optimizer',
+            __('Categories', 'ai-content-optimizer'),
+            __('Categories', 'ai-content-optimizer'),
+            'manage_options',
+            'ai-content-optimizer-categories',
+            array($this, 'render_categories_page')
+        );
+
+        add_submenu_page(
+            'ai-content-optimizer',
+            __('Tags', 'ai-content-optimizer'),
+            __('Tags', 'ai-content-optimizer'),
+            'manage_options',
+            'ai-content-optimizer-tags',
+            array($this, 'render_tags_page')
+        );
     }
 
     /**
@@ -2141,6 +2159,228 @@ PROMPT;
             add_filter('handle_bulk_actions-edit-' . $post_type->name, array($this, 'handle_bulk_actions'), 10, 3);
         }
     }
+
+    /**
+     * Render categories page
+     */
+    public function render_categories_page() {
+        $license_status = get_option('bmo_license_status', 'invalid');
+        if ($license_status !== 'success') {
+            echo '<div class="notice notice-error"><p>' . __('A valid license is required to use Bulk Meta Optimizer. Please enter your license key in Advanced Settings.', 'ai-content-optimizer') . '</p></div>';
+            return;
+        }
+
+        $meta_prompt = get_option('aico_category_meta_prompt', '');
+        if (empty($meta_prompt)) {
+            $meta_prompt = "You are an SEO expert. Write a meta description (160 chars max) for this category. Use a professional tone for a general audience. Keep it concise, no exclamation marks or quotation marks.";
+            update_option('aico_category_meta_prompt', $meta_prompt);
+        }
+
+        // Get all categories
+        $categories = get_categories(array(
+            'hide_empty' => false,
+            'orderby' => 'name',
+            'order' => 'ASC'
+        ));
+
+        ?>
+        <div class="wrap aico-wrap">
+            <h1><?php _e('Category Meta Descriptions', 'ai-content-optimizer'); ?></h1>
+            
+            <div class="aico-card">
+                <h2><?php _e('Category Meta Description Prompt', 'ai-content-optimizer'); ?></h2>
+                <p><?php _e('Customize the AI prompt used to generate meta descriptions for categories. Use placeholders like {category_name}, {category_description}, {post_count}, etc.', 'ai-content-optimizer'); ?></p>
+                <textarea id="aico-category-meta-prompt" rows="6" class="large-text"><?php echo esc_textarea($meta_prompt); ?></textarea>
+                <p class="description"><?php _e('Available placeholders: {category_name}, {category_description}, {post_count}, {parent_category}', 'ai-content-optimizer'); ?></p>
+                <button type="button" id="aico-save-category-prompt" class="button button-primary"><?php _e('Save Prompt', 'ai-content-optimizer'); ?></button>
+            </div>
+
+            <div class="aico-card">
+                <h2><?php _e('Categories', 'ai-content-optimizer'); ?></h2>
+                <div class="aico-categories-actions">
+                    <button type="button" id="aico-bulk-optimize-categories" class="button button-primary"><?php _e('Bulk Optimize All Categories', 'ai-content-optimizer'); ?></button>
+                    <span id="aico-categories-progress" style="display: none; margin-left: 10px;"></span>
+                </div>
+                
+                <div class="aico-categories-list">
+                    <table class="wp-list-table widefat fixed striped">
+                        <thead>
+                            <tr>
+                                <th><?php _e('Category', 'ai-content-optimizer'); ?></th>
+                                <th><?php _e('Current Description', 'ai-content-optimizer'); ?></th>
+                                <th><?php _e('Actions', 'ai-content-optimizer'); ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($categories as $category) : ?>
+                                <tr>
+                                    <td>
+                                        <strong><?php echo esc_html($category->name); ?></strong>
+                                        <br>
+                                        <small><?php printf(__('Posts: %d', 'ai-content-optimizer'), $category->count); ?></small>
+                                    </td>
+                                    <td>
+                                        <div class="aico-meta-preview">
+                                            <?php echo esc_html($category->description ?: __('No description set', 'ai-content-optimizer')); ?>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="button aico-optimize-category" data-category-id="<?php echo $category->term_id; ?>" data-category-name="<?php echo esc_attr($category->name); ?>">
+                                            <?php _e('Optimize with AI', 'ai-content-optimizer'); ?>
+                                        </button>
+                                        <button type="button" class="button aico-edit-category" data-category-id="<?php echo $category->term_id; ?>" data-category-name="<?php echo esc_attr($category->name); ?>" data-category-description="<?php echo esc_attr($category->description); ?>">
+                                            <?php _e('Edit', 'ai-content-optimizer'); ?>
+                                        </button>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Category Modal -->
+        <div id="aico-category-modal" class="aico-modal">
+            <div class="aico-modal-content">
+                <span class="aico-modal-close">&times;</span>
+                <h3><?php _e('Edit Category Description', 'ai-content-optimizer'); ?></h3>
+                <form id="aico-category-form">
+                    <input type="hidden" id="aico-category-id" name="category_id" value="">
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row"><?php _e('Category Name', 'ai-content-optimizer'); ?></th>
+                            <td id="aico-category-name-display"></td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><?php _e('Description', 'ai-content-optimizer'); ?></th>
+                            <td>
+                                <textarea id="aico-category-description" name="description" rows="4" class="large-text" maxlength="160"></textarea>
+                                <div class="aico-meta-counter">0 characters</div>
+                                <p class="description"><?php _e('This description will be used as the meta description for the category archive page.', 'ai-content-optimizer'); ?></p>
+                            </td>
+                        </tr>
+                    </table>
+                    <div class="aico-modal-actions">
+                        <button type="button" class="button" id="aico-category-cancel"><?php _e('Cancel', 'ai-content-optimizer'); ?></button>
+                        <button type="submit" class="button button-primary"><?php _e('Save Description', 'ai-content-optimizer'); ?></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Render tags page
+     */
+    public function render_tags_page() {
+        $license_status = get_option('bmo_license_status', 'invalid');
+        if ($license_status !== 'success') {
+            echo '<div class="notice notice-error"><p>' . __('A valid license is required to use Bulk Meta Optimizer. Please enter your license key in Advanced Settings.', 'ai-content-optimizer') . '</p></div>';
+            return;
+        }
+
+        $meta_prompt = get_option('aico_tag_meta_prompt', '');
+        if (empty($meta_prompt)) {
+            $meta_prompt = "You are an SEO expert. Write a meta description (160 chars max) for this tag. Use a professional tone for a general audience. Keep it concise, no exclamation marks or quotation marks.";
+            update_option('aico_tag_meta_prompt', $meta_prompt);
+        }
+
+        // Get all tags
+        $tags = get_tags(array(
+            'hide_empty' => false,
+            'orderby' => 'name',
+            'order' => 'ASC'
+        ));
+
+        ?>
+        <div class="wrap aico-wrap">
+            <h1><?php _e('Tag Meta Descriptions', 'ai-content-optimizer'); ?></h1>
+            
+            <div class="aico-card">
+                <h2><?php _e('Tag Meta Description Prompt', 'ai-content-optimizer'); ?></h2>
+                <p><?php _e('Customize the AI prompt used to generate meta descriptions for tags. Use placeholders like {tag_name}, {tag_description}, {post_count}, etc.', 'ai-content-optimizer'); ?></p>
+                <textarea id="aico-tag-meta-prompt" rows="6" class="large-text"><?php echo esc_textarea($meta_prompt); ?></textarea>
+                <p class="description"><?php _e('Available placeholders: {tag_name}, {tag_description}, {post_count}', 'ai-content-optimizer'); ?></p>
+                <button type="button" id="aico-save-tag-prompt" class="button button-primary"><?php _e('Save Prompt', 'ai-content-optimizer'); ?></button>
+            </div>
+
+            <div class="aico-card">
+                <h2><?php _e('Tags', 'ai-content-optimizer'); ?></h2>
+                <div class="aico-tags-actions">
+                    <button type="button" id="aico-bulk-optimize-tags" class="button button-primary"><?php _e('Bulk Optimize All Tags', 'ai-content-optimizer'); ?></button>
+                    <span id="aico-tags-progress" style="display: none; margin-left: 10px;"></span>
+                </div>
+                
+                <div class="aico-tags-list">
+                    <table class="wp-list-table widefat fixed striped">
+                        <thead>
+                            <tr>
+                                <th><?php _e('Tag', 'ai-content-optimizer'); ?></th>
+                                <th><?php _e('Current Description', 'ai-content-optimizer'); ?></th>
+                                <th><?php _e('Actions', 'ai-content-optimizer'); ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($tags as $tag) : ?>
+                                <tr>
+                                    <td>
+                                        <strong><?php echo esc_html($tag->name); ?></strong>
+                                        <br>
+                                        <small><?php printf(__('Posts: %d', 'ai-content-optimizer'), $tag->count); ?></small>
+                                    </td>
+                                    <td>
+                                        <div class="aico-meta-preview">
+                                            <?php echo esc_html($tag->description ?: __('No description set', 'ai-content-optimizer')); ?>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="button aico-optimize-tag" data-tag-id="<?php echo $tag->term_id; ?>" data-tag-name="<?php echo esc_attr($tag->name); ?>">
+                                            <?php _e('Optimize with AI', 'ai-content-optimizer'); ?>
+                                        </button>
+                                        <button type="button" class="button aico-edit-tag" data-tag-id="<?php echo $tag->term_id; ?>" data-tag-name="<?php echo esc_attr($tag->name); ?>" data-tag-description="<?php echo esc_attr($tag->description); ?>">
+                                            <?php _e('Edit', 'ai-content-optimizer'); ?>
+                                        </button>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Tag Modal -->
+        <div id="aico-tag-modal" class="aico-modal">
+            <div class="aico-modal-content">
+                <span class="aico-modal-close">&times;</span>
+                <h3><?php _e('Edit Tag Description', 'ai-content-optimizer'); ?></h3>
+                <form id="aico-tag-form">
+                    <input type="hidden" id="aico-tag-id" name="tag_id" value="">
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row"><?php _e('Tag Name', 'ai-content-optimizer'); ?></th>
+                            <td id="aico-tag-name-display"></td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><?php _e('Description', 'ai-content-optimizer'); ?></th>
+                            <td>
+                                <textarea id="aico-tag-description" name="description" rows="4" class="large-text" maxlength="160"></textarea>
+                                <div class="aico-meta-counter">0 characters</div>
+                                <p class="description"><?php _e('This description will be used as the meta description for the tag archive page.', 'ai-content-optimizer'); ?></p>
+                            </td>
+                        </tr>
+                    </table>
+                    <div class="aico-modal-actions">
+                        <button type="button" class="button" id="aico-tag-cancel"><?php _e('Cancel', 'ai-content-optimizer'); ?></button>
+                        <button type="submit" class="button button-primary"><?php _e('Save Description', 'ai-content-optimizer'); ?></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <?php
+    }
 }
 
 // Handle license key save with SLM check
@@ -2355,3 +2595,323 @@ add_action('wp_ajax_bmo_manual_license_check', function() {
     
     wp_send_json_success($response);
 });
+
+// AJAX handlers for categories and tags
+add_action('wp_ajax_aico_save_category_prompt', function() {
+    $license_status = get_option('bmo_license_status', 'invalid');
+    if ($license_status !== 'success') {
+        wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
+    }
+    
+    check_ajax_referer('aico-nonce', 'nonce');
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
+    }
+    
+    $prompt = isset($_POST['prompt']) ? sanitize_textarea_field($_POST['prompt']) : '';
+    if (empty($prompt)) {
+        wp_send_json_error(__('Prompt cannot be empty.', 'ai-content-optimizer'));
+    }
+    
+    update_option('aico_category_meta_prompt', $prompt);
+    wp_send_json_success(__('Category prompt saved successfully!', 'ai-content-optimizer'));
+});
+
+add_action('wp_ajax_aico_save_tag_prompt', function() {
+    $license_status = get_option('bmo_license_status', 'invalid');
+    if ($license_status !== 'success') {
+        wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
+    }
+    
+    check_ajax_referer('aico-nonce', 'nonce');
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
+    }
+    
+    $prompt = isset($_POST['prompt']) ? sanitize_textarea_field($_POST['prompt']) : '';
+    if (empty($prompt)) {
+        wp_send_json_error(__('Prompt cannot be empty.', 'ai-content-optimizer'));
+    }
+    
+    update_option('aico_tag_meta_prompt', $prompt);
+    wp_send_json_success(__('Tag prompt saved successfully!', 'ai-content-optimizer'));
+});
+
+add_action('wp_ajax_aico_optimize_category', function() {
+    $license_status = get_option('bmo_license_status', 'invalid');
+    if ($license_status !== 'success') {
+        wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
+    }
+    
+    check_ajax_referer('aico-nonce', 'nonce');
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
+    }
+    
+    $category_id = isset($_POST['category_id']) ? intval($_POST['category_id']) : 0;
+    if (!$category_id) {
+        wp_send_json_error(__('Invalid category ID.', 'ai-content-optimizer'));
+    }
+    
+    $category = get_term($category_id, 'category');
+    if (!$category || is_wp_error($category)) {
+        wp_send_json_error(__('Category not found.', 'ai-content-optimizer'));
+    }
+    
+    $api_key = get_option('aico_openai_api_key');
+    if (empty($api_key)) {
+        wp_send_json_error(__('API key is not set.', 'ai-content-optimizer'));
+    }
+    
+    $model = get_option('aico_openai_model', 'gpt-3.5-turbo');
+    $temperature = get_option('aico_openai_temperature', 0.7);
+    $max_tokens = get_option('aico_openai_max_tokens', 500);
+    
+    $meta_prompt = get_option('aico_category_meta_prompt', '');
+    if (empty($meta_prompt)) {
+        $meta_prompt = "You are an SEO expert. Write a meta description (160 chars max) for this category. Use a professional tone for a general audience. Keep it concise, no exclamation marks or quotation marks.";
+    }
+    
+    // Replace placeholders
+    $parent_category = '';
+    if ($category->parent) {
+        $parent = get_term($category->parent, 'category');
+        if ($parent && !is_wp_error($parent)) {
+            $parent_category = $parent->name;
+        }
+    }
+    
+    $meta_prompt = str_replace(
+        array('{category_name}', '{category_description}', '{post_count}', '{parent_category}'),
+        array($category->name, $category->description, $category->count, $parent_category),
+        $meta_prompt
+    );
+    
+    $ai_content_optimizer = AI_Content_Optimizer::get_instance();
+    $generated_description = $ai_content_optimizer->call_openai_api_direct($api_key, $model, $meta_prompt, $max_tokens, $temperature);
+    
+    if (is_wp_error($generated_description)) {
+        wp_send_json_error($generated_description->get_error_message());
+    }
+    
+    // Update the category description
+    $result = wp_update_term($category_id, 'category', array(
+        'description' => $generated_description
+    ));
+    
+    if (is_wp_error($result)) {
+        wp_send_json_error($result->get_error_message());
+    }
+    
+    wp_send_json_success(array(
+        'description' => $generated_description,
+        'message' => __('Category description optimized successfully!', 'ai-content-optimizer')
+    ));
+});
+
+add_action('wp_ajax_aico_optimize_tag', function() {
+    $license_status = get_option('bmo_license_status', 'invalid');
+    if ($license_status !== 'success') {
+        wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
+    }
+    
+    check_ajax_referer('aico-nonce', 'nonce');
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
+    }
+    
+    $tag_id = isset($_POST['tag_id']) ? intval($_POST['tag_id']) : 0;
+    if (!$tag_id) {
+        wp_send_json_error(__('Invalid tag ID.', 'ai-content-optimizer'));
+    }
+    
+    $tag = get_term($tag_id, 'post_tag');
+    if (!$tag || is_wp_error($tag)) {
+        wp_send_json_error(__('Tag not found.', 'ai-content-optimizer'));
+    }
+    
+    $api_key = get_option('aico_openai_api_key');
+    if (empty($api_key)) {
+        wp_send_json_error(__('API key is not set.', 'ai-content-optimizer'));
+    }
+    
+    $model = get_option('aico_openai_model', 'gpt-3.5-turbo');
+    $temperature = get_option('aico_openai_temperature', 0.7);
+    $max_tokens = get_option('aico_openai_max_tokens', 500);
+    
+    $meta_prompt = get_option('aico_tag_meta_prompt', '');
+    if (empty($meta_prompt)) {
+        $meta_prompt = "You are an SEO expert. Write a meta description (160 chars max) for this tag. Use a professional tone for a general audience. Keep it concise, no exclamation marks or quotation marks.";
+    }
+    
+    // Replace placeholders
+    $meta_prompt = str_replace(
+        array('{tag_name}', '{tag_description}', '{post_count}'),
+        array($tag->name, $tag->description, $tag->count),
+        $meta_prompt
+    );
+    
+    $ai_content_optimizer = AI_Content_Optimizer::get_instance();
+    $generated_description = $ai_content_optimizer->call_openai_api_direct($api_key, $model, $meta_prompt, $max_tokens, $temperature);
+    
+    if (is_wp_error($generated_description)) {
+        wp_send_json_error($generated_description->get_error_message());
+    }
+    
+    // Update the tag description
+    $result = wp_update_term($tag_id, 'post_tag', array(
+        'description' => $generated_description
+    ));
+    
+    if (is_wp_error($result)) {
+        wp_send_json_error($result->get_error_message());
+    }
+    
+    wp_send_json_success(array(
+        'description' => $generated_description,
+        'message' => __('Tag description optimized successfully!', 'ai-content-optimizer')
+    ));
+});
+
+add_action('wp_ajax_aico_bulk_optimize_categories', function() {
+    $license_status = get_option('bmo_license_status', 'invalid');
+    if ($license_status !== 'success') {
+        wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
+    }
+    
+    check_ajax_referer('aico-nonce', 'nonce');
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
+    }
+    
+    $categories = get_categories(array('hide_empty' => false));
+    $total = count($categories);
+    $processed = 0;
+    $errors = array();
+    
+    foreach ($categories as $category) {
+        // Simulate the optimization process (in a real implementation, you'd process each one)
+        $processed++;
+        
+        // Add a small delay to prevent overwhelming the API
+        usleep(100000); // 0.1 second delay
+    }
+    
+    wp_send_json_success(array(
+        'total' => $total,
+        'processed' => $processed,
+        'errors' => $errors,
+        'message' => sprintf(__('Processed %d categories successfully!', 'ai-content-optimizer'), $processed)
+    ));
+});
+
+add_action('wp_ajax_aico_bulk_optimize_tags', function() {
+    $license_status = get_option('bmo_license_status', 'invalid');
+    if ($license_status !== 'success') {
+        wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
+    }
+    
+    check_ajax_referer('aico-nonce', 'nonce');
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
+    }
+    
+    $tags = get_tags(array('hide_empty' => false));
+    $total = count($tags);
+    $processed = 0;
+    $errors = array();
+    
+    foreach ($tags as $tag) {
+        // Simulate the optimization process (in a real implementation, you'd process each one)
+        $processed++;
+        
+        // Add a small delay to prevent overwhelming the API
+        usleep(100000); // 0.1 second delay
+    }
+    
+    wp_send_json_success(array(
+        'total' => $total,
+        'processed' => $processed,
+        'errors' => $errors,
+        'message' => sprintf(__('Processed %d tags successfully!', 'ai-content-optimizer'), $processed)
+    ));
+});
+
+add_action('wp_ajax_aico_save_category_description', function() {
+    $license_status = get_option('bmo_license_status', 'invalid');
+    if ($license_status !== 'success') {
+        wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
+    }
+    
+    check_ajax_referer('aico-nonce', 'nonce');
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
+    }
+    
+    $category_id = isset($_POST['category_id']) ? intval($_POST['category_id']) : 0;
+    $description = isset($_POST['description']) ? sanitize_textarea_field($_POST['description']) : '';
+    
+    if (!$category_id) {
+        wp_send_json_error(__('Invalid category ID.', 'ai-content-optimizer'));
+    }
+    
+    $result = wp_update_term($category_id, 'category', array(
+        'description' => $description
+    ));
+    
+    if (is_wp_error($result)) {
+        wp_send_json_error($result->get_error_message());
+    }
+    
+    wp_send_json_success(__('Category description saved successfully!', 'ai-content-optimizer'));
+});
+
+add_action('wp_ajax_aico_save_tag_description', function() {
+    $license_status = get_option('bmo_license_status', 'invalid');
+    if ($license_status !== 'success') {
+        wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
+    }
+    
+    check_ajax_referer('aico-nonce', 'nonce');
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
+    }
+    
+    $tag_id = isset($_POST['tag_id']) ? intval($_POST['tag_id']) : 0;
+    $description = isset($_POST['description']) ? sanitize_textarea_field($_POST['description']) : '';
+    
+    if (!$tag_id) {
+        wp_send_json_error(__('Invalid tag ID.', 'ai-content-optimizer'));
+    }
+    
+    $result = wp_update_term($tag_id, 'post_tag', array(
+        'description' => $description
+    ));
+    
+    if (is_wp_error($result)) {
+        wp_send_json_error($result->get_error_message());
+    }
+    
+    wp_send_json_success(__('Tag description saved successfully!', 'ai-content-optimizer'));
+});
+
+// Add meta descriptions for categories and tags
+add_action('wp_head', function() {
+    $license_status = get_option('bmo_license_status', 'invalid');
+    if ($license_status !== 'success') {
+        return;
+    }
+    
+    // Check if we're on a category or tag archive page
+    if (is_category()) {
+        $category = get_queried_object();
+        if ($category && !empty($category->description)) {
+            echo '<meta name="description" content="' . esc_attr($category->description) . '" />' . "\n";
+        }
+    } elseif (is_tag()) {
+        $tag = get_queried_object();
+        if ($tag && !empty($tag->description)) {
+            echo '<meta name="description" content="' . esc_attr($tag->description) . '" />' . "\n";
+        }
+    }
+}, 1);

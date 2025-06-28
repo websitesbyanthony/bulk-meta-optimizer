@@ -237,3 +237,123 @@
 #aico-test-result-page {
     margin-top: 10px;
 }
+
+/* Modal Styles */
+.aico-modal {
+    display: none;
+    position: fixed;
+    z-index: 100000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.aico-modal-content {
+    background-color: #fff;
+    margin: 5% auto;
+    padding: 24px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.aico-modal-close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.aico-modal-close:hover,
+.aico-modal-close:focus {
+    color: #000;
+}
+
+.aico-modal h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #1d2327;
+}
+
+.aico-modal-actions {
+    margin-top: 20px;
+    text-align: right;
+}
+
+.aico-modal-actions .button {
+    margin-left: 10px;
+}
+
+/* Character counter for meta description */
+.aico-meta-counter {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+}
+
+.aico-meta-counter.warning {
+    color: #dba617;
+}
+
+.aico-meta-counter.error {
+    color: #dc3232;
+}
+
+/* Meta preview styles */
+.aico-meta-preview {
+    background: #f9f9f9;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    line-height: 1.4;
+    max-width: 300px;
+    word-wrap: break-word;
+    border: 1px solid #ddd;
+    min-height: 20px;
+}
+
+/* Categories and Tags specific styles */
+.aico-categories-actions,
+.aico-tags-actions {
+    margin-bottom: 20px;
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+.aico-categories-list table,
+.aico-tags-list table {
+    margin-top: 20px;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.aico-categories-list table th,
+.aico-categories-list table td,
+.aico-tags-list table th,
+.aico-tags-list table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.aico-categories-list table th,
+.aico-tags-list table th {
+    background: #f9f9f9;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.aico-categories-list .button,
+.aico-tags-list .button {
+    margin-right: 5px;
+    font-size: 12px;
+    padding: 6px 12px;
+}
