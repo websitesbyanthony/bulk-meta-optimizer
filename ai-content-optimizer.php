@@ -240,6 +240,11 @@ PROMPT;
             add_action('wp_ajax_aico_generate_content', array($this, 'ajax_generate_content'));
             add_action('wp_ajax_aico_bulk_optimize', array($this, 'ajax_bulk_optimize'));
             add_action('wp_ajax_aico_save_settings', array($this, 'ajax_save_settings'));
+            add_action('wp_ajax_aico_generate_category_meta', array($this, 'ajax_generate_category_meta'));
+            add_action('wp_ajax_aico_save_category_meta', array($this, 'ajax_save_category_meta'));
+            add_action('wp_ajax_aico_bulk_generate_categories', array($this, 'ajax_bulk_generate_categories'));
+            add_action('wp_ajax_aico_save_category_settings', array($this, 'ajax_save_category_settings'));
+            add_action('wp_ajax_aico_save_taxonomy_settings', array($this, 'ajax_save_taxonomy_settings'));
 
             // Add row actions
             add_filter('post_row_actions', array($this, 'add_row_actions'), 10, 2);
@@ -263,6 +268,9 @@ PROMPT;
             add_filter('handle_bulk_actions-edit-post', array($this, 'handle_bulk_actions'), 10, 3);
             add_filter('handle_bulk_actions-edit-page', array($this, 'handle_bulk_actions'), 10, 3);
         }
+
+        // Add frontend hooks for category meta descriptions
+        add_action('wp_head', array($this, 'output_category_meta_description'));
     }
 
     /**
@@ -339,6 +347,16 @@ PROMPT;
             'manage_options',
             'ai-content-optimizer-advanced',
             array($this, 'render_advanced_page')
+        );
+
+        // Add Category Meta Descriptions submenu
+        add_submenu_page(
+            'ai-content-optimizer',
+            __('Taxonomy Meta Descriptions', 'ai-content-optimizer'),
+            __('Taxonomy Meta Descriptions', 'ai-content-optimizer'),
+            'manage_options',
+            'ai-content-optimizer-categories',
+            array($this, 'render_categories_page')
         );
     }
 
@@ -2141,228 +2159,533 @@ PROMPT;
             add_filter('handle_bulk_actions-edit-' . $post_type->name, array($this, 'handle_bulk_actions'), 10, 3);
         }
     }
-}
 
-// Handle license key save with SLM check
-add_action('admin_post_bmo_save_license_key', function() {
-    if ( ! current_user_can('manage_options') ) {
-        wp_die(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
-    }
-    check_admin_referer('bmo_save_license_key', 'bmo_license_nonce');
+    // Add frontend hooks for category meta descriptions
+    public function output_category_meta_description() {
+        // Only output on taxonomy archive pages
+        if (!is_tax() && !is_category() && !is_tag()) {
+            return;
+        }
 
-    $key = sanitize_text_field($_POST['bmo_license_key'] ?? '');
-    update_option('bmo_license_key', $key);
+        $term = get_queried_object();
+        if (!$term || !isset($term->term_id)) {
+            return;
+        }
 
-    $parsed = parse_url(home_url());
-    $full_url = $parsed['scheme'] . '://' . $parsed['host'];
-    $host_only = $parsed['host'];
-
-    $body = [
-        'slm_action'        => 'slm_activate',
-        'secret_key'        => BMO_SLM_SECRET_VERIFY,
-        'license_key'       => $key,
-        'item_reference'    => BMO_SLM_ITEM,
-        'url'               => $full_url,
-        'domain_name'       => $host_only,
-        'registered_domain' => $full_url,
-    ];
-
-    // Only log if debug mode is enabled
-    if (get_option('aico_debug_mode', false)) {
-        error_log(__METHOD__ . ' → SLM payload: ' . print_r($body, true));
-    }
-
-    $response = wp_remote_post(BMO_SLM_SERVER, [
-        'body' => $body,
-        'timeout' => 15,
-        'sslverify' => true,
-    ]);
-
-    $data = is_wp_error($response)
-          ? ['result' => 'error', 'message' => $response->get_error_message()]
-          : json_decode(wp_remote_retrieve_body($response), true);
-    
-    // Only log if debug mode is enabled
-    if (get_option('aico_debug_mode', false)) {
-        error_log(__METHOD__ . ' SLM response for activate: ' . print_r($data, true));
-    }
-
-    if (!empty($data['result']) && $data['result'] === 'error') {
-        if (stripos($data['message'], 'maximum allowable domains') !== false) {
-            // a license‐limit violation
-            wp_redirect(add_query_arg('bmo_license_status', 'limit_reached', admin_url('admin.php?page=ai-content-optimizer-advanced')));
-            exit;
+        // Get the custom meta description for this term
+        $meta_description = get_term_meta($term->term_id, 'aico_meta_description', true);
+        
+        if (!empty($meta_description)) {
+            echo '<meta name="description" content="' . esc_attr($meta_description) . '" />' . "\n";
         }
     }
 
-    if (!empty($data['result']) && $data['result'] === 'success') {
-        $status = 'success';
-    } elseif (!empty($data['message']) && stripos($data['message'], 'expired') !== false) {
-        $status = 'expired';
-    } else {
-        $status = 'invalid';
+    /**
+     * Render categories page
+     */
+    public function render_categories_page() {
+        $license_status = get_option('bmo_license_status', 'invalid');
+        if ($license_status !== 'success') {
+            echo '<div class="notice notice-error"><p>' . __('A valid license is required to use Bulk Meta Optimizer. Please enter your license key in Advanced Settings.', 'ai-content-optimizer') . '</p></div>';
+            return;
+        }
+
+        // Get all public taxonomies
+        $taxonomies = get_taxonomies(array('public' => true), 'objects');
+        
+        // Get selected taxonomy
+        $selected_taxonomy = isset($_GET['taxonomy']) ? sanitize_text_field($_GET['taxonomy']) : 'category';
+        
+        // Validate selected taxonomy
+        if (!array_key_exists($selected_taxonomy, $taxonomies)) {
+            $selected_taxonomy = 'category';
+        }
+
+        // Get terms for the selected taxonomy
+        $terms = get_terms(array(
+            'taxonomy' => $selected_taxonomy,
+            'hide_empty' => false,
+            'orderby' => 'name',
+            'order' => 'ASC'
+        ));
+
+        // Get taxonomy settings
+        $taxonomy_settings = get_option('aico_taxonomy_settings', array());
+        $taxonomy_meta_prompt = get_option('aico_taxonomy_meta_prompt', '');
+
+        ?>
+        <div class="wrap aico-wrap">
+            <h1><?php _e('Taxonomy Meta Descriptions', 'ai-content-optimizer'); ?></h1>
+            
+            <div class="aico-card">
+                <h2><?php _e('Taxonomy Settings', 'ai-content-optimizer'); ?></h2>
+                <form method="post" action="<?php echo esc_url(admin_url('admin-ajax.php')); ?>" class="aico-settings-form">
+                    <input type="hidden" name="action" value="aico_save_taxonomy_settings" />
+                    <?php wp_nonce_field('aico-nonce', 'nonce'); ?>
+                    
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row"><?php _e('Meta Description Prompt', 'ai-content-optimizer'); ?></th>
+                            <td>
+                                <textarea name="taxonomy_meta_prompt" rows="5" class="large-text"><?php echo esc_textarea($taxonomy_meta_prompt); ?></textarea>
+                                <p class="description"><?php _e('Custom prompt for generating taxonomy meta descriptions. Use {term_name} and {term_description} as placeholders.', 'ai-content-optimizer'); ?></p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><?php _e('Content Tone', 'ai-content-optimizer'); ?></th>
+                            <td>
+                                <select name="settings[content_tone]">
+                                    <?php
+                                    $tones = array(
+                                        'professional' => __('Professional', 'ai-content-optimizer'),
+                                        'conversational' => __('Conversational', 'ai-content-optimizer'),
+                                        'educational' => __('Educational', 'ai-content-optimizer'),
+                                        'persuasive' => __('Persuasive', 'ai-content-optimizer'),
+                                        'technical' => __('Technical', 'ai-content-optimizer'),
+                                        'enthusiastic' => __('Enthusiastic', 'ai-content-optimizer'),
+                                    );
+
+                                    $selected_tone = isset($taxonomy_settings['content_tone']) ? $taxonomy_settings['content_tone'] : 'professional';
+
+                                    foreach ($tones as $value => $label) {
+                                        printf(
+                                            '<option value="%s" %s>%s</option>',
+                                            esc_attr($value),
+                                            selected($selected_tone, $value, false),
+                                            esc_html($label)
+                                        );
+                                    }
+                                    ?>
+                                </select>
+                            </td>
+                        </tr>
+                    </table>
+                    
+                    <p class="submit">
+                        <button type="submit" class="button button-primary"><?php _e('Save Taxonomy Settings', 'ai-content-optimizer'); ?></button>
+                    </p>
+                </form>
+            </div>
+
+            <div class="aico-card">
+                <h2><?php _e('Taxonomies', 'ai-content-optimizer'); ?></h2>
+                
+                <!-- Taxonomy selector -->
+                <div class="aico-taxonomy-selector">
+                    <label for="taxonomy-selector"><?php _e('Select Taxonomy:', 'ai-content-optimizer'); ?></label>
+                    <select id="taxonomy-selector">
+                        <?php foreach ($taxonomies as $taxonomy_name => $taxonomy_obj) : ?>
+                            <option value="<?php echo esc_attr($taxonomy_name); ?>" <?php selected($selected_taxonomy, $taxonomy_name); ?>>
+                                <?php echo esc_html($taxonomy_obj->labels->name); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <p><?php printf(__('Generate and manage meta descriptions for your %s. This will help improve SEO for taxonomy archive pages.', 'ai-content-optimizer'), esc_html($taxonomies[$selected_taxonomy]->labels->name)); ?></p>
+                
+                <div class="aico-categories-actions">
+                    <button type="button" id="aico-bulk-generate-categories" class="button button-primary">
+                        <?php printf(__('Generate All %s Meta Descriptions', 'ai-content-optimizer'), esc_html($taxonomies[$selected_taxonomy]->labels->name)); ?>
+                    </button>
+                    <span class="spinner" style="float: none; margin-left: 10px;"></span>
+                </div>
+
+                <div class="aico-categories-list">
+                    <table class="wp-list-table widefat fixed striped">
+                        <thead>
+                            <tr>
+                                <th><?php _e('Term', 'ai-content-optimizer'); ?></th>
+                                <th><?php _e('Posts', 'ai-content-optimizer'); ?></th>
+                                <th><?php _e('Meta Description', 'ai-content-optimizer'); ?></th>
+                                <th><?php _e('Actions', 'ai-content-optimizer'); ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($terms as $term) : ?>
+                                <tr>
+                                    <td>
+                                        <strong><?php echo esc_html($term->name); ?></strong>
+                                        <?php if (!empty($term->description)) : ?>
+                                            <br><small><?php echo esc_html($term->description); ?></small>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td><?php echo esc_html($term->count); ?></td>
+                                    <td>
+                                        <?php 
+                                        $meta_description = get_term_meta($term->term_id, 'aico_meta_description', true);
+                                        if (!empty($meta_description)) : ?>
+                                            <div class="aico-meta-preview">
+                                                <?php echo esc_html($meta_description); ?>
+                                            </div>
+                                        <?php else : ?>
+                                            <em><?php _e('No meta description set', 'ai-content-optimizer'); ?></em>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="button button-small aico-generate-category-meta" 
+                                                data-category-id="<?php echo esc_attr($term->term_id); ?>"
+                                                data-category-name="<?php echo esc_attr($term->name); ?>"
+                                                data-category-description="<?php echo esc_attr($term->description); ?>">
+                                            <?php echo empty($meta_description) ? __('Generate', 'ai-content-optimizer') : __('Regenerate', 'ai-content-optimizer'); ?>
+                                        </button>
+                                        <?php if (!empty($meta_description)) : ?>
+                                            <button type="button" class="button button-small aico-edit-category-meta" 
+                                                    data-category-id="<?php echo esc_attr($term->term_id); ?>"
+                                                    data-meta-description="<?php echo esc_attr($meta_description); ?>">
+                                                <?php _e('Edit', 'ai-content-optimizer'); ?>
+                                            </button>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Meta Description Modal -->
+        <div id="aico-edit-meta-modal" class="aico-modal" style="display: none;">
+            <div class="aico-modal-content">
+                <span class="aico-modal-close">&times;</span>
+                <h3><?php _e('Edit Meta Description', 'ai-content-optimizer'); ?></h3>
+                <form id="aico-edit-meta-form">
+                    <input type="hidden" id="edit-category-id" name="category_id" />
+                    <textarea id="edit-meta-description" name="meta_description" rows="4" class="large-text" maxlength="160"></textarea>
+                    <p class="description"><?php _e('Maximum 160 characters for optimal SEO.', 'ai-content-optimizer'); ?></p>
+                    <div class="aico-modal-actions">
+                        <button type="submit" class="button button-primary"><?php _e('Save', 'ai-content-optimizer'); ?></button>
+                        <button type="button" class="button aico-modal-cancel"><?php _e('Cancel', 'ai-content-optimizer'); ?></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <?php
     }
 
-    // Update license status and reset the last check timestamp
-    update_option('bmo_license_status', $status);
-    update_option('bmo_last_license_check', time());
+    /**
+     * AJAX generate category meta description
+     */
+    public function ajax_generate_category_meta() {
+        $license_status = get_option('bmo_license_status', 'invalid');
+        if ($license_status !== 'success') {
+            wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
+            exit;
+        }
+        check_ajax_referer('aico-nonce', 'nonce');
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
+        }
 
-    wp_redirect(add_query_arg(
-        'bmo_license_status',
-        $status,
-        admin_url('admin.php?page=ai-content-optimizer-advanced')
-    ));
-    exit;
-});
+        $category_id = isset($_POST['category_id']) ? intval($_POST['category_id']) : 0;
+        $category_name = isset($_POST['category_name']) ? sanitize_text_field($_POST['category_name']) : '';
+        $category_description = isset($_POST['category_description']) ? sanitize_textarea_field($_POST['category_description']) : '';
 
-// License status check function
-function bmo_check_license_status() {
-    // Check if we need to perform a license check (only once per day)
-    $last_check = get_option('bmo_last_license_check', 0);
-    $current_time = time();
-    
-    // Only check once per day (86400 seconds = 24 hours)
-    if ($current_time - $last_check < 86400) {
-        return;
-    }
-    
-    $key = get_option('bmo_license_key', '');
-    if (empty($key)) {
-        update_option('bmo_license_status', 'invalid');
-        update_option('bmo_last_license_check', $current_time);
-        return;
-    }
+        if (!$category_id || empty($category_name)) {
+            wp_send_json_error(__('Invalid category data.', 'ai-content-optimizer'));
+        }
 
-    $parsed = parse_url(home_url());
-    $full_url = $parsed['scheme'] . '://' . $parsed['host'];
-    $host_only = $parsed['host'];
+        $api_key = get_option('aico_openai_api_key');
+        if (empty($api_key)) {
+            wp_send_json_error(__('API key is not set.', 'ai-content-optimizer'));
+        }
 
-    $body = [
-        'slm_action'        => 'slm_check',
-        'secret_key'        => BMO_SLM_SECRET_VERIFY,
-        'license_key'       => $key,
-        'item_reference'    => BMO_SLM_ITEM,
-        'url'               => $full_url,
-        'domain_name'       => $host_only,
-        'registered_domain' => $full_url,
-    ];
+        $model = get_option('aico_openai_model', 'gpt-3.5-turbo');
+        $temperature = get_option('aico_openai_temperature', 0.7);
+        $max_tokens = get_option('aico_openai_max_tokens', 500);
 
-    // Only log if debug mode is enabled
-    if (get_option('aico_debug_mode', false)) {
-        error_log(__METHOD__ . ' → SLM payload: ' . print_r($body, true));
-    }
+        // Get category settings
+        $category_settings = get_option('aico_category_settings', array());
+        $category_meta_prompt = get_option('aico_category_meta_prompt', '');
 
-    $response = wp_remote_post(BMO_SLM_SERVER, [
-        'body' => $body,
-        'timeout' => 10,
-        'sslverify' => true,
-    ]);
+        // Default prompt if none is set
+        if (empty($category_meta_prompt)) {
+            $category_meta_prompt = "You are an SEO expert. Write a compelling meta description (160 characters max) for the category '{category_name}'. Use a {content_tone} tone. Keep it concise and include relevant keywords. No exclamation marks or quotation marks.";
+        }
 
-    $data = json_decode(wp_remote_retrieve_body($response), true);
-    if (!empty($data['result'])) {
-        update_option('bmo_license_status', $data['result']);
-    }
-    
-    // Only log if debug mode is enabled
-    if (get_option('aico_debug_mode', false)) {
-        error_log(__FUNCTION__ . ' SLM response for check: ' . print_r($data, true));
-    }
-    
-    // Update the last check timestamp
-    update_option('bmo_last_license_check', $current_time);
-}
+        // Replace placeholders
+        $prompt = str_replace(
+            array('{category_name}', '{category_description}', '{content_tone}'),
+            array($category_name, $category_description, $category_settings['content_tone'] ?? 'professional'),
+            $category_meta_prompt
+        );
 
-// Remove the admin_init hook that was causing frequent checks
-// add_action('admin_init','bmo_check_license_status');
+        try {
+            $generated_meta = $this->call_openai_api_direct($api_key, $model, $prompt, $max_tokens, $temperature);
+            
+            if (is_wp_error($generated_meta)) {
+                wp_send_json_error($generated_meta->get_error_message());
+            }
 
-// Only run license check on plugin activation and daily schedule
-add_action('admin_init', function() {
-    // Only check license on the first admin page load of the day
-    $last_check = get_option('bmo_last_license_check', 0);
-    $current_time = time();
-    
-    // If we haven't checked today, do it now
-    if ($current_time - $last_check >= 86400) {
-        bmo_check_license_status();
-    }
-}, 20); // Lower priority to run after other admin_init actions
+            // Process the generated text
+            $processed_meta = $this->process_generated_text($generated_meta);
+            
+            // Limit to 160 characters
+            if (strlen($processed_meta) > 160) {
+                $processed_meta = substr($processed_meta, 0, 157) . '...';
+            }
 
-// Deactivation hook
-function bmo_deactivate_license() {
-    $key = get_option('bmo_license_key', '');
-    if (empty($key)) {
-        return;
+            wp_send_json_success(array(
+                'meta_description' => $processed_meta,
+                'message' => __('Meta description generated successfully!', 'ai-content-optimizer')
+            ));
+
+        } catch (Exception $e) {
+            wp_send_json_error(__('Error generating meta description: ', 'ai-content-optimizer') . $e->getMessage());
+        }
     }
 
-    $parsed = parse_url(home_url());
-    $full_url = $parsed['scheme'] . '://' . $parsed['host'];
-    $host_only = $parsed['host'];
+    /**
+     * AJAX save category meta description
+     */
+    public function ajax_save_category_meta() {
+        $license_status = get_option('bmo_license_status', 'invalid');
+        if ($license_status !== 'success') {
+            wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
+            exit;
+        }
+        check_ajax_referer('aico-nonce', 'nonce');
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
+        }
 
-    $body = [
-        'slm_action'        => 'slm_deactivate',
-        'secret_key'        => BMO_SLM_SECRET_VERIFY,
-        'license_key'       => $key,
-        'item_reference'    => BMO_SLM_ITEM,
-        'url'               => $full_url,
-        'domain_name'       => $host_only,
-        'registered_domain' => $full_url,
-    ];
+        $category_id = isset($_POST['category_id']) ? intval($_POST['category_id']) : 0;
+        $meta_description = isset($_POST['meta_description']) ? sanitize_textarea_field($_POST['meta_description']) : '';
 
-    // Only log if debug mode is enabled
-    if (get_option('aico_debug_mode', false)) {
-        error_log(__METHOD__ . ' → SLM payload: ' . print_r($body, true));
+        if (!$category_id) {
+            wp_send_json_error(__('Invalid category ID.', 'ai-content-optimizer'));
+        }
+
+        // Save the meta description
+        $result = update_term_meta($category_id, 'aico_meta_description', $meta_description);
+        
+        if ($result) {
+            wp_send_json_success(__('Meta description saved successfully!', 'ai-content-optimizer'));
+        } else {
+            wp_send_json_error(__('Failed to save meta description.', 'ai-content-optimizer'));
+        }
     }
 
-    wp_remote_post(BMO_SLM_SERVER, [
-        'body' => $body,
-        'timeout' => 10,
-        'sslverify' => true,
-    ]);
-}
-register_deactivation_hook(__FILE__, 'bmo_deactivate_license');
+    /**
+     * AJAX bulk generate categories
+     */
+    public function ajax_bulk_generate_categories() {
+        $license_status = get_option('bmo_license_status', 'invalid');
+        if ($license_status !== 'success') {
+            wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
+            exit;
+        }
+        check_ajax_referer('aico-nonce', 'nonce');
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
+        }
 
-// Schedule daily license check
-if ( ! wp_next_scheduled('bmo_daily_license_check') ) {
-    wp_schedule_event( time(), 'daily', 'bmo_daily_license_check' );
-}
-add_action('bmo_daily_license_check','bmo_check_license_status');
+        $api_key = get_option('aico_openai_api_key');
+        if (empty($api_key)) {
+            wp_send_json_error(__('API key is not set.', 'ai-content-optimizer'));
+        }
 
-// Gate plugin functionality on license status
-add_action('plugins_loaded','bmo_maybe_disable_plugin', 5);
-function bmo_maybe_disable_plugin() {
-    $status = get_option('bmo_license_status', 'invalid');
-    
-    if ($status === 'success') {
-        return; // Plugin should be enabled
-    } elseif ($status === 'expired') {
-        $msg = 'Your license has expired. Please renew to continue using Bulk Meta Optimizer.';
-    } elseif ($status === 'limit_reached') {
-        $msg = 'You\'ve reached the maximum number of activations for this license.';
-    } else {
-        $msg = 'A valid license is required to use Bulk Meta Optimizer. Please enter your license key in Settings.';
+        // Get all categories
+        $categories = get_categories(array(
+            'hide_empty' => false,
+            'orderby' => 'name',
+            'order' => 'ASC'
+        ));
+
+        $results = array(
+            'success' => array(),
+            'error' => array()
+        );
+
+        $model = get_option('aico_openai_model', 'gpt-3.5-turbo');
+        $temperature = get_option('aico_openai_temperature', 0.7);
+        $max_tokens = get_option('aico_openai_max_tokens', 500);
+
+        // Get category settings
+        $category_settings = get_option('aico_category_settings', array());
+        $category_meta_prompt = get_option('aico_category_meta_prompt', '');
+
+        // Default prompt if none is set
+        if (empty($category_meta_prompt)) {
+            $category_meta_prompt = "You are an SEO expert. Write a compelling meta description (160 characters max) for the category '{category_name}'. Use a {content_tone} tone. Keep it concise and include relevant keywords. No exclamation marks or quotation marks.";
+        }
+
+        foreach ($categories as $category) {
+            try {
+                // Replace placeholders
+                $prompt = str_replace(
+                    array('{category_name}', '{category_description}', '{content_tone}'),
+                    array($category->name, $category->description, $category_settings['content_tone'] ?? 'professional'),
+                    $category_meta_prompt
+                );
+
+                $generated_meta = $this->call_openai_api_direct($api_key, $model, $prompt, $max_tokens, $temperature);
+                
+                if (is_wp_error($generated_meta)) {
+                    $results['error'][] = array(
+                        'id' => $category->term_id,
+                        'name' => $category->name,
+                        'message' => $generated_meta->get_error_message()
+                    );
+                    continue;
+                }
+
+                // Process the generated text
+                $processed_meta = $this->process_generated_text($generated_meta);
+                
+                // Limit to 160 characters
+                if (strlen($processed_meta) > 160) {
+                    $processed_meta = substr($processed_meta, 0, 157) . '...';
+                }
+
+                // Save the meta description
+                update_term_meta($category->term_id, 'aico_meta_description', $processed_meta);
+                
+                $results['success'][] = array(
+                    'id' => $category->term_id,
+                    'name' => $category->name,
+                    'meta_description' => $processed_meta
+                );
+
+            } catch (Exception $e) {
+                $results['error'][] = array(
+                    'id' => $category->term_id,
+                    'name' => $category->name,
+                    'message' => $e->getMessage()
+                );
+            }
+        }
+
+        wp_send_json_success($results);
     }
-    
-    // show an admin notice
-    add_action('admin_notices', function() use($msg){
-        echo "<div class='notice notice-error'><p>{$msg}</p></div>";
+
+    /**
+     * AJAX save category settings
+     */
+    public function ajax_save_category_settings() {
+        $license_status = get_option('bmo_license_status', 'invalid');
+        if ($license_status !== 'success') {
+            wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
+            exit;
+        }
+        check_ajax_referer('aico-nonce', 'nonce');
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
+        }
+
+        $settings = isset($_POST['settings']) ? $_POST['settings'] : array();
+        $category_meta_prompt = isset($_POST['category_meta_prompt']) ? $this->allow_html_prompts($_POST['category_meta_prompt']) : '';
+
+        // Save category meta prompt
+        update_option('aico_category_meta_prompt', $category_meta_prompt);
+
+        // Save category settings
+        $sanitized_settings = array();
+        $sanitized_settings['content_tone'] = sanitize_text_field($settings['content_tone'] ?? 'professional');
+        
+        update_option('aico_category_settings', $sanitized_settings);
+
+        wp_send_json_success(__('Category settings saved successfully!', 'ai-content-optimizer'));
+    }
+
+    /**
+     * AJAX save taxonomy settings
+     */
+    public function ajax_save_taxonomy_settings() {
+        $license_status = get_option('bmo_license_status', 'invalid');
+        if ($license_status !== 'success') {
+            wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
+            exit;
+        }
+        check_ajax_referer('aico-nonce', 'nonce');
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
+        }
+
+        $taxonomy_meta_prompt = isset($_POST['taxonomy_meta_prompt']) ? $this->allow_html_prompts($_POST['taxonomy_meta_prompt']) : '';
+
+        // Save taxonomy meta prompt
+        update_option('aico_taxonomy_meta_prompt', $taxonomy_meta_prompt);
+
+        // Save taxonomy settings
+        $sanitized_settings = array();
+        $sanitized_settings['content_tone'] = sanitize_text_field($_POST['settings']['content_tone'] ?? 'professional');
+        
+        update_option('aico_taxonomy_settings', $sanitized_settings);
+
+        wp_send_json_success(__('Taxonomy settings saved successfully!', 'ai-content-optimizer'));
+    }
+
+    // Handle license key save with SLM check
+    add_action('admin_post_bmo_save_license_key', function() {
+        if ( ! current_user_can('manage_options') ) {
+            wp_die(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
+        }
+        check_admin_referer('bmo_save_license_key', 'bmo_license_nonce');
+
+        $key = sanitize_text_field($_POST['bmo_license_key'] ?? '');
+        update_option('bmo_license_key', $key);
+
+        $parsed = parse_url(home_url());
+        $full_url = $parsed['scheme'] . '://' . $parsed['host'];
+        $host_only = $parsed['host'];
+
+        $body = [
+            'slm_action'        => 'slm_activate',
+            'secret_key'        => BMO_SLM_SECRET_VERIFY,
+            'license_key'       => $key,
+            'item_reference'    => BMO_SLM_ITEM,
+            'url'               => $full_url,
+            'domain_name'       => $host_only,
+            'registered_domain' => $full_url,
+        ];
+
+        // Only log if debug mode is enabled
+        if (get_option('aico_debug_mode', false)) {
+            error_log(__METHOD__ . ' → SLM payload: ' . print_r($body, true));
+        }
+
+        $response = wp_remote_post(BMO_SLM_SERVER, [
+            'body' => $body,
+            'timeout' => 15,
+            'sslverify' => true,
+        ]);
+
+        $data = is_wp_error($response)
+              ? ['result' => 'error', 'message' => $response->get_error_message()]
+              : json_decode(wp_remote_retrieve_body($response), true);
+        
+        // Only log if debug mode is enabled
+        if (get_option('aico_debug_mode', false)) {
+            error_log(__METHOD__ . ' SLM response for activate: ' . print_r($data, true));
+        }
+
+        if (!empty($data['result']) && $data['result'] === 'error') {
+            if (stripos($data['message'], 'maximum allowable domains') !== false) {
+                // a license‐limit violation
+                wp_redirect(add_query_arg('bmo_license_status', 'limit_reached', admin_url('admin.php?page=ai-content-optimizer-advanced')));
+                exit;
+            }
+        }
+
+        if (!empty($data['result']) && $data['result'] === 'success') {
+            $status = 'success';
+        } elseif (!empty($data['message']) && stripos($data['message'], 'expired') !== false) {
+            $status = 'expired';
+        } else {
+            $status = 'invalid';
+        }
+
+        // Update license status and reset the last check timestamp
+        update_option('bmo_license_status', $status);
+        update_option('bmo_last_license_check', time());
+
+        wp_redirect(add_query_arg(
+            'bmo_license_status',
+            $status,
+            admin_url('admin.php?page=ai-content-optimizer-advanced')
+        ));
+        exit;
     });
-    
-    // Don't completely stop the plugin - let it load so users can access settings
-    // The core functionality is already gated in the init() method
 }
-
-// Function to manually clear license check cache and force a new check
-function bmo_force_license_check() {
-    delete_option('bmo_last_license_check');
-    bmo_check_license_status();
-}
-
-// Add AJAX handler for manual license check
-add_action('wp_ajax_bmo_force_license_check', function() {
-    if (!current_user_can('manage_options')) {
-        wp_die(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
-    }
-    
-    bmo_force_license_check();
-    wp_send_json_success(__('License check completed.', 'ai-content-optimizer'));
-});
