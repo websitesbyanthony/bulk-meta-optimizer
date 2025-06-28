@@ -1,6 +1,6 @@
-/* Modern AI Content Optimizer Admin Styles */
+/* AI Content Optimizer Admin Styles - Fixed and Modern */
 
-/* Reset and Base Styles */
+/* Base Styles */
 .aico-wrap {
     margin: 20px 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
@@ -19,29 +19,15 @@
 .aico-card {
     background: #fff;
     border: 1px solid #e2e4e7;
-    border-radius: 12px;
+    border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     margin-bottom: 24px;
-    padding: 28px;
+    padding: 24px;
     transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
 }
 
 .aico-card:hover {
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
-}
-
-.aico-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #2271b1, #72aee6);
-    border-radius: 12px 12px 0 0;
 }
 
 .aico-card h2 {
@@ -60,7 +46,7 @@
     font-size: 1.2em;
 }
 
-/* Dashboard Layout */
+/* Dashboard Layout - FIXED */
 .aico-dashboard {
     display: grid;
     grid-template-columns: 1fr;
@@ -74,7 +60,7 @@
     }
 }
 
-/* Statistics Grid */
+/* Statistics Grid - FIXED */
 .aico-stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -85,17 +71,15 @@
 .aico-stat-item {
     background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
     border: 1px solid #e2e4e7;
-    border-radius: 12px;
-    padding: 24px;
+    border-radius: 8px;
+    padding: 20px;
     text-align: center;
     transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
 }
 
 .aico-stat-item:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .aico-stat-item h3 {
@@ -116,61 +100,47 @@
 }
 
 .aico-stat-total {
-    font-size: 2.2em;
+    font-size: 2em;
     font-weight: 700;
     color: #2271b1;
     line-height: 1;
 }
 
 .aico-stat-optimized {
-    font-size: 1.8em;
+    font-size: 1.6em;
     font-weight: 600;
     color: #00a32a;
     line-height: 1;
 }
 
 .aico-stat-percentage {
-    font-size: 1.4em;
+    font-size: 1.2em;
     font-weight: 600;
     color: #d63638;
     line-height: 1;
 }
 
-/* Progress Bar */
+/* Progress Bar - FIXED */
 .aico-progress-bar {
     background: #f0f0f1;
-    border-radius: 20px;
-    height: 12px;
+    border-radius: 10px;
+    height: 10px;
     margin: 15px 0;
     overflow: hidden;
-    position: relative;
 }
 
 .aico-progress {
     background: linear-gradient(90deg, #00a32a, #00ba9c);
     height: 100%;
-    border-radius: 20px;
+    border-radius: 10px;
     transition: width 0.8s ease;
-    position: relative;
 }
 
-.aico-progress::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-    animation: shimmer 2s infinite;
+/* Actions Section - FIXED */
+.aico-actions {
+    margin-top: 30px;
 }
 
-@keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-}
-
-/* Actions Grid */
 .aico-actions-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -181,17 +151,15 @@
 .aico-action-item {
     background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
     border: 1px solid #e2e4e7;
-    border-radius: 12px;
-    padding: 24px;
+    border-radius: 8px;
+    padding: 20px;
     text-align: center;
     transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
 }
 
 .aico-action-item:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     border-color: #2271b1;
 }
 
@@ -202,25 +170,7 @@
     margin: 0 0 15px 0;
 }
 
-.aico-action-item .button {
-    background: linear-gradient(135deg, #2271b1, #72aee6);
-    border: none;
-    border-radius: 8px;
-    color: white;
-    font-weight: 500;
-    padding: 12px 24px;
-    text-decoration: none;
-    transition: all 0.3s ease;
-    display: inline-block;
-}
-
-.aico-action-item .button:hover {
-    background: linear-gradient(135deg, #1e5a8a, #5b9bd5);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(34, 113, 177, 0.3);
-}
-
-/* Activity List */
+/* Activity List - FIXED */
 .aico-activity-list {
     margin: 0;
     padding: 0;
@@ -229,16 +179,15 @@
 
 .aico-activity-list li {
     background: #f8f9fa;
-    border-radius: 8px;
-    margin-bottom: 12px;
-    padding: 16px;
-    border-left: 4px solid #2271b1;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    padding: 12px;
+    border-left: 3px solid #2271b1;
     transition: all 0.3s ease;
 }
 
 .aico-activity-list li:hover {
     background: #f0f0f1;
-    transform: translateX(4px);
 }
 
 .aico-activity-time {
@@ -257,14 +206,14 @@
     line-height: 1.4;
 }
 
-/* Modern Tab Design */
+/* Modern Tab Design - FIXED */
 .aico-tabs {
     margin-top: 30px;
 }
 
 .aico-tab-nav {
     background: #f8f9fa;
-    border-radius: 12px;
+    border-radius: 8px;
     padding: 8px;
     margin-bottom: 30px;
     display: flex;
@@ -290,14 +239,14 @@
 .aico-tab-link {
     background: #ffffff;
     border: 1px solid #e2e4e7;
-    border-radius: 8px;
+    border-radius: 6px;
     color: #1d2327;
     display: inline-block;
     font-size: 14px;
     font-weight: 500;
     line-height: 1.4;
     margin: 0;
-    padding: 12px 20px;
+    padding: 10px 16px;
     text-decoration: none;
     transition: all 0.3s ease;
     white-space: nowrap;
@@ -307,7 +256,6 @@
     background: #f0f0f1;
     border-color: #2271b1;
     color: #2271b1;
-    transform: translateY(-1px);
 }
 
 .aico-tab-link.active {
@@ -315,25 +263,18 @@
     border-color: #2271b1;
     color: white;
     font-weight: 600;
-    box-shadow: 0 4px 12px rgba(34, 113, 177, 0.3);
 }
 
-/* Tab Content */
+/* Tab Content - FIXED */
 .aico-tab-content {
     display: none;
-    animation: fadeIn 0.3s ease;
 }
 
 .aico-tab-content.active {
     display: block;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Settings Grid */
+/* Settings Grid - FIXED */
 .aico-settings-grid {
     display: grid;
     grid-template-columns: 1fr;
@@ -346,7 +287,7 @@
     }
 }
 
-/* Form Elements */
+/* Form Elements - FIXED */
 .aico-settings-form {
     margin-top: 20px;
 }
@@ -365,7 +306,7 @@
     text-align: left;
     vertical-align: top;
     width: 200px;
-    border-radius: 8px 0 0 8px;
+    border-radius: 6px 0 0 6px;
 }
 
 .form-table td {
@@ -374,7 +315,7 @@
     border-left: none;
     padding: 16px 20px;
     vertical-align: top;
-    border-radius: 0 8px 8px 0;
+    border-radius: 0 6px 6px 0;
 }
 
 .form-table tr:hover th,
@@ -382,7 +323,7 @@
     background: #f8f9fa;
 }
 
-/* Modern Form Controls */
+/* Modern Form Controls - FIXED */
 input[type="text"],
 input[type="password"],
 input[type="email"],
@@ -391,11 +332,11 @@ select,
 textarea {
     background: #ffffff;
     border: 2px solid #e2e4e7;
-    border-radius: 8px;
+    border-radius: 6px;
     color: #1d2327;
     font-size: 14px;
     line-height: 1.4;
-    padding: 12px 16px;
+    padding: 10px 12px;
     transition: all 0.3s ease;
     width: 100%;
     box-sizing: border-box;
@@ -408,29 +349,29 @@ input[type="number"]:focus,
 select:focus,
 textarea:focus {
     border-color: #2271b1;
-    box-shadow: 0 0 0 3px rgba(34, 113, 177, 0.1);
+    box-shadow: 0 0 0 2px rgba(34, 113, 177, 0.1);
     outline: none;
 }
 
-/* Checkboxes and Radio Buttons */
+/* Checkboxes and Radio Buttons - FIXED */
 input[type="checkbox"],
 input[type="radio"] {
     accent-color: #2271b1;
-    transform: scale(1.2);
+    transform: scale(1.1);
     margin-right: 8px;
 }
 
-/* Modern Buttons */
+/* Modern Buttons - FIXED */
 .button {
     background: linear-gradient(135deg, #2271b1, #72aee6);
     border: none;
-    border-radius: 8px;
+    border-radius: 6px;
     color: white;
     cursor: pointer;
     font-size: 14px;
     font-weight: 500;
     line-height: 1.4;
-    padding: 12px 24px;
+    padding: 10px 20px;
     text-decoration: none;
     transition: all 0.3s ease;
     display: inline-block;
@@ -438,8 +379,8 @@ input[type="radio"] {
 
 .button:hover {
     background: linear-gradient(135deg, #1e5a8a, #5b9bd5);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(34, 113, 177, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(34, 113, 177, 0.3);
 }
 
 .button-primary {
@@ -458,11 +399,11 @@ input[type="radio"] {
     background: linear-gradient(135deg, #50575e, #787c82);
 }
 
-/* Status Messages */
+/* Status Messages - FIXED */
 .notice {
     background: #ffffff;
     border: 1px solid #e2e4e7;
-    border-radius: 8px;
+    border-radius: 6px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     margin: 20px 0;
     padding: 16px 20px;
@@ -484,7 +425,7 @@ input[type="radio"] {
     background: linear-gradient(135deg, #fefcf0 0%, #ffffff 100%);
 }
 
-/* Loading States */
+/* Loading States - FIXED */
 .aico-loading {
     color: #2271b1;
     font-weight: 500;
@@ -500,7 +441,7 @@ input[type="radio"] {
     font-weight: 500;
 }
 
-/* Spinner */
+/* Spinner - FIXED */
 .spinner {
     border: 2px solid #f3f3f3;
     border-top: 2px solid #2271b1;
@@ -518,7 +459,32 @@ input[type="radio"] {
     100% { transform: rotate(360deg); }
 }
 
-/* Responsive Design */
+/* Bulk Progress - FIXED */
+.aico-bulk-progress {
+    background: #fff;
+    border: 1px solid #e2e4e7;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    margin: 20px 0;
+    padding: 20px;
+}
+
+.aico-bulk-progress .aico-progress-text {
+    margin-top: 10px;
+    font-weight: 500;
+    color: #1d2327;
+}
+
+/* Test Results - FIXED */
+#aico-test-result,
+#aico-test-result-page {
+    margin-top: 10px;
+    padding: 12px;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+/* Responsive Design - FIXED */
 @media (max-width: 782px) {
     .aico-dashboard {
         grid-template-columns: 1fr;
@@ -548,7 +514,7 @@ input[type="radio"] {
     .form-table td {
         display: block;
         width: 100%;
-        border-radius: 8px;
+        border-radius: 6px;
         margin-bottom: 8px;
     }
     
@@ -558,21 +524,140 @@ input[type="radio"] {
     }
 }
 
-/* Custom Scrollbar */
-.aico-wrap ::-webkit-scrollbar {
-    width: 8px;
+/* Category/Taxonomy Specific Styles - FIXED */
+.aico-categories-actions {
+    margin-bottom: 20px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e2e4e7;
 }
 
-.aico-wrap ::-webkit-scrollbar-track {
-    background: #f1f1f1;
+.aico-taxonomy-selector {
+    margin-bottom: 20px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e2e4e7;
+}
+
+.aico-taxonomy-selector label {
+    font-weight: 600;
+    margin-right: 10px;
+    color: #1d2327;
+}
+
+.aico-taxonomy-selector select {
+    min-width: 200px;
+    border: 2px solid #e2e4e7;
+    border-radius: 6px;
+    padding: 8px 12px;
+}
+
+.aico-categories-actions .spinner {
+    margin-left: 10px;
+    float: none;
+}
+
+.aico-categories-list table {
+    margin-top: 20px;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.aico-categories-list table th,
+.aico-categories-list table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #e2e4e7;
+}
+
+.aico-categories-list table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.aico-meta-preview {
+    background: #f8f9fa;
+    padding: 8px 12px;
     border-radius: 4px;
+    font-size: 13px;
+    line-height: 1.4;
+    max-width: 300px;
+    word-wrap: break-word;
+    border: 1px solid #e2e4e7;
 }
 
-.aico-wrap ::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 4px;
+.aico-categories-list .button {
+    margin-right: 5px;
+    font-size: 12px;
+    padding: 6px 12px;
 }
 
-.aico-wrap ::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
+/* Modal Styles - FIXED */
+.aico-modal {
+    display: none;
+    position: fixed;
+    z-index: 100000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.aico-modal-content {
+    background-color: #fff;
+    margin: 5% auto;
+    padding: 24px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.aico-modal-close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.aico-modal-close:hover,
+.aico-modal-close:focus {
+    color: #000;
+}
+
+.aico-modal h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #1d2327;
+}
+
+.aico-modal-actions {
+    margin-top: 20px;
+    text-align: right;
+}
+
+.aico-modal-actions .button {
+    margin-left: 10px;
+}
+
+/* Character counter for meta description - FIXED */
+.aico-meta-counter {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+}
+
+.aico-meta-counter.warning {
+    color: #dba617;
+}
+
+.aico-meta-counter.error {
+    color: #d63638;
 }

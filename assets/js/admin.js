@@ -6,9 +6,12 @@
 
     // Initialize when document is ready
     $(document).ready(function() {
+        console.log('AI Content Optimizer JS loaded');
+        
         // Test API connection
         $('#aico-test-api, #aico-test-api-page').on('click', function(e) {
             e.preventDefault();
+            console.log('Test API clicked');
             
             const $button = $(this);
             const $result = $button.attr('id') === 'aico-test-api' ? $('#aico-test-result') : $('#aico-test-result-page');
@@ -26,6 +29,7 @@
                     nonce: aicoData.nonce
                 },
                 success: function(response) {
+                    console.log('API test response:', response);
                     if (response.success) {
                         $result.html('<span class="aico-success">' + response.data + '</span>');
                     } else {
@@ -33,6 +37,7 @@
                     }
                 },
                 error: function(xhr, status, error) {
+                    console.error('API test error:', error);
                     $result.html('<span class="aico-error">' + aicoData.strings.error + ' ' + error + '</span>');
                 },
                 complete: function() {
@@ -44,13 +49,17 @@
         // Generate content for a single post
         $('.aico-optimize').on('click', function(e) {
             e.preventDefault();
+            console.log('Optimize clicked');
             
             const $link = $(this);
             const postId = $link.data('post-id');
             
             if (!postId) {
+                console.error('No post ID found');
                 return;
             }
+            
+            console.log('Optimizing post ID:', postId);
             
             // Show loading message
             $link.text(aicoData.strings.generating);
@@ -65,6 +74,7 @@
                     nonce: aicoData.nonce
                 },
                 success: function(response) {
+                    console.log('Optimize response:', response);
                     if (response.success) {
                         $link.text(aicoData.strings.success);
                         setTimeout(function() {
@@ -78,6 +88,7 @@
                     }
                 },
                 error: function(xhr, status, error) {
+                    console.error('Optimize error:', error);
                     $link.text(aicoData.strings.error + ' ' + error);
                     setTimeout(function() {
                         $link.text(aicoData.strings.optimize);
@@ -94,12 +105,15 @@
         // Add bulk optimize button handler
         $('.aico-bulk-optimize').on('click', function(e) {
             e.preventDefault();
+            console.log('Bulk optimize clicked');
+            
             if (bulkOptimizeRunning) {
                 return;
             }
             const $button = $(this);
             const postIds = $button.data('post-ids') ? $button.data('post-ids').toString().split(',') : [];
             if (!postIds.length) {
+                console.error('No post IDs found for bulk optimize');
                 return;
             }
             if (!confirm(aicoData.strings.confirmBulk)) {
@@ -112,6 +126,8 @@
             if (bulkOptimizeRunning) {
                 return;
             }
+            console.log('Starting bulk optimize for:', postIds);
+            
             // Create progress bar if it doesn't exist
             if ($('#aico-bulk-progress').length === 0) {
                 $('h1.wp-heading-inline').after(
@@ -126,12 +142,16 @@
             bulkOptimizeCurrentIndex = 0;
             processBulkOptimize();
         }
+        
         function processBulkOptimize() {
             const total = bulkOptimizePostIds.length;
             const progress = Math.round((bulkOptimizeCurrentIndex / total) * 100);
+            console.log('Bulk optimize progress:', bulkOptimizeCurrentIndex, '/', total);
+            
             // Update progress bar
             $('#aico-bulk-progress .aico-progress').css('width', progress + '%');
             $('#aico-bulk-progress .aico-progress-text').text(aicoData.strings.processing + ' ' + bulkOptimizeCurrentIndex + ' / ' + total);
+            
             // Send AJAX request
             $.ajax({
                 url: aicoData.ajaxUrl,
@@ -143,6 +163,7 @@
                     nonce: aicoData.nonce
                 },
                 success: function(response) {
+                    console.log('Bulk optimize response:', response);
                     if (response.success) {
                         if (response.data.done) {
                             // All done
@@ -162,6 +183,7 @@
                     }
                 },
                 error: function(xhr, status, error) {
+                    console.error('Bulk optimize error:', error);
                     // Error
                     bulkOptimizeRunning = false;
                     $('#aico-bulk-progress .aico-progress-text').text(aicoData.strings.error + ' ' + error);
@@ -172,6 +194,7 @@
         // Settings form submission
         $('.aico-settings-form').on('submit', function(e) {
             e.preventDefault();
+            console.log('Settings form submitted');
             
             const $form = $(this);
             const $submitButton = $form.find('button[type="submit"]');
@@ -191,6 +214,7 @@
                 type: 'POST',
                 data: $form.serialize(),
                 success: function(response) {
+                    console.log('Settings save response:', response);
                     if (response.success) {
                         // Show success message
                         $form.before('<div class="notice notice-success is-dismissible"><p>' + response.data + '</p></div>');
@@ -198,7 +222,7 @@
                         // Change button text to "Saved!" temporarily
                         $submitButton.text('Saved!');
                         
-                        // Reset button text after 2 seconds
+                        // Reset button after 2 seconds
                         setTimeout(function() {
                             $submitButton.text($submitButton.data('original-text'));
                         }, 2000);
@@ -209,6 +233,7 @@
                     }
                 },
                 error: function(xhr, status, error) {
+                    console.error('Settings save error:', error);
                     // Show error message
                     $form.before('<div class="notice notice-error is-dismissible"><p>' + aicoData.strings.error + ' ' + error + '</p></div>');
                     $submitButton.text($submitButton.data('original-text'));
@@ -218,366 +243,42 @@
                 }
             });
         });
-        
-        // Manual license check
-        $('#bmo-force-license-check').on('click', function(e) {
-            e.preventDefault();
-            
-            const $button = $(this);
-            const $result = $('#bmo-license-check-result');
-            
-            // Show loading message
-            $button.prop('disabled', true);
-            $result.html('<span class="aico-loading">Checking license...</span>');
-            
-            // Send AJAX request
-            $.ajax({
-                url: aicoData.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'bmo_force_license_check',
-                    nonce: aicoData.nonce
-                },
-                success: function(response) {
-                    if (response.success) {
-                        $result.html('<span class="aico-success">' + response.data + '</span>');
-                        // Reload page after 2 seconds to show updated license status
-                        setTimeout(function() {
-                            location.reload();
-                        }, 2000);
-                    } else {
-                        $result.html('<span class="aico-error">' + aicoData.strings.error + ' ' + response.data + '</span>');
-                    }
-                },
-                error: function(xhr, status, error) {
-                    $result.html('<span class="aico-error">' + aicoData.strings.error + ' ' + error + '</span>');
-                },
-                complete: function() {
-                    $button.prop('disabled', false);
-                }
-            });
-        });
-        
-        // Category meta description generation
-        $('.aico-generate-category-meta').on('click', function(e) {
-            e.preventDefault();
-            
-            const $button = $(this);
-            const categoryId = $button.data('category-id');
-            const categoryName = $button.data('category-name');
-            const categoryDescription = $button.data('category-description');
-            
-            // Show loading message
-            $button.prop('disabled', true).text(aicoData.strings.generating);
-            
-            // Send AJAX request
-            $.ajax({
-                url: aicoData.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'aico_generate_category_meta',
-                    category_id: categoryId,
-                    category_name: categoryName,
-                    category_description: categoryDescription,
-                    nonce: aicoData.nonce
-                },
-                success: function(response) {
-                    if (response.success) {
-                        // Save the generated meta description
-                        $.ajax({
-                            url: aicoData.ajaxUrl,
-                            type: 'POST',
-                            data: {
-                                action: 'aico_save_category_meta',
-                                category_id: categoryId,
-                                meta_description: response.data.meta_description,
-                                nonce: aicoData.nonce
-                            },
-                            success: function(saveResponse) {
-                                if (saveResponse.success) {
-                                    $button.text(aicoData.strings.success);
-                                    // Reload page to show updated meta description
-                                    setTimeout(function() {
-                                        location.reload();
-                                    }, 1500);
-                                } else {
-                                    $button.text(aicoData.strings.error + ' ' + saveResponse.data);
-                                    setTimeout(function() {
-                                        $button.text('Regenerate');
-                                    }, 3000);
-                                }
-                            },
-                            error: function() {
-                                $button.text(aicoData.strings.error);
-                                setTimeout(function() {
-                                    $button.text('Regenerate');
-                                }, 3000);
-                            }
-                        });
-                    } else {
-                        $button.text(aicoData.strings.error + ' ' + response.data);
-                        setTimeout(function() {
-                            $button.text('Regenerate');
-                        }, 3000);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    $button.text(aicoData.strings.error + ' ' + error);
-                    setTimeout(function() {
-                        $button.text('Regenerate');
-                    }, 3000);
-                },
-                complete: function() {
-                    $button.prop('disabled', false);
-                }
-            });
-        });
 
-        // Bulk generate category meta descriptions
-        $('#aico-bulk-generate-categories').on('click', function(e) {
-            e.preventDefault();
-            
-            const $button = $(this);
-            const $spinner = $button.siblings('.spinner');
-            
-            if (!confirm('Are you sure you want to generate meta descriptions for all categories? This may take some time.')) {
-                return;
-            }
-            
-            // Show loading
-            $button.prop('disabled', true);
-            $spinner.addClass('is-active');
-            
-            // Send AJAX request
-            $.ajax({
-                url: aicoData.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'aico_bulk_generate_categories',
-                    nonce: aicoData.nonce
-                },
-                success: function(response) {
-                    if (response.success) {
-                        const results = response.data;
-                        const successCount = results.success.length;
-                        const errorCount = results.error.length;
-                        
-                        let message = `Generated ${successCount} meta descriptions successfully.`;
-                        if (errorCount > 0) {
-                            message += ` ${errorCount} failed.`;
-                        }
-                        
-                        alert(message);
-                        
-                        // Reload page to show updated meta descriptions
-                        location.reload();
-                    } else {
-                        alert('Error: ' + response.data);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    alert('Error: ' + error);
-                },
-                complete: function() {
-                    $button.prop('disabled', false);
-                    $spinner.removeClass('is-active');
-                }
-            });
-        });
-
-        // Edit category meta description modal
-        $('.aico-edit-category-meta').on('click', function(e) {
-            e.preventDefault();
-            
-            const categoryId = $(this).data('category-id');
-            const metaDescription = $(this).data('meta-description');
-            
-            $('#edit-category-id').val(categoryId);
-            $('#edit-meta-description').val(metaDescription);
-            
-            // Add character counter if it doesn't exist
-            if ($('#edit-meta-description').siblings('.aico-meta-counter').length === 0) {
-                $('#edit-meta-description').after('<div class="aico-meta-counter">0 / 160 characters</div>');
-            }
-            
-            // Update character counter
+        // Meta description character counter
+        $('.aico-meta-description').on('input', function() {
             updateMetaCounter();
-            
-            $('#aico-edit-meta-modal').show();
         });
 
-        // Character counter function
         function updateMetaCounter() {
-            const textarea = $('#edit-meta-description');
-            const counter = textarea.siblings('.aico-meta-counter');
-            const length = textarea.val().length;
-            const maxLength = 160;
-            
-            counter.text(length + ' / ' + maxLength + ' characters');
-            
-            // Update counter color based on length
-            counter.removeClass('warning error');
-            if (length > maxLength) {
-                counter.addClass('error');
-            } else if (length > maxLength * 0.9) {
-                counter.addClass('warning');
-            }
-        }
-
-        // Update character counter on input
-        $(document).on('input', '#edit-meta-description', function() {
-            updateMetaCounter();
-        });
-
-        // Close modal
-        $('.aico-modal-close, .aico-modal-cancel').on('click', function() {
-            $('#aico-edit-meta-modal').hide();
-        });
-
-        // Close modal when clicking outside
-        $(window).on('click', function(e) {
-            if ($(e.target).hasClass('aico-modal')) {
-                $('.aico-modal').hide();
-            }
-        });
-
-        // Save edited meta description
-        $('#aico-edit-meta-form').on('submit', function(e) {
-            e.preventDefault();
-            
-            const $form = $(this);
-            const $submitButton = $form.find('button[type="submit"]');
-            const categoryId = $('#edit-category-id').val();
-            const metaDescription = $('#edit-meta-description').val();
-            
-            // Show loading
-            $submitButton.prop('disabled', true).text('Saving...');
-            
-            // Send AJAX request
-            $.ajax({
-                url: aicoData.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'aico_save_category_meta',
-                    category_id: categoryId,
-                    meta_description: metaDescription,
-                    nonce: aicoData.nonce
-                },
-                success: function(response) {
-                    if (response.success) {
-                        $submitButton.text('Saved!');
-                        setTimeout(function() {
-                            $('#aico-edit-meta-modal').hide();
-                            location.reload();
-                        }, 1000);
-                    } else {
-                        $submitButton.text('Error: ' + response.data);
-                        setTimeout(function() {
-                            $submitButton.text('Save').prop('disabled', false);
-                        }, 3000);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    $submitButton.text('Error: ' + error);
-                    setTimeout(function() {
-                        $submitButton.text('Save').prop('disabled', false);
-                    }, 3000);
+            $('.aico-meta-description').each(function() {
+                const $textarea = $(this);
+                const $counter = $textarea.next('.aico-meta-counter');
+                const length = $textarea.val().length;
+                
+                if ($counter.length === 0) {
+                    $textarea.after('<div class="aico-meta-counter">' + length + ' characters</div>');
+                } else {
+                    $counter.text(length + ' characters');
+                }
+                
+                // Add warning/error classes
+                $counter.removeClass('warning error');
+                if (length > 160) {
+                    $counter.addClass('error');
+                } else if (length > 150) {
+                    $counter.addClass('warning');
                 }
             });
-        });
-        
-        // Tab navigation
-        $('.aico-tab-link').on('click', function(e) {
-            e.preventDefault();
-            
-            const $link = $(this);
-            const target = $link.attr('href');
-            
-            // Update active tab
-            $('.aico-tab-link').removeClass('active');
-            $link.addClass('active');
-            
-            // Show target tab content
-            $('.aico-tab-content').removeClass('active');
-            $(target).addClass('active');
-            
-            // Update URL hash without page jump
-            if (history.pushState) {
-                history.pushState(null, null, target);
-            }
-        });
-        
-        // Check for hash in URL to activate correct tab
-        if (window.location.hash) {
-            const hash = window.location.hash;
-            const $tabLink = $('.aico-tab-link[href="' + hash + '"]');
-            
-            if ($tabLink.length) {
-                $tabLink.click();
-            }
         }
-        
-        // Show/hide custom density input
-        $('#aico-keyword-density').on('change', function() {
-            const $select = $(this);
-            const $container = $('#aico-custom-density-container');
-            
-            if ($select.val() === 'custom') {
-                $container.show();
-            } else {
-                $container.hide();
-            }
-        });
-        
-        // Show/hide custom region input
-        $('#aico-geographic-targeting').on('change', function() {
-            const $select = $(this);
-            const $container = $('#aico-custom-region-container');
-            
-            if ($select.val() === 'custom') {
-                $container.show();
-            } else {
-                $container.hide();
-            }
-        });
-        
-        // Reset to defaults
-        $('.aico-reset-defaults').on('click', function(e) {
-            e.preventDefault();
-            
-            if (confirm('Are you sure you want to reset all settings to defaults? This cannot be undone.')) {
-                const $button = $(this);
-                const postType = $button.data('post-type');
-                
-                // Send AJAX request
-                $.ajax({
-                    url: aicoData.ajaxUrl,
-                    type: 'POST',
-                    data: {
-                        action: 'aico_reset_defaults',
-                        post_type: postType,
-                        nonce: aicoData.nonce
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            // Reload page
-                            window.location.reload();
-                        } else {
-                            alert(aicoData.strings.error + ' ' + response.data);
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        alert(aicoData.strings.error + ' ' + error);
-                    }
-                });
-            }
-        });
-        
+
+        // Initialize meta counter on page load
+        updateMetaCounter();
+
         // Export settings
         $('#aico-export-settings').on('click', function(e) {
             e.preventDefault();
+            console.log('Export settings clicked');
             
-            // Send AJAX request
             $.ajax({
                 url: aicoData.ajaxUrl,
                 type: 'POST',
@@ -586,6 +287,7 @@
                     nonce: aicoData.nonce
                 },
                 success: function(response) {
+                    console.log('Export response:', response);
                     if (response.success) {
                         // Create download link
                         const blob = new Blob([JSON.stringify(response.data)], { type: 'application/json' });
@@ -602,6 +304,7 @@
                     }
                 },
                 error: function(xhr, status, error) {
+                    console.error('Export error:', error);
                     alert(aicoData.strings.error + ' ' + error);
                 }
             });
@@ -610,6 +313,7 @@
         // Import settings
         $('#aico-import-settings').on('click', function(e) {
             e.preventDefault();
+            console.log('Import settings clicked');
             
             const $fileInput = $('#aico-import-file');
             const file = $fileInput[0].files[0];
@@ -634,6 +338,7 @@
                             nonce: aicoData.nonce
                         },
                         success: function(response) {
+                            console.log('Import response:', response);
                             if (response.success) {
                                 // Reload page
                                 window.location.reload();
@@ -642,6 +347,7 @@
                             }
                         },
                         error: function(xhr, status, error) {
+                            console.error('Import error:', error);
                             alert(aicoData.strings.error + ' ' + error);
                         }
                     });
@@ -670,14 +376,18 @@
         // Taxonomy optimization on taxonomy management pages
         $('.aico-optimize-taxonomy').on('click', function(e) {
             e.preventDefault();
+            console.log('Taxonomy optimize clicked');
             
             const $link = $(this);
             const termId = $link.data('term-id');
             const nonce = $link.data('nonce');
             
             if (!termId) {
+                console.error('No term ID found');
                 return;
             }
+            
+            console.log('Optimizing taxonomy term ID:', termId);
             
             // Show loading message
             $link.text(aicoData.strings.generating);
@@ -692,6 +402,7 @@
                     nonce: nonce
                 },
                 success: function(response) {
+                    console.log('Taxonomy optimize response:', response);
                     if (response.success) {
                         $link.text(aicoData.strings.success);
                         setTimeout(function() {
@@ -705,6 +416,7 @@
                     }
                 },
                 error: function(xhr, status, error) {
+                    console.error('Taxonomy optimize error:', error);
                     $link.text(aicoData.strings.error + ' ' + error);
                     setTimeout(function() {
                         $link.text('Optimize with AI');
@@ -716,14 +428,18 @@
         // Optimize taxonomy term
         $('.aico-optimize-term').on('click', function(e) {
             e.preventDefault();
+            console.log('Optimize term clicked');
             
             const $link = $(this);
             const termId = $link.data('term-id');
             const termName = $link.data('term-name');
             
             if (!termId) {
+                console.error('No term ID found');
                 return;
             }
+            
+            console.log('Optimizing term ID:', termId, 'Name:', termName);
             
             // Show loading message
             $link.text(aicoData.strings.generating);
@@ -741,6 +457,7 @@
                     nonce: aicoData.nonce
                 },
                 success: function(response) {
+                    console.log('Term optimize response:', response);
                     if (response.success) {
                         $link.text(aicoData.strings.success);
                         setTimeout(function() {
@@ -754,6 +471,7 @@
                     }
                 },
                 error: function(xhr, status, error) {
+                    console.error('Term optimize error:', error);
                     $link.text(aicoData.strings.error + ' ' + error);
                     setTimeout(function() {
                         $link.text(aicoData.strings.optimize);
@@ -780,5 +498,7 @@
             // Default to category
             return 'category';
         }
+        
+        console.log('AI Content Optimizer JS initialization complete');
     });
 })(jQuery);

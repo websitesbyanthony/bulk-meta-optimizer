@@ -1661,7 +1661,7 @@ PROMPT;
             ));
             $stats[$post_type]['total'] = count($total_query->posts);
 
-            // Get optimized posts
+            // Get optimized posts - check for any optimization meta keys
             $optimized_query = new WP_Query(array(
                 'post_type' => $post_type,
                 'post_status' => 'publish',
@@ -1672,6 +1672,18 @@ PROMPT;
                 'update_post_term_cache' => false,
                 'meta_query' => array(
                     'relation' => 'OR',
+                    array(
+                        'key' => '_aico_title_optimized',
+                        'compare' => 'EXISTS'
+                    ),
+                    array(
+                        'key' => '_aico_meta_optimized',
+                        'compare' => 'EXISTS'
+                    ),
+                    array(
+                        'key' => '_aico_content_optimized',
+                        'compare' => 'EXISTS'
+                    ),
                     array(
                         'key' => '_aico_optimized',
                         'compare' => 'EXISTS'
@@ -1701,7 +1713,13 @@ PROMPT;
             'meta_key' => '_aico_optimized_time',
             'orderby' => 'meta_value_num',
             'order' => 'DESC',
-            'meta_query' => array(array('key' => '_aico_optimized', 'compare' => 'EXISTS')),
+            'meta_query' => array(
+                'relation' => 'OR',
+                array('key' => '_aico_title_optimized', 'compare' => 'EXISTS'),
+                array('key' => '_aico_meta_optimized', 'compare' => 'EXISTS'),
+                array('key' => '_aico_content_optimized', 'compare' => 'EXISTS'),
+                array('key' => '_aico_optimized', 'compare' => 'EXISTS'),
+            ),
         ));
 
         if ($recent_query->have_posts()) {
@@ -1710,6 +1728,9 @@ PROMPT;
                 $post_id = get_the_ID();
                 $type_label = get_post_type_object(get_post_type())->labels->singular_name;
                 $time = get_post_meta($post_id, '_aico_optimized_time', true);
+                if (!$time) {
+                    $time = time(); // Fallback to current time if no timestamp
+                }
                 $activity[] = array(
                     'time' => date_i18n(get_option('date_format') . ' ' . get_option('time_format'), $time),
                     'text' => sprintf(__('Optimized %s: %s', 'ai-content-optimizer'), $type_label, get_the_title()),
@@ -1988,28 +2009,39 @@ PROMPT;
         }
 
         $post_ids = isset($_POST['post_ids']) ? array_map('intval', explode(',', $_POST['post_ids'])) : array();
+        $current_index = isset($_POST['current_index']) ? intval($_POST['current_index']) : 0;
+        
         if (empty($post_ids)) {
             wp_send_json_error(__('No posts selected.', 'ai-content-optimizer'));
         }
 
-        $results = array(
-            'success' => array(),
-            'error' => array()
-        );
-
-        foreach ($post_ids as $post_id) {
-            $result = $this->optimize_post($post_id);
-            if (is_wp_error($result)) {
-                $results['error'][] = array(
-                    'id' => $post_id,
-                    'message' => $result->get_error_message()
-                );
-            } else {
-                $results['success'][] = $post_id;
-            }
+        // Check if we're done
+        if ($current_index >= count($post_ids)) {
+            wp_send_json_success(array(
+                'done' => true,
+                'message' => sprintf(__('Bulk optimization completed! %d posts processed.', 'ai-content-optimizer'), count($post_ids))
+            ));
         }
 
-        wp_send_json_success($results);
+        // Process current post
+        $current_post_id = $post_ids[$current_index];
+        $result = $this->optimize_post($current_post_id);
+        
+        if (is_wp_error($result)) {
+            wp_send_json_success(array(
+                'done' => false,
+                'current_index' => $current_index + 1,
+                'message' => sprintf(__('Processing post %d of %d. Error: %s', 'ai-content-optimizer'), 
+                    $current_index + 1, count($post_ids), $result->get_error_message())
+            ));
+        } else {
+            wp_send_json_success(array(
+                'done' => false,
+                'current_index' => $current_index + 1,
+                'message' => sprintf(__('Processing post %d of %d. Success!', 'ai-content-optimizer'), 
+                    $current_index + 1, count($post_ids))
+            ));
+        }
     }
 
     /**
