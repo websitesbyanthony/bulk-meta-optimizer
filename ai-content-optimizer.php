@@ -2910,17 +2910,19 @@ add_action('wp_ajax_aico_optimize_category', function() {
     }
     
     // Support both category_id and term_id parameters
-    $category_id = isset($_POST['category_id']) ? intval($_POST['category_id']) : 0;
-    if (!$category_id) {
-        $category_id = isset($_POST['term_id']) ? intval($_POST['term_id']) : 0;
+    $term_id = isset($_POST['category_id']) ? intval($_POST['category_id']) : 0;
+    if (!$term_id) {
+        $term_id = isset($_POST['term_id']) ? intval($_POST['term_id']) : 0;
     }
-    if (!$category_id) {
-        wp_send_json_error(__('Invalid category ID.', 'ai-content-optimizer'));
+    if (!$term_id) {
+        wp_send_json_error(__('Invalid term ID.', 'ai-content-optimizer'));
     }
     
-    $category = get_term($category_id, 'category');
-    if (!$category || is_wp_error($category)) {
-        wp_send_json_error(__('Category not found.', 'ai-content-optimizer'));
+    // Get taxonomy from request, default to 'category'
+    $taxonomy = isset($_POST['taxonomy']) ? sanitize_text_field($_POST['taxonomy']) : 'category';
+    $term = get_term($term_id, $taxonomy);
+    if (!$term || is_wp_error($term)) {
+        wp_send_json_error(__('Term not found.', 'ai-content-optimizer'));
     }
     
     // Get post type from request or default to 'post'
@@ -2954,8 +2956,8 @@ add_action('wp_ajax_aico_optimize_category', function() {
     
     // Replace placeholders
     $parent_category = '';
-    if ($category->parent) {
-        $parent = get_term($category->parent, 'category');
+    if ($term->parent) {
+        $parent = get_term($term->parent, $taxonomy);
         if ($parent && !is_wp_error($parent)) {
             $parent_category = $parent->name;
         }
@@ -2966,7 +2968,7 @@ add_action('wp_ajax_aico_optimize_category', function() {
     
     $meta_prompt = str_replace(
         array('{category_name}', '{category_description}', '{post_count}', '{parent_category}', '{post_type_label}'),
-        array($category->name, $category->description, $category->count, $parent_category, $post_type_label),
+        array($term->name, $term->description, $term->count, $parent_category, $post_type_label),
         $meta_prompt
     );
     
@@ -2977,8 +2979,8 @@ add_action('wp_ajax_aico_optimize_category', function() {
         wp_send_json_error($generated_description->get_error_message());
     }
     
-    // Update the category description
-    $result = wp_update_term($category_id, 'category', array(
+    // Update the term description
+    $result = wp_update_term($term_id, $taxonomy, array(
         'description' => $generated_description
     ));
     
@@ -2988,7 +2990,7 @@ add_action('wp_ajax_aico_optimize_category', function() {
     
     wp_send_json_success(array(
         'description' => $generated_description,
-        'message' => __('Category description optimized successfully!', 'ai-content-optimizer')
+        'message' => __('Term description optimized successfully!', 'ai-content-optimizer')
     ));
 });
 
@@ -3004,17 +3006,19 @@ add_action('wp_ajax_aico_optimize_tag', function() {
     }
     
     // Support both tag_id and term_id parameters
-    $tag_id = isset($_POST['tag_id']) ? intval($_POST['tag_id']) : 0;
-    if (!$tag_id) {
-        $tag_id = isset($_POST['term_id']) ? intval($_POST['term_id']) : 0;
+    $term_id = isset($_POST['tag_id']) ? intval($_POST['tag_id']) : 0;
+    if (!$term_id) {
+        $term_id = isset($_POST['term_id']) ? intval($_POST['term_id']) : 0;
     }
-    if (!$tag_id) {
-        wp_send_json_error(__('Invalid tag ID.', 'ai-content-optimizer'));
+    if (!$term_id) {
+        wp_send_json_error(__('Invalid term ID.', 'ai-content-optimizer'));
     }
     
-    $tag = get_term($tag_id, 'post_tag');
-    if (!$tag || is_wp_error($tag)) {
-        wp_send_json_error(__('Tag not found.', 'ai-content-optimizer'));
+    // Get taxonomy from request, default to 'post_tag'
+    $taxonomy = isset($_POST['taxonomy']) ? sanitize_text_field($_POST['taxonomy']) : 'post_tag';
+    $term = get_term($term_id, $taxonomy);
+    if (!$term || is_wp_error($term)) {
+        wp_send_json_error(__('Term not found.', 'ai-content-optimizer'));
     }
     
     // Get post type from request or default to 'post'
@@ -3052,7 +3056,7 @@ add_action('wp_ajax_aico_optimize_tag', function() {
     
     $meta_prompt = str_replace(
         array('{tag_name}', '{tag_description}', '{post_count}', '{post_type_label}'),
-        array($tag->name, $tag->description, $tag->count, $post_type_label),
+        array($term->name, $term->description, $term->count, $post_type_label),
         $meta_prompt
     );
     
@@ -3063,8 +3067,8 @@ add_action('wp_ajax_aico_optimize_tag', function() {
         wp_send_json_error($generated_description->get_error_message());
     }
     
-    // Update the tag description
-    $result = wp_update_term($tag_id, 'post_tag', array(
+    // Update the term description
+    $result = wp_update_term($term_id, $taxonomy, array(
         'description' => $generated_description
     ));
     
@@ -3074,7 +3078,7 @@ add_action('wp_ajax_aico_optimize_tag', function() {
     
     wp_send_json_success(array(
         'description' => $generated_description,
-        'message' => __('Tag description optimized successfully!', 'ai-content-optimizer')
+        'message' => __('Term description optimized successfully!', 'ai-content-optimizer')
     ));
 });
 
