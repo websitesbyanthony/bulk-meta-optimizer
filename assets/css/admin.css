@@ -5,6 +5,20 @@
     margin-top: 20px;
 }
 
+.aico-tab-section {
+    margin-bottom: 20px;
+}
+
+.aico-tab-section h3 {
+    margin: 0 0 10px 0;
+    padding: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #23282d;
+    border-bottom: 1px solid #e5e5e5;
+    padding-bottom: 8px;
+}
+
 .aico-tab-link {
     background: #f0f0f0;
     border: 1px solid #ccd0d4;
