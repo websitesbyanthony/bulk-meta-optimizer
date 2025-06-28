@@ -1170,6 +1170,14 @@ PROMPT;
                     </table>
                     <?php submit_button(__('Save License Key', 'ai-content-optimizer')); ?>
                 </form>
+                
+                <!-- Manual License Check -->
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
+                    <h3><?php _e('Manual License Check', 'ai-content-optimizer'); ?></h3>
+                    <p><?php _e('License status is automatically checked once per 24 hours. Use this button to manually check your license status now.', 'ai-content-optimizer'); ?></p>
+                    <button type="button" id="bmo-manual-license-check" class="button button-secondary"><?php _e('Check License Now', 'ai-content-optimizer'); ?></button>
+                    <div id="bmo-license-check-result" style="margin-top: 10px;"></div>
+                </div>
             </div>
 
             <!-- API Settings Card -->
@@ -2159,8 +2167,6 @@ add_action('admin_post_bmo_save_license_key', function() {
         'registered_domain' => $full_url,
     ];
 
-    error_log(__METHOD__ . ' → SLM payload: ' . print_r($body, true));
-
     $response = wp_remote_post(BMO_SLM_SERVER, [
         'body' => $body,
         'timeout' => 15,
@@ -2170,8 +2176,6 @@ add_action('admin_post_bmo_save_license_key', function() {
     $data = is_wp_error($response)
           ? ['result' => 'error', 'message' => $response->get_error_message()]
           : json_decode(wp_remote_retrieve_body($response), true);
-    
-    error_log(__METHOD__ . ' SLM response for activate: ' . print_r($data, true));
 
     if (!empty($data['result']) && $data['result'] === 'error') {
         if (stripos($data['message'], 'maximum allowable domains') !== false) {
@@ -2197,11 +2201,22 @@ add_action('admin_post_bmo_save_license_key', function() {
     exit;
 });
 
-// License status check function
+// License status check function with caching
 function bmo_check_license_status() {
+    // Check if we have a recent cache (within 24 hours)
+    $last_check = get_option('bmo_license_last_check', 0);
+    $current_time = time();
+    $cache_duration = 24 * 60 * 60; // 24 hours in seconds
+    
+    // If we checked recently, don't check again
+    if (($current_time - $last_check) < $cache_duration) {
+        return;
+    }
+    
     $key = get_option('bmo_license_key', '');
     if (empty($key)) {
         update_option('bmo_license_status', 'invalid');
+        update_option('bmo_license_last_check', $current_time);
         return;
     }
 
@@ -2219,8 +2234,6 @@ function bmo_check_license_status() {
         'registered_domain' => $full_url,
     ];
 
-    error_log(__METHOD__ . ' → SLM payload: ' . print_r($body, true));
-
     $response = wp_remote_post(BMO_SLM_SERVER, [
         'body' => $body,
         'timeout' => 10,
@@ -2231,9 +2244,20 @@ function bmo_check_license_status() {
     if (!empty($data['result'])) {
         update_option('bmo_license_status', $data['result']);
     }
-    error_log(__FUNCTION__ . ' SLM response for check: ' . print_r($data, true));
+    
+    // Update the last check time
+    update_option('bmo_license_last_check', $current_time);
 }
-add_action('admin_init','bmo_check_license_status');
+
+// Force license check (for manual checks)
+function bmo_force_license_check() {
+    // Clear the cache to force a fresh check
+    delete_option('bmo_license_last_check');
+    bmo_check_license_status();
+}
+
+// Only run the cached check on admin_init, not the forced check
+add_action('admin_init', 'bmo_check_license_status');
 
 // Deactivation hook
 function bmo_deactivate_license() {
@@ -2255,8 +2279,6 @@ function bmo_deactivate_license() {
         'domain_name'       => $host_only,
         'registered_domain' => $full_url,
     ];
-
-    error_log(__METHOD__ . ' → SLM payload: ' . print_r($body, true));
 
     wp_remote_post(BMO_SLM_SERVER, [
         'body' => $body,
@@ -2295,3 +2317,41 @@ function bmo_maybe_disable_plugin() {
     // Don't completely stop the plugin - let it load so users can access settings
     // The core functionality is already gated in the init() method
 }
+
+// AJAX handler for manual license check
+add_action('wp_ajax_bmo_manual_license_check', function() {
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error('Insufficient permissions');
+    }
+    
+    check_ajax_referer('aico-nonce', 'nonce');
+    
+    // Force a fresh license check
+    bmo_force_license_check();
+    
+    $status = get_option('bmo_license_status', 'invalid');
+    $last_check = get_option('bmo_license_last_check', 0);
+    
+    $response = array(
+        'status' => $status,
+        'last_check' => $last_check ? date('Y-m-d H:i:s', $last_check) : 'Never',
+        'message' => ''
+    );
+    
+    switch ($status) {
+        case 'success':
+            $response['message'] = 'License is valid and active.';
+            break;
+        case 'expired':
+            $response['message'] = 'License has expired. Please renew your license.';
+            break;
+        case 'invalid':
+            $response['message'] = 'Invalid license key. Please check your license key.';
+            break;
+        default:
+            $response['message'] = 'Unknown license status.';
+            break;
+    }
+    
+    wp_send_json_success($response);
+});

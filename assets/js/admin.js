@@ -311,6 +311,67 @@
             }
         });
         
+        // Manual license check
+        $('#bmo-manual-license-check').on('click', function(e) {
+            e.preventDefault();
+            
+            const $button = $(this);
+            const $result = $('#bmo-license-check-result');
+            
+            // Store original text
+            const originalText = $button.text();
+            
+            // Show loading state
+            $button.text('Checking...').prop('disabled', true);
+            $result.html('<span class="aico-loading">Checking license status...</span>');
+            
+            // Send AJAX request
+            $.ajax({
+                url: aicoData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'bmo_manual_license_check',
+                    nonce: aicoData.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        const data = response.data;
+                        let statusClass = 'aico-error';
+                        let statusIcon = '❌';
+                        
+                        if (data.status === 'success') {
+                            statusClass = 'aico-success';
+                            statusIcon = '✔️';
+                        } else if (data.status === 'expired') {
+                            statusClass = 'aico-warning';
+                            statusIcon = '⚠️';
+                        }
+                        
+                        $result.html(
+                            '<div class="' + statusClass + '">' +
+                            '<strong>' + statusIcon + ' ' + data.message + '</strong><br>' +
+                            '<small>Last checked: ' + data.last_check + '</small>' +
+                            '</div>'
+                        );
+                        
+                        // Reload page after 2 seconds to update the license status display
+                        setTimeout(function() {
+                            window.location.reload();
+                        }, 2000);
+                    } else {
+                        $result.html('<span class="aico-error">Error: ' + response.data + '</span>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $result.html('<span class="aico-error">Error: ' + error + '</span>');
+                },
+                complete: function() {
+                    // Restore button state
+                    $button.text(originalText).prop('disabled', false);
+                }
+            });
+        });
+        
         // Export settings
         $('#aico-export-settings').on('click', function(e) {
             e.preventDefault();

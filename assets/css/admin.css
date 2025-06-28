@@ -210,6 +210,11 @@
     font-weight: bold;
 }
 
+.aico-warning {
+    color: #dba617;
+    font-weight: bold;
+}
+
 .aico-loading {
     color: #757575;
     font-style: italic;
