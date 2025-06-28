@@ -1462,6 +1462,8 @@ PROMPT;
         $sanitized_settings['optimize_content'] = isset($settings['optimize_content']) ? 1 : 0;
         $sanitized_settings['optimize_slug'] = isset($settings['optimize_slug']) ? 1 : 0;
         $sanitized_settings['preserve_html'] = isset($settings['preserve_html']) ? 1 : 0;
+        $sanitized_settings['optimize_category_meta'] = isset($settings['optimize_category_meta']) ? 1 : 0;
+        $sanitized_settings['optimize_tag_meta'] = isset($settings['optimize_tag_meta']) ? 1 : 0;
         $sanitized_settings['title_separator'] = sanitize_text_field($settings['title_separator'] ?? 'dash');
         $sanitized_settings['excluded_words'] = sanitize_textarea_field($settings['excluded_words'] ?? '');
         $sanitized_settings['content_tone'] = sanitize_text_field($settings['content_tone'] ?? 'professional');
@@ -2922,9 +2924,27 @@ add_action('wp_ajax_aico_optimize_category', function() {
     // Get taxonomy from request, default to 'category'
     $taxonomy = isset($_POST['taxonomy']) ? sanitize_text_field($_POST['taxonomy']) : 'category';
     error_log("[AICO] Optimize Category: term_id={$term_id}, taxonomy={$taxonomy}");
+    
+    // Check if taxonomy exists
+    if (!taxonomy_exists($taxonomy)) {
+        error_log("[AICO] Taxonomy does not exist: {$taxonomy}");
+        wp_send_json_error(__('Taxonomy not found.', 'ai-content-optimizer'));
+    }
+    
+    // Get all terms in this taxonomy for debugging
+    $all_terms = get_terms(array(
+        'taxonomy' => $taxonomy,
+        'hide_empty' => false,
+        'fields' => 'ids'
+    ));
+    error_log("[AICO] All terms in taxonomy {$taxonomy}: " . implode(', ', $all_terms));
+    
     $term = get_term($term_id, $taxonomy);
     if (!$term || is_wp_error($term)) {
         error_log("[AICO] Term not found: term_id={$term_id}, taxonomy={$taxonomy}");
+        if (is_wp_error($term)) {
+            error_log("[AICO] WP Error: " . $term->get_error_message());
+        }
         wp_send_json_error(__('Term not found.', 'ai-content-optimizer'));
     }
     
@@ -3021,9 +3041,27 @@ add_action('wp_ajax_aico_optimize_tag', function() {
     // Get taxonomy from request, default to 'post_tag'
     $taxonomy = isset($_POST['taxonomy']) ? sanitize_text_field($_POST['taxonomy']) : 'post_tag';
     error_log("[AICO] Optimize Tag: term_id={$term_id}, taxonomy={$taxonomy}");
+    
+    // Check if taxonomy exists
+    if (!taxonomy_exists($taxonomy)) {
+        error_log("[AICO] Taxonomy does not exist: {$taxonomy}");
+        wp_send_json_error(__('Taxonomy not found.', 'ai-content-optimizer'));
+    }
+    
+    // Get all terms in this taxonomy for debugging
+    $all_terms = get_terms(array(
+        'taxonomy' => $taxonomy,
+        'hide_empty' => false,
+        'fields' => 'ids'
+    ));
+    error_log("[AICO] All terms in taxonomy {$taxonomy}: " . implode(', ', $all_terms));
+    
     $term = get_term($term_id, $taxonomy);
     if (!$term || is_wp_error($term)) {
         error_log("[AICO] Term not found: term_id={$term_id}, taxonomy={$taxonomy}");
+        if (is_wp_error($term)) {
+            error_log("[AICO] WP Error: " . $term->get_error_message());
+        }
         wp_send_json_error(__('Term not found.', 'ai-content-optimizer'));
     }
     
