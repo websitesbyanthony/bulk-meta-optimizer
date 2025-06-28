@@ -1,0 +1,251 @@
+.aico-tab-nav {
+    border-bottom: 1px solid #ccd0d4;
+    margin-bottom: 20px;
+    padding: 0;
+    margin-top: 20px;
+    display: block;
+    clear: both;
+    overflow: hidden;
+}
+
+.aico-tab-link {
+    background: #f0f0f0;
+    border: 1px solid #ccd0d4;
+    border-bottom: none;
+    color: #555;
+    display: inline-block;
+    font-size: 14px;
+    line-height: 1.71428571;
+    margin: 0 4px -1px 0;
+    padding: 30px;
+    text-decoration: none;
+    font-weight: normal;
+    float: left;
+}
+
+.aico-tab-link:hover {
+    background: #f8f8f8;
+    color: #333;
+}
+
+.aico-tab-link.active {
+    background: #fff;
+    border-bottom: 1px solid #fff;
+    color: #000;
+    font-weight: 600;
+}
+
+/* Ensure tab content is properly hidden/shown */
+.aico-tab-content {
+    display: none;
+    clear: both;
+}
+
+.aico-tab-content.active {
+    display: block;
+}
+
+/* Add more spacing and improve tab visibility */
+.aico-tabs {
+    margin-top: 20px;
+}
+
+/* Ensure WordPress admin styles don't override our tab styles */
+.wrap .aico-tab-nav a.aico-tab-link {
+    display: inline-block;
+    text-decoration: none;
+    font-size: 14px;
+    outline: none;
+    box-shadow: none;
+    padding: 30px;
+}
+
+.wrap .aico-tab-nav a.aico-tab-link:focus {
+    box-shadow: none;
+    outline: none;
+    color: #333;
+}
+
+/* Force tab styles with !important to override WordPress defaults */
+.aico-tab-link {
+    background: #f0f0f0 !important;
+    color: #555 !important;
+    padding: 15px !important;
+}
+
+.aico-tab-link.active {
+    background: #fff !important;
+    color: #000 !important;
+}
+
+/* Rest of the existing CSS */
+.aico-wrap {
+    margin: 20px 0;
+}
+
+.aico-card {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+    margin-bottom: 20px;
+    padding: 20px;
+}
+
+.aico-dashboard {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+@media (min-width: 782px) {
+    .aico-dashboard {
+        grid-template-columns: 2fr 1fr;
+    }
+}
+
+.aico-stats-card {
+    grid-column: 1 / -1;
+}
+
+.aico-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.aico-stat-item {
+    background: #f9f9f9;
+    border-radius: 4px;
+    padding: 15px;
+}
+
+.aico-progress-bar {
+    background: #e5e5e5;
+    border-radius: 3px;
+    height: 10px;
+    margin: 10px 0;
+    overflow: hidden;
+}
+
+.aico-progress {
+    background: #2271b1;
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.aico-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.aico-action-item {
+    background: #f9f9f9;
+    border-radius: 4px;
+    padding: 15px;
+}
+
+.aico-activity-list {
+    margin: 0;
+    padding: 0;
+}
+
+.aico-activity-list li {
+    border-bottom: 1px solid #f0f0f0;
+    margin: 0;
+    padding: 10px 0;
+}
+
+.aico-activity-list li:last-child {
+    border-bottom: none;
+}
+
+.aico-activity-time {
+    color: #757575;
+    display: block;
+    font-size: 12px;
+    margin-bottom: 5px;
+}
+
+.aico-settings-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+@media (min-width: 782px) {
+    .aico-settings-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.aico-prompt-variables {
+    background: #f9f9f9;
+    border-radius: 4px;
+    margin-top: 20px;
+    padding: 15px;
+}
+
+.aico-prompt-variables ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.aico-import-export {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+@media (min-width: 782px) {
+    .aico-import-export {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.aico-range {
+    vertical-align: middle;
+    width: 200px;
+}
+
+.aico-range-value {
+    display: inline-block;
+    margin-left: 10px;
+    min-width: 30px;
+    text-align: center;
+}
+
+.aico-success {
+    color: #46b450;
+    font-weight: bold;
+}
+
+.aico-error {
+    color: #dc3232;
+    font-weight: bold;
+}
+
+.aico-loading {
+    color: #757575;
+    font-style: italic;
+}
+
+.aico-bulk-progress {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+    margin: 20px 0;
+    padding: 15px;
+}
+
+.aico-bulk-progress .aico-progress-text {
+    margin-top: 10px;
+}
+
+#aico-test-result,
+#aico-test-result-page {
+    margin-top: 10px;
+}
