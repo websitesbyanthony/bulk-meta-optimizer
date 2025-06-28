@@ -2915,13 +2915,16 @@ add_action('wp_ajax_aico_optimize_category', function() {
         $term_id = isset($_POST['term_id']) ? intval($_POST['term_id']) : 0;
     }
     if (!$term_id) {
+        error_log('[AICO] No term_id provided. POST: ' . print_r($_POST, true));
         wp_send_json_error(__('Invalid term ID.', 'ai-content-optimizer'));
     }
     
     // Get taxonomy from request, default to 'category'
     $taxonomy = isset($_POST['taxonomy']) ? sanitize_text_field($_POST['taxonomy']) : 'category';
+    error_log("[AICO] Optimize Category: term_id={$term_id}, taxonomy={$taxonomy}");
     $term = get_term($term_id, $taxonomy);
     if (!$term || is_wp_error($term)) {
+        error_log("[AICO] Term not found: term_id={$term_id}, taxonomy={$taxonomy}");
         wp_send_json_error(__('Term not found.', 'ai-content-optimizer'));
     }
     
@@ -3011,13 +3014,16 @@ add_action('wp_ajax_aico_optimize_tag', function() {
         $term_id = isset($_POST['term_id']) ? intval($_POST['term_id']) : 0;
     }
     if (!$term_id) {
+        error_log('[AICO] No term_id provided. POST: ' . print_r($_POST, true));
         wp_send_json_error(__('Invalid term ID.', 'ai-content-optimizer'));
     }
     
     // Get taxonomy from request, default to 'post_tag'
     $taxonomy = isset($_POST['taxonomy']) ? sanitize_text_field($_POST['taxonomy']) : 'post_tag';
+    error_log("[AICO] Optimize Tag: term_id={$term_id}, taxonomy={$taxonomy}");
     $term = get_term($term_id, $taxonomy);
     if (!$term || is_wp_error($term)) {
+        error_log("[AICO] Term not found: term_id={$term_id}, taxonomy={$taxonomy}");
         wp_send_json_error(__('Term not found.', 'ai-content-optimizer'));
     }
     
