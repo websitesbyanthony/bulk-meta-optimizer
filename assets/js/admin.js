@@ -666,5 +666,51 @@
             currentUrl.searchParams.set('taxonomy', selectedTaxonomy);
             window.location.href = currentUrl.toString();
         });
+
+        // Taxonomy optimization on taxonomy management pages
+        $('.aico-optimize-taxonomy').on('click', function(e) {
+            e.preventDefault();
+            
+            const $link = $(this);
+            const termId = $link.data('term-id');
+            const nonce = $link.data('nonce');
+            
+            if (!termId) {
+                return;
+            }
+            
+            // Show loading message
+            $link.text(aicoData.strings.generating);
+            
+            // Send AJAX request
+            $.ajax({
+                url: aicoData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'aico_generate_category_meta',
+                    category_id: termId,
+                    nonce: nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $link.text(aicoData.strings.success);
+                        setTimeout(function() {
+                            $link.text('Optimize with AI');
+                        }, 2000);
+                    } else {
+                        $link.text(aicoData.strings.error + ' ' + response.data);
+                        setTimeout(function() {
+                            $link.text('Optimize with AI');
+                        }, 3000);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $link.text(aicoData.strings.error + ' ' + error);
+                    setTimeout(function() {
+                        $link.text('Optimize with AI');
+                    }, 3000);
+                }
+            });
+        });
     });
 })(jQuery);
