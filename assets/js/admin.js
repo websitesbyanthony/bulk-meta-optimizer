@@ -712,5 +712,73 @@
                 }
             });
         });
+
+        // Optimize taxonomy term
+        $('.aico-optimize-term').on('click', function(e) {
+            e.preventDefault();
+            
+            const $link = $(this);
+            const termId = $link.data('term-id');
+            const termName = $link.data('term-name');
+            
+            if (!termId) {
+                return;
+            }
+            
+            // Show loading message
+            $link.text(aicoData.strings.generating);
+            
+            // Send AJAX request
+            $.ajax({
+                url: aicoData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'aico_generate_category_meta',
+                    category_id: termId,
+                    category_name: termName,
+                    category_description: '',
+                    taxonomy: getCurrentTaxonomy(),
+                    nonce: aicoData.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $link.text(aicoData.strings.success);
+                        setTimeout(function() {
+                            $link.text(aicoData.strings.optimize);
+                        }, 2000);
+                    } else {
+                        $link.text(aicoData.strings.error + ' ' + response.data);
+                        setTimeout(function() {
+                            $link.text(aicoData.strings.optimize);
+                        }, 3000);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $link.text(aicoData.strings.error + ' ' + error);
+                    setTimeout(function() {
+                        $link.text(aicoData.strings.optimize);
+                    }, 3000);
+                }
+            });
+        });
+
+        // Helper function to get current taxonomy
+        function getCurrentTaxonomy() {
+            // Try to get taxonomy from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const taxonomy = urlParams.get('taxonomy');
+            if (taxonomy) {
+                return taxonomy;
+            }
+            
+            // Try to get from page context
+            const $taxonomyInput = $('input[name="taxonomy"]');
+            if ($taxonomyInput.length) {
+                return $taxonomyInput.val();
+            }
+            
+            // Default to category
+            return 'category';
+        }
     });
 })(jQuery);

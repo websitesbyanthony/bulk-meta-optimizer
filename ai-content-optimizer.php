@@ -295,8 +295,17 @@ PROMPT;
         
         // Add admin notices for taxonomy bulk actions
         add_action('admin_notices', function() {
-            if (isset($_GET['aico_bulk_notice']) && $_GET['aico_bulk_notice'] === '1') {
-                echo '<div class="notice notice-success is-dismissible"><p>' . __('Taxonomy optimization completed! Check the Bulk Meta Optimizer → Taxonomy Meta Descriptions page to view and manage the generated meta descriptions.', 'ai-content-optimizer') . '</p></div>';
+            if (isset($_GET['aico_bulk_terms_processed']) && isset($_GET['aico_bulk_terms_errors'])) {
+                $processed = intval($_GET['aico_bulk_terms_processed']);
+                $errors = intval($_GET['aico_bulk_terms_errors']);
+                
+                if ($processed > 0) {
+                    $message = sprintf(__('Taxonomy optimization completed! %d terms processed successfully.', 'ai-content-optimizer'), $processed);
+                    if ($errors > 0) {
+                        $message .= ' ' . sprintf(__('%d errors occurred.', 'ai-content-optimizer'), $errors);
+                    }
+                    echo '<div class="notice notice-success is-dismissible"><p>' . $message . '</p></div>';
+                }
             }
         });
     }
@@ -395,7 +404,9 @@ PROMPT;
         if (strpos($hook, 'ai-content-optimizer') !== false ||
             $hook === 'edit.php' ||
             $hook === 'post.php' ||
-            $hook === 'post-new.php') {
+            $hook === 'post-new.php' ||
+            strpos($hook, 'edit-tags.php') !== false ||
+            strpos($hook, 'term.php') !== false) {
 
             // Enqueue styles
             wp_enqueue_style(
@@ -422,46 +433,19 @@ PROMPT;
                 true
             );
 
-            // Localize script
-            wp_localize_script(
-                'ai-content-optimizer-admin',
-                'aicoData',
-                array(
-                    'ajaxUrl' => admin_url('admin-ajax.php'),
-                    'nonce' => wp_create_nonce('aico-nonce'),
-                    'strings' => array(
-                        'generating' => __('Generating...', 'ai-content-optimizer'),
-                        'success' => __('Success!', 'ai-content-optimizer'),
-                        'error' => __('Error:', 'ai-content-optimizer'),
-                        'confirmBulk' => __('Are you sure you want to optimize the selected items? This may take some time.', 'ai-content-optimizer'),
-                        'processing' => __('Processing...', 'ai-content-optimizer'),
-                    ),
+            // Localize script with AJAX URL and nonce
+            wp_localize_script('ai-content-optimizer-admin', 'aicoData', array(
+                'ajaxUrl' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('aico-nonce'),
+                'strings' => array(
+                    'generating' => __('Generating...', 'ai-content-optimizer'),
+                    'success' => __('Success!', 'ai-content-optimizer'),
+                    'error' => __('Error:', 'ai-content-optimizer'),
+                    'optimize' => __('Optimize', 'ai-content-optimizer'),
+                    'processing' => __('Processing...', 'ai-content-optimizer'),
+                    'confirmBulk' => __('Are you sure you want to optimize all selected items?', 'ai-content-optimizer'),
                 )
-            );
-        }
-
-        if ($hook === 'edit.php') {
-            wp_enqueue_script(
-                'ai-content-optimizer-list',
-                plugins_url('assets/js/list.js', __FILE__),
-                array('jquery'),
-                self::VERSION,
-                true
-            );
-
-            wp_localize_script(
-                'ai-content-optimizer-list',
-                'aicoListData',
-                array(
-                    'ajaxUrl' => admin_url('admin-ajax.php'),
-                    'nonce' => wp_create_nonce('aico-nonce'),
-                    'strings' => array(
-                        'optimizing' => __('Optimizing...', 'ai-content-optimizer'),
-                        'success' => __('Optimized!', 'ai-content-optimizer'),
-                        'error' => __('Error:', 'ai-content-optimizer'),
-                    )
-                )
-            );
+            ));
         }
     }
 
@@ -1694,9 +1678,8 @@ PROMPT;
                     ),
                     array(
                         'key' => '_yoast_wpseo_metadesc',
-                        'compare' => 'EXISTS',
-                        'value' => '',
-                        'compare' => '!='
+                        'compare' => '!=',
+                        'value' => ''
                     ),
                 ),
             ));
@@ -2672,9 +2655,16 @@ PROMPT;
      * AJAX handler for generating category meta description
      */
     public function ajax_generate_category_meta() {
+        // Enable error reporting for debugging
+        error_reporting(E_ALL);
+        ini_set('display_errors', 1);
+        
+        error_log('ajax_generate_category_meta called');
+        
         check_ajax_referer('aico-nonce', 'nonce');
         
         if (!current_user_can('manage_options')) {
+            error_log('User lacks permission for ajax_generate_category_meta');
             wp_die(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
         }
 
@@ -2683,8 +2673,13 @@ PROMPT;
         $category_description = sanitize_textarea_field($_POST['category_description']);
         $taxonomy = sanitize_text_field($_POST['taxonomy']);
 
+        error_log('Category ID: ' . $category_id);
+        error_log('Category Name: ' . $category_name);
+        error_log('Taxonomy: ' . $taxonomy);
+
         $api_key = get_option('aico_openai_api_key');
         if (empty($api_key)) {
+            error_log('OpenAI API key not configured');
             wp_send_json_error(__('OpenAI API key not configured.', 'ai-content-optimizer'));
         }
 
@@ -2694,19 +2689,26 @@ PROMPT;
         $taxonomy_settings = get_option('aico_taxonomy_' . $taxonomy . '_settings', array());
         $meta_prompt = get_option('aico_taxonomy_' . $taxonomy . '_meta_prompt', 'Write a compelling meta description for the {term_name} category. Include relevant keywords and make it engaging for users. Keep it between 150-160 characters.');
 
+        error_log('Meta prompt: ' . $meta_prompt);
+
         $prompt = str_replace(
             array('{term_name}', '{term_description}'),
             array($category_name, $category_description),
             $meta_prompt
         );
 
+        error_log('Final prompt: ' . $prompt);
+
         $response = $this->call_openai_api_direct($api_key, $model, $prompt, 200, 0.7);
         
         if (is_wp_error($response)) {
+            error_log('API error: ' . $response->get_error_message());
             wp_send_json_error($response->get_error_message());
         }
 
+        error_log('API response: ' . $response);
         update_term_meta($category_id, 'aico_meta_description', $response);
+        
         wp_send_json_success(array(
             'meta_description' => $response,
             'message' => __('Meta description generated successfully.', 'ai-content-optimizer')
