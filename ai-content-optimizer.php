@@ -835,18 +835,14 @@ PROMPT;
                 </div>
 
                 <?php
-                // Only show category and tag settings for post types that have them
                 $has_categories = is_object_in_taxonomy($post_type, 'category') || is_object_in_taxonomy($post_type, 'product_cat');
                 $has_tags = is_object_in_taxonomy($post_type, 'post_tag') || is_object_in_taxonomy($post_type, 'product_tag');
-                
-                if ($has_categories || $has_tags) :
                 ?>
+                <?php if ($has_categories) : ?>
                 <div class="aico-card">
-                    <h2><?php _e('Category & Tag Meta Descriptions', 'ai-content-optimizer'); ?></h2>
-                    <p class="description"><?php printf(__('Configure AI-powered meta description generation for categories and tags associated with %s.', 'ai-content-optimizer'), esc_html($post_type_label)); ?></p>
-
+                    <h2><?php _e('Category Meta Descriptions', 'ai-content-optimizer'); ?></h2>
+                    <p class="description"><?php printf(__('Configure AI-powered meta description generation for categories associated with %s.', 'ai-content-optimizer'), esc_html($post_type_label)); ?></p>
                     <table class="form-table">
-                        <?php if ($has_categories) : ?>
                         <tr>
                             <th scope="row"><?php _e('Optimize Category Meta Descriptions', 'ai-content-optimizer'); ?></th>
                             <td>
@@ -863,9 +859,19 @@ PROMPT;
                                 <p class="description"><?php _e('Use {category_name} and {post_type_label} as placeholders.', 'ai-content-optimizer'); ?></p>
                             </td>
                         </tr>
-                        <?php endif; ?>
-                        
-                        <?php if ($has_tags) : ?>
+                    </table>
+                    <div class="aico-bulk-actions" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
+                        <button type="button" class="button aico-optimize-categories" data-post-type="<?php echo esc_attr($post_type); ?>">
+                            <?php _e('Optimize All Categories', 'ai-content-optimizer'); ?>
+                        </button>
+                    </div>
+                </div>
+                <?php endif; ?>
+                <?php if ($has_tags) : ?>
+                <div class="aico-card">
+                    <h2><?php _e('Tag Meta Descriptions', 'ai-content-optimizer'); ?></h2>
+                    <p class="description"><?php printf(__('Configure AI-powered meta description generation for tags associated with %s.', 'ai-content-optimizer'), esc_html($post_type_label)); ?></p>
+                    <table class="form-table">
                         <tr>
                             <th scope="row"><?php _e('Optimize Tag Meta Descriptions', 'ai-content-optimizer'); ?></th>
                             <td>
@@ -882,24 +888,11 @@ PROMPT;
                                 <p class="description"><?php _e('Use {tag_name} and {post_type_label} as placeholders.', 'ai-content-optimizer'); ?></p>
                             </td>
                         </tr>
-                        <?php endif; ?>
                     </table>
-                    
                     <div class="aico-bulk-actions" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
-                        <h3><?php _e('Bulk Actions', 'ai-content-optimizer'); ?></h3>
-                        <p class="description"><?php printf(__('Optimize all categories and tags associated with %s.', 'ai-content-optimizer'), esc_html($post_type_label)); ?></p>
-                        
-                        <?php if ($has_categories) : ?>
-                        <button type="button" class="button aico-optimize-categories" data-post-type="<?php echo esc_attr($post_type); ?>">
-                            <?php _e('Optimize All Categories', 'ai-content-optimizer'); ?>
-                        </button>
-                        <?php endif; ?>
-                        
-                        <?php if ($has_tags) : ?>
                         <button type="button" class="button aico-optimize-tags" data-post-type="<?php echo esc_attr($post_type); ?>">
                             <?php _e('Optimize All Tags', 'ai-content-optimizer'); ?>
                         </button>
-                        <?php endif; ?>
                     </div>
                 </div>
                 <?php endif; ?>
