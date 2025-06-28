@@ -281,6 +281,16 @@ PROMPT;
                 add_filter('handle_bulk_actions-edit-product_tag', array($this, 'handle_taxonomy_bulk_actions'), 10, 3);
             }
         }
+        
+        // Frontend hooks - only if license is valid
+        $license_status = get_option('bmo_license_status', 'invalid');
+        if ($license_status === 'success') {
+            // Add frontend meta tags for categories and tags
+            add_action('wp_head', array($this, 'add_taxonomy_meta_tags'));
+            
+            // Add custom post type support
+            add_action('init', array($this, 'add_custom_post_type_support'));
+        }
     }
 
     /**
@@ -359,6 +369,8 @@ PROMPT;
             array($this, 'render_advanced_page')
         );
 
+        // Removed separate Categories and Tags pages - now integrated into post type settings
+        /*
         add_submenu_page(
             'ai-content-optimizer',
             __('Categories', 'ai-content-optimizer'),
@@ -376,6 +388,7 @@ PROMPT;
             'ai-content-optimizer-tags',
             array($this, 'render_tags_page')
         );
+        */
     }
 
     /**
@@ -819,6 +832,59 @@ PROMPT;
                             </td>
                         </tr>
                     </table>
+                </div>
+
+                <div class="aico-card">
+                    <h2><?php _e('Category & Tag Meta Descriptions', 'ai-content-optimizer'); ?></h2>
+                    <p class="description"><?php printf(__('Configure AI-powered meta description generation for categories and tags associated with %s.', 'ai-content-optimizer'), esc_html($post_type_label)); ?></p>
+
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row"><?php _e('Optimize Category Meta Descriptions', 'ai-content-optimizer'); ?></th>
+                            <td>
+                                <label>
+                                    <input type="checkbox" name="settings[optimize_category_meta]" value="1" <?php checked(isset($settings['optimize_category_meta']) ? $settings['optimize_category_meta'] : false); ?> />
+                                    <?php printf(__('Generate optimized meta descriptions for categories of %s', 'ai-content-optimizer'), esc_html($post_type_label)); ?>
+                                </label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><?php _e('Optimize Tag Meta Descriptions', 'ai-content-optimizer'); ?></th>
+                            <td>
+                                <label>
+                                    <input type="checkbox" name="settings[optimize_tag_meta]" value="1" <?php checked(isset($settings['optimize_tag_meta']) ? $settings['optimize_tag_meta'] : false); ?> />
+                                    <?php printf(__('Generate optimized meta descriptions for tags of %s', 'ai-content-optimizer'), esc_html($post_type_label)); ?>
+                                </label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><?php _e('Category Meta Description Prompt', 'ai-content-optimizer'); ?></th>
+                            <td>
+                                <textarea name="settings[category_meta_prompt]" rows="3" class="large-text"><?php echo esc_textarea(isset($settings['category_meta_prompt']) ? $settings['category_meta_prompt'] : 'Generate a compelling meta description for the category "{category_name}" in the context of {post_type_label}. Focus on SEO optimization and user engagement. Keep it under 160 characters.'); ?></textarea>
+                                <p class="description"><?php _e('Use {category_name} and {post_type_label} as placeholders.', 'ai-content-optimizer'); ?></p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><?php _e('Tag Meta Description Prompt', 'ai-content-optimizer'); ?></th>
+                            <td>
+                                <textarea name="settings[tag_meta_prompt]" rows="3" class="large-text"><?php echo esc_textarea(isset($settings['tag_meta_prompt']) ? $settings['tag_meta_prompt'] : 'Generate a compelling meta description for the tag "{tag_name}" in the context of {post_type_label}. Focus on SEO optimization and user engagement. Keep it under 160 characters.'); ?></textarea>
+                                <p class="description"><?php _e('Use {tag_name} and {post_type_label} as placeholders.', 'ai-content-optimizer'); ?></p>
+                            </td>
+                        </tr>
+                    </table>
+                    
+                    <div class="aico-bulk-actions" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
+                        <h3><?php _e('Bulk Actions', 'ai-content-optimizer'); ?></h3>
+                        <p class="description"><?php printf(__('Optimize all categories and tags associated with %s.', 'ai-content-optimizer'), esc_html($post_type_label)); ?></p>
+                        
+                        <button type="button" class="button aico-optimize-categories" data-post-type="<?php echo esc_attr($post_type); ?>">
+                            <?php _e('Optimize All Categories', 'ai-content-optimizer'); ?>
+                        </button>
+                        
+                        <button type="button" class="button aico-optimize-tags" data-post-type="<?php echo esc_attr($post_type); ?>">
+                            <?php _e('Optimize All Tags', 'ai-content-optimizer'); ?>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="aico-card">
@@ -2522,6 +2588,149 @@ PROMPT;
             return $redirect_to;
         }
     }
+
+    /**
+     * Add frontend meta tags for categories and tags
+     */
+    public function add_taxonomy_meta_tags() {
+        if (!is_tax() && !is_category() && !is_tag()) {
+            return;
+        }
+        
+        $term = get_queried_object();
+        if (!$term || is_wp_error($term)) {
+            return;
+        }
+        
+        // Get the taxonomy
+        $taxonomy = $term->taxonomy;
+        
+        // Determine post type based on taxonomy
+        $post_type = 'post';
+        if ($taxonomy === 'product_cat' || $taxonomy === 'product_tag') {
+            $post_type = 'product';
+        }
+        
+        // Get post type settings
+        $settings_key = 'aico_' . $post_type . '_settings';
+        $settings = get_option($settings_key, array());
+        
+        // Check if optimization is enabled for this taxonomy type
+        if (($taxonomy === 'category' || $taxonomy === 'product_cat') && empty($settings['optimize_category_meta'])) {
+            return;
+        }
+        if (($taxonomy === 'post_tag' || $taxonomy === 'product_tag') && empty($settings['optimize_tag_meta'])) {
+            return;
+        }
+        
+        // Get the meta description from the term description
+        $meta_description = $term->description;
+        if (empty($meta_description)) {
+            return;
+        }
+        
+        // Output the meta description
+        echo '<meta name="description" content="' . esc_attr(wp_strip_all_tags($meta_description)) . '" />' . "\n";
+    }
+
+    /**
+     * Add custom post type support
+     */
+    public function add_custom_post_type_support() {
+        // Check license status before enabling functionality
+        $license_status = get_option('bmo_license_status', 'invalid');
+        if ($license_status !== 'success') {
+            // If license is not valid, prevent custom post type support from loading
+            return;
+        }
+
+        // Get all public custom post types
+        $custom_post_types = get_post_types(array(
+            'public'   => true,
+            '_builtin' => false,
+        ), 'objects');
+
+        // Remove 'product' if it exists as we handle it separately
+        if (isset($custom_post_types['product'])) {
+            unset($custom_post_types['product']);
+        }
+
+        // Get page prompts to use as defaults, or use standard defaults if page prompts don't exist
+        $default_title_prompt = __('Write an SEO-optimized title for this {post_type} about {title}. Make it engaging and include the main keyword naturally. Keep it under 60 characters.', 'ai-content-optimizer');
+        $default_meta_prompt = __('Write a compelling meta description for this {post_type} about {title}. Include the main keyword and a clear call-to-action. Keep it between 150-160 characters.', 'ai-content-optimizer');
+        $default_content_prompt = __('Optimize this content while preserving its structure and meaning. Maintain all HTML tags, shortcodes, and formatting. Focus on improving readability and SEO without changing the core message.', 'ai-content-optimizer');
+
+        $page_title_prompt = get_option('aico_page_title_prompt', $default_title_prompt);
+        $page_meta_prompt = get_option('aico_page_meta_prompt', $default_meta_prompt);
+        $page_content_prompt = get_option('aico_page_content_prompt', $default_content_prompt);
+
+        // Initialize settings for each custom post type
+        foreach ($custom_post_types as $post_type) {
+            $settings_key = 'aico_' . $post_type->name . '_settings';
+            $title_prompt_key = 'aico_' . $post_type->name . '_title_prompt';
+            $meta_prompt_key = 'aico_' . $post_type->name . '_meta_prompt';
+            $content_prompt_key = 'aico_' . $post_type->name . '_content_prompt';
+
+            // Initialize settings if they don't exist
+            if (!get_option($settings_key)) {
+                $default_content_settings = array(
+                    'content_tone' => 'professional',
+                    'target_audience' => 'general',
+                    'content_focus' => 'benefit-focused',
+                    'seo_aggressiveness' => 'moderate',
+                    'keyword_density' => 'standard',
+                    'geographic_targeting' => 'global',
+                    'brand_voice' => 'trustworthy',
+                    'title_separator' => 'dash',
+                    'excluded_words' => '',
+                );
+
+                $default_toggles = array(
+                    'optimize_title' => true,
+                    'optimize_meta' => true,
+                    'optimize_content' => false,
+                    'optimize_slug' => false,
+                    'preserve_html' => true,
+                );
+
+                update_option($settings_key, array_merge($default_content_settings, $default_toggles));
+            }
+
+            // Always ensure prompts exist
+            if (!get_option($title_prompt_key)) {
+                update_option($title_prompt_key, str_replace('page', $post_type->name, $page_title_prompt));
+            }
+            if (!get_option($meta_prompt_key)) {
+                update_option($meta_prompt_key, str_replace('page', $post_type->name, $page_meta_prompt));
+            }
+            if (!get_option($content_prompt_key)) {
+                update_option($content_prompt_key, $page_content_prompt);
+            }
+
+            // Register settings for the custom post type
+            register_setting('aico_content_settings', $settings_key);
+            register_setting(
+                'aico_content_settings',
+                $title_prompt_key,
+                array('type' => 'string', 'sanitize_callback' => array($this, 'allow_html_prompts'))
+            );
+            register_setting(
+                'aico_content_settings',
+                $meta_prompt_key,
+                array('type' => 'string', 'sanitize_callback' => array($this, 'allow_html_prompts'))
+            );
+            register_setting(
+                'aico_content_settings',
+                $content_prompt_key,
+                array('type' => 'string', 'sanitize_callback' => array($this, 'allow_html_prompts'))
+            );
+
+            // Add row actions and bulk actions for the custom post type
+            add_filter($post_type->name . '_row_actions', array($this, 'add_row_actions'), 10, 2);
+            add_filter('bulk_actions-edit-' . $post_type->name, array($this, 'register_bulk_actions'));
+            add_filter('handle_bulk_actions-edit-' . $post_type->name, array($this, 'handle_bulk_actions'), 10, 3);
+        }
+    }
 }
 
 // Handle license key save with SLM check
@@ -2789,7 +2998,11 @@ add_action('wp_ajax_aico_optimize_category', function() {
         wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
     }
     
+    // Support both category_id and term_id parameters
     $category_id = isset($_POST['category_id']) ? intval($_POST['category_id']) : 0;
+    if (!$category_id) {
+        $category_id = isset($_POST['term_id']) ? intval($_POST['term_id']) : 0;
+    }
     if (!$category_id) {
         wp_send_json_error(__('Invalid category ID.', 'ai-content-optimizer'));
     }
@@ -2797,6 +3010,18 @@ add_action('wp_ajax_aico_optimize_category', function() {
     $category = get_term($category_id, 'category');
     if (!$category || is_wp_error($category)) {
         wp_send_json_error(__('Category not found.', 'ai-content-optimizer'));
+    }
+    
+    // Get post type from request or default to 'post'
+    $post_type = isset($_POST['post_type']) ? sanitize_text_field($_POST['post_type']) : 'post';
+    
+    // Get post type settings
+    $settings_key = 'aico_' . $post_type . '_settings';
+    $settings = get_option($settings_key, array());
+    
+    // Check if category optimization is enabled for this post type
+    if (empty($settings['optimize_category_meta'])) {
+        wp_send_json_error(__('Category meta description optimization is not enabled for this post type.', 'ai-content-optimizer'));
     }
     
     $api_key = get_option('aico_openai_api_key');
@@ -2808,9 +3033,12 @@ add_action('wp_ajax_aico_optimize_category', function() {
     $temperature = get_option('aico_openai_temperature', 0.7);
     $max_tokens = get_option('aico_openai_max_tokens', 500);
     
-    $meta_prompt = get_option('aico_category_meta_prompt', '');
+    // Get post type-specific category meta prompt
+    $meta_prompt = isset($settings['category_meta_prompt']) ? $settings['category_meta_prompt'] : '';
     if (empty($meta_prompt)) {
-        $meta_prompt = "You are an SEO expert. Write a meta description (160 chars max) for this category. Use a professional tone for a general audience. Keep it concise, no exclamation marks or quotation marks.";
+        $post_type_obj = get_post_type_object($post_type);
+        $post_type_label = $post_type_obj ? $post_type_obj->labels->singular_name : ucfirst($post_type);
+        $meta_prompt = "Generate a compelling meta description for the category \"{category_name}\" in the context of {$post_type_label}. Focus on SEO optimization and user engagement. Keep it under 160 characters.";
     }
     
     // Replace placeholders
@@ -2822,9 +3050,12 @@ add_action('wp_ajax_aico_optimize_category', function() {
         }
     }
     
+    $post_type_obj = get_post_type_object($post_type);
+    $post_type_label = $post_type_obj ? $post_type_obj->labels->singular_name : ucfirst($post_type);
+    
     $meta_prompt = str_replace(
-        array('{category_name}', '{category_description}', '{post_count}', '{parent_category}'),
-        array($category->name, $category->description, $category->count, $parent_category),
+        array('{category_name}', '{category_description}', '{post_count}', '{parent_category}', '{post_type_label}'),
+        array($category->name, $category->description, $category->count, $parent_category, $post_type_label),
         $meta_prompt
     );
     
@@ -2861,7 +3092,11 @@ add_action('wp_ajax_aico_optimize_tag', function() {
         wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
     }
     
+    // Support both tag_id and term_id parameters
     $tag_id = isset($_POST['tag_id']) ? intval($_POST['tag_id']) : 0;
+    if (!$tag_id) {
+        $tag_id = isset($_POST['term_id']) ? intval($_POST['term_id']) : 0;
+    }
     if (!$tag_id) {
         wp_send_json_error(__('Invalid tag ID.', 'ai-content-optimizer'));
     }
@@ -2869,6 +3104,18 @@ add_action('wp_ajax_aico_optimize_tag', function() {
     $tag = get_term($tag_id, 'post_tag');
     if (!$tag || is_wp_error($tag)) {
         wp_send_json_error(__('Tag not found.', 'ai-content-optimizer'));
+    }
+    
+    // Get post type from request or default to 'post'
+    $post_type = isset($_POST['post_type']) ? sanitize_text_field($_POST['post_type']) : 'post';
+    
+    // Get post type settings
+    $settings_key = 'aico_' . $post_type . '_settings';
+    $settings = get_option($settings_key, array());
+    
+    // Check if tag optimization is enabled for this post type
+    if (empty($settings['optimize_tag_meta'])) {
+        wp_send_json_error(__('Tag meta description optimization is not enabled for this post type.', 'ai-content-optimizer'));
     }
     
     $api_key = get_option('aico_openai_api_key');
@@ -2880,15 +3127,21 @@ add_action('wp_ajax_aico_optimize_tag', function() {
     $temperature = get_option('aico_openai_temperature', 0.7);
     $max_tokens = get_option('aico_openai_max_tokens', 500);
     
-    $meta_prompt = get_option('aico_tag_meta_prompt', '');
+    // Get post type-specific tag meta prompt
+    $meta_prompt = isset($settings['tag_meta_prompt']) ? $settings['tag_meta_prompt'] : '';
     if (empty($meta_prompt)) {
-        $meta_prompt = "You are an SEO expert. Write a meta description (160 chars max) for this tag. Use a professional tone for a general audience. Keep it concise, no exclamation marks or quotation marks.";
+        $post_type_obj = get_post_type_object($post_type);
+        $post_type_label = $post_type_obj ? $post_type_obj->labels->singular_name : ucfirst($post_type);
+        $meta_prompt = "Generate a compelling meta description for the tag \"{tag_name}\" in the context of {$post_type_label}. Focus on SEO optimization and user engagement. Keep it under 160 characters.";
     }
     
     // Replace placeholders
+    $post_type_obj = get_post_type_object($post_type);
+    $post_type_label = $post_type_obj ? $post_type_obj->labels->singular_name : ucfirst($post_type);
+    
     $meta_prompt = str_replace(
-        array('{tag_name}', '{tag_description}', '{post_count}'),
-        array($tag->name, $tag->description, $tag->count),
+        array('{tag_name}', '{tag_description}', '{post_count}', '{post_type_label}'),
+        array($tag->name, $tag->description, $tag->count, $post_type_label),
         $meta_prompt
     );
     
@@ -2925,17 +3178,76 @@ add_action('wp_ajax_aico_bulk_optimize_categories', function() {
         wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
     }
     
+    // Get post type from request or default to 'post'
+    $post_type = isset($_POST['post_type']) ? sanitize_text_field($_POST['post_type']) : 'post';
+    
+    // Get post type settings
+    $settings_key = 'aico_' . $post_type . '_settings';
+    $settings = get_option($settings_key, array());
+    
+    // Check if category optimization is enabled for this post type
+    if (empty($settings['optimize_category_meta'])) {
+        wp_send_json_error(__('Category meta description optimization is not enabled for this post type.', 'ai-content-optimizer'));
+    }
+    
     $categories = get_categories(array('hide_empty' => false));
     $total = count($categories);
     $processed = 0;
     $errors = array();
     
+    $api_key = get_option('aico_openai_api_key');
+    if (empty($api_key)) {
+        wp_send_json_error(__('API key is not set.', 'ai-content-optimizer'));
+    }
+    
+    $model = get_option('aico_openai_model', 'gpt-3.5-turbo');
+    $temperature = get_option('aico_openai_temperature', 0.7);
+    $max_tokens = get_option('aico_openai_max_tokens', 500);
+    
+    $ai_content_optimizer = AI_Content_Optimizer::get_instance();
+    $post_type_obj = get_post_type_object($post_type);
+    $post_type_label = $post_type_obj ? $post_type_obj->labels->singular_name : ucfirst($post_type);
+    
     foreach ($categories as $category) {
-        // Simulate the optimization process (in a real implementation, you'd process each one)
-        $processed++;
-        
-        // Add a small delay to prevent overwhelming the API
-        usleep(100000); // 0.1 second delay
+        try {
+            // Get post type-specific category meta prompt
+            $meta_prompt = isset($settings['category_meta_prompt']) ? $settings['category_meta_prompt'] : '';
+            if (empty($meta_prompt)) {
+                $meta_prompt = "Generate a compelling meta description for the category \"{category_name}\" in the context of {$post_type_label}. Focus on SEO optimization and user engagement. Keep it under 160 characters.";
+            }
+            
+            // Replace placeholders
+            $parent_category = '';
+            if ($category->parent) {
+                $parent = get_term($category->parent, 'category');
+                if ($parent && !is_wp_error($parent)) {
+                    $parent_category = $parent->name;
+                }
+            }
+            
+            $meta_prompt = str_replace(
+                array('{category_name}', '{category_description}', '{post_count}', '{parent_category}', '{post_type_label}'),
+                array($category->name, $category->description, $category->count, $parent_category, $post_type_label),
+                $meta_prompt
+            );
+            
+            $generated_description = $ai_content_optimizer->call_openai_api_direct($api_key, $model, $meta_prompt, $max_tokens, $temperature);
+            
+            if (!is_wp_error($generated_description)) {
+                wp_update_term($category->term_id, 'category', array(
+                    'description' => $generated_description
+                ));
+                $processed++;
+            } else {
+                $errors[] = sprintf(__('Error optimizing category "%s": %s', 'ai-content-optimizer'), $category->name, $generated_description->get_error_message());
+            }
+            
+            // Add a small delay to prevent overwhelming the API
+            usleep(100000); // 0.1 second delay
+            
+        } catch (Exception $e) {
+            $errors[] = sprintf(__('Error optimizing category "%s": %s', 'ai-content-optimizer'), $category->name, $e->getMessage());
+        }
     }
     
     wp_send_json_success(array(
@@ -2957,17 +3269,68 @@ add_action('wp_ajax_aico_bulk_optimize_tags', function() {
         wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
     }
     
+    // Get post type from request or default to 'post'
+    $post_type = isset($_POST['post_type']) ? sanitize_text_field($_POST['post_type']) : 'post';
+    
+    // Get post type settings
+    $settings_key = 'aico_' . $post_type . '_settings';
+    $settings = get_option($settings_key, array());
+    
+    // Check if tag optimization is enabled for this post type
+    if (empty($settings['optimize_tag_meta'])) {
+        wp_send_json_error(__('Tag meta description optimization is not enabled for this post type.', 'ai-content-optimizer'));
+    }
+    
     $tags = get_tags(array('hide_empty' => false));
     $total = count($tags);
     $processed = 0;
     $errors = array();
     
+    $api_key = get_option('aico_openai_api_key');
+    if (empty($api_key)) {
+        wp_send_json_error(__('API key is not set.', 'ai-content-optimizer'));
+    }
+    
+    $model = get_option('aico_openai_model', 'gpt-3.5-turbo');
+    $temperature = get_option('aico_openai_temperature', 0.7);
+    $max_tokens = get_option('aico_openai_max_tokens', 500);
+    
+    $ai_content_optimizer = AI_Content_Optimizer::get_instance();
+    $post_type_obj = get_post_type_object($post_type);
+    $post_type_label = $post_type_obj ? $post_type_obj->labels->singular_name : ucfirst($post_type);
+    
     foreach ($tags as $tag) {
-        // Simulate the optimization process (in a real implementation, you'd process each one)
-        $processed++;
-        
-        // Add a small delay to prevent overwhelming the API
-        usleep(100000); // 0.1 second delay
+        try {
+            // Get post type-specific tag meta prompt
+            $meta_prompt = isset($settings['tag_meta_prompt']) ? $settings['tag_meta_prompt'] : '';
+            if (empty($meta_prompt)) {
+                $meta_prompt = "Generate a compelling meta description for the tag \"{tag_name}\" in the context of {$post_type_label}. Focus on SEO optimization and user engagement. Keep it under 160 characters.";
+            }
+            
+            // Replace placeholders
+            $meta_prompt = str_replace(
+                array('{tag_name}', '{tag_description}', '{post_count}', '{post_type_label}'),
+                array($tag->name, $tag->description, $tag->count, $post_type_label),
+                $meta_prompt
+            );
+            
+            $generated_description = $ai_content_optimizer->call_openai_api_direct($api_key, $model, $meta_prompt, $max_tokens, $temperature);
+            
+            if (!is_wp_error($generated_description)) {
+                wp_update_term($tag->term_id, 'post_tag', array(
+                    'description' => $generated_description
+                ));
+                $processed++;
+            } else {
+                $errors[] = sprintf(__('Error optimizing tag "%s": %s', 'ai-content-optimizer'), $tag->name, $generated_description->get_error_message());
+            }
+            
+            // Add a small delay to prevent overwhelming the API
+            usleep(100000); // 0.1 second delay
+            
+        } catch (Exception $e) {
+            $errors[] = sprintf(__('Error optimizing tag "%s": %s', 'ai-content-optimizer'), $tag->name, $e->getMessage());
+        }
     }
     
     wp_send_json_success(array(
@@ -3073,7 +3436,12 @@ add_action('wp_ajax_aico_optimize_category', function() {
         wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
     }
     
+    // Accept both term_id and category_id parameters
     $term_id = isset($_POST['term_id']) ? intval($_POST['term_id']) : 0;
+    if (!$term_id) {
+        $term_id = isset($_POST['category_id']) ? intval($_POST['category_id']) : 0;
+    }
+    
     $taxonomy = isset($_POST['taxonomy']) ? sanitize_text_field($_POST['taxonomy']) : 'category';
     
     if (!$term_id) {
@@ -3154,7 +3522,12 @@ add_action('wp_ajax_aico_optimize_tag', function() {
         wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
     }
     
+    // Accept both term_id and tag_id parameters
     $term_id = isset($_POST['term_id']) ? intval($_POST['term_id']) : 0;
+    if (!$term_id) {
+        $term_id = isset($_POST['tag_id']) ? intval($_POST['tag_id']) : 0;
+    }
+    
     $taxonomy = isset($_POST['taxonomy']) ? sanitize_text_field($_POST['taxonomy']) : 'post_tag';
     
     if (!$term_id) {

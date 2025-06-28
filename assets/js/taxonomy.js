@@ -16,6 +16,7 @@
             const nonce = $link.data('nonce');
             
             if (!termId) {
+                console.error('No term ID found');
                 return;
             }
             
@@ -26,17 +27,40 @@
             // Show loading message
             $link.text(aicoTaxonomyData.strings.optimizing);
             
+            // Get post type from URL or default to 'post'
+            let postType = 'post';
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('post_type')) {
+                postType = urlParams.get('post_type');
+            } else if (taxonomy === 'product_cat' || taxonomy === 'product_tag') {
+                postType = 'product';
+            }
+            
+            // Prepare data based on taxonomy type
+            const ajaxData = {
+                action: ajaxAction,
+                term_id: termId,
+                taxonomy: taxonomy,
+                post_type: postType,
+                nonce: nonce
+            };
+            
+            // Add specific ID parameter based on taxonomy type
+            if (taxonomy === 'category' || taxonomy === 'product_cat') {
+                ajaxData.category_id = termId;
+            } else if (taxonomy === 'post_tag' || taxonomy === 'product_tag') {
+                ajaxData.tag_id = termId;
+            }
+            
+            console.log('Sending AJAX request:', ajaxData);
+            
             // Send AJAX request
             $.ajax({
                 url: aicoTaxonomyData.ajaxUrl,
                 type: 'POST',
-                data: {
-                    action: ajaxAction,
-                    term_id: termId,
-                    taxonomy: taxonomy,
-                    nonce: nonce
-                },
+                data: ajaxData,
                 success: function(response) {
+                    console.log('AJAX response:', response);
                     if (response.success) {
                         $link.text(aicoTaxonomyData.strings.success);
                         
@@ -58,6 +82,7 @@
                     }
                 },
                 error: function(xhr, status, error) {
+                    console.error('AJAX error:', xhr, status, error);
                     $link.text(aicoTaxonomyData.strings.error + ' ' + error);
                     setTimeout(function() {
                         $link.text('Optimize with AI');
@@ -145,6 +170,15 @@
                 ajaxAction = 'aico_optimize_tag';
             }
             
+            // Get post type from URL or default based on taxonomy
+            let postType = 'post';
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('post_type')) {
+                postType = urlParams.get('post_type');
+            } else if (taxonomy === 'product_cat' || taxonomy === 'product_tag') {
+                postType = 'product';
+            }
+            
             // Process current term
             $.ajax({
                 url: aicoTaxonomyData.ajaxUrl,
@@ -153,6 +187,7 @@
                     action: ajaxAction,
                     term_id: termId,
                     taxonomy: taxonomy,
+                    post_type: postType,
                     nonce: aicoTaxonomyData.nonce
                 },
                 success: function(response) {

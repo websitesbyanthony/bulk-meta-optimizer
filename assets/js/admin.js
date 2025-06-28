@@ -279,36 +279,43 @@
             }
         });
         
-        // Reset to defaults
+        // Reset defaults
         $('.aico-reset-defaults').on('click', function(e) {
             e.preventDefault();
             
-            if (confirm('Are you sure you want to reset all settings to defaults? This cannot be undone.')) {
-                const $button = $(this);
-                const postType = $button.data('post-type');
-                
-                // Send AJAX request
-                $.ajax({
-                    url: aicoData.ajaxUrl,
-                    type: 'POST',
-                    data: {
-                        action: 'aico_reset_defaults',
-                        post_type: postType,
-                        nonce: aicoData.nonce
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            // Reload page
-                            window.location.reload();
-                        } else {
-                            alert(aicoData.strings.error + ' ' + response.data);
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        alert(aicoData.strings.error + ' ' + error);
-                    }
-                });
+            const $button = $(this);
+            const postType = $button.data('post-type');
+            
+            if (!confirm('Are you sure you want to reset all settings and prompts for this post type to default values?')) {
+                return;
             }
+            
+            // Show loading message
+            $button.prop('disabled', true).text('Resetting...');
+            
+            // Send AJAX request
+            $.ajax({
+                url: aicoData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'aico_reset_defaults',
+                    post_type: postType,
+                    nonce: aicoData.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Reload the page to show updated settings
+                        window.location.reload();
+                    } else {
+                        alert('Error: ' + response.data);
+                        $button.prop('disabled', false).text('Reset to Defaults');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    alert('Error: ' + error);
+                    $button.prop('disabled', false).text('Reset to Defaults');
+                }
+            });
         });
         
         // Manual license check
@@ -902,6 +909,81 @@
                 },
                 error: function(xhr, status, error) {
                     alert('Error: ' + error);
+                }
+            });
+        });
+        
+        // Category and Tag Optimization
+        $('.aico-optimize-categories').on('click', function(e) {
+            e.preventDefault();
+            
+            const $button = $(this);
+            const postType = $button.data('post-type');
+            
+            if (!confirm('Are you sure you want to optimize all categories for this post type? This may take some time.')) {
+                return;
+            }
+            
+            // Show loading message
+            $button.prop('disabled', true).text('Optimizing Categories...');
+            
+            // Send AJAX request
+            $.ajax({
+                url: aicoData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'aico_bulk_optimize_categories',
+                    post_type: postType,
+                    nonce: aicoData.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        alert('Success: ' + response.data.message);
+                    } else {
+                        alert('Error: ' + response.data);
+                    }
+                    $button.prop('disabled', false).text('Optimize All Categories');
+                },
+                error: function(xhr, status, error) {
+                    alert('Error: ' + error);
+                    $button.prop('disabled', false).text('Optimize All Categories');
+                }
+            });
+        });
+        
+        $('.aico-optimize-tags').on('click', function(e) {
+            e.preventDefault();
+            
+            const $button = $(this);
+            const postType = $button.data('post-type');
+            
+            if (!confirm('Are you sure you want to optimize all tags for this post type? This may take some time.')) {
+                return;
+            }
+            
+            // Show loading message
+            $button.prop('disabled', true).text('Optimizing Tags...');
+            
+            // Send AJAX request
+            $.ajax({
+                url: aicoData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'aico_bulk_optimize_tags',
+                    post_type: postType,
+                    nonce: aicoData.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        alert('Success: ' + response.data.message);
+                    } else {
+                        alert('Error: ' + response.data);
+                    }
+                    $button.prop('disabled', false).text('Optimize All Tags');
+                },
+                error: function(xhr, status, error) {
+                    alert('Error: ' + error);
+                    $button.prop('disabled', false).text('Optimize All Tags');
                 }
             });
         });
