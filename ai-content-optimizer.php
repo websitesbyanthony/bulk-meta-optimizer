@@ -262,6 +262,24 @@ PROMPT;
 
             add_filter('handle_bulk_actions-edit-post', array($this, 'handle_bulk_actions'), 10, 3);
             add_filter('handle_bulk_actions-edit-page', array($this, 'handle_bulk_actions'), 10, 3);
+            
+            // Add taxonomy row actions and bulk actions
+            add_filter('category_row_actions', array($this, 'add_taxonomy_row_actions'), 10, 2);
+            add_filter('post_tag_row_actions', array($this, 'add_taxonomy_row_actions'), 10, 2);
+            add_filter('bulk_actions-edit-category', array($this, 'register_taxonomy_bulk_actions'));
+            add_filter('bulk_actions-edit-post_tag', array($this, 'register_taxonomy_bulk_actions'));
+            add_filter('handle_bulk_actions-edit-category', array($this, 'handle_taxonomy_bulk_actions'), 10, 3);
+            add_filter('handle_bulk_actions-edit-post_tag', array($this, 'handle_taxonomy_bulk_actions'), 10, 3);
+            
+            // Add support for WooCommerce product categories and tags
+            if (class_exists('WooCommerce')) {
+                add_filter('product_cat_row_actions', array($this, 'add_taxonomy_row_actions'), 10, 2);
+                add_filter('product_tag_row_actions', array($this, 'add_taxonomy_row_actions'), 10, 2);
+                add_filter('bulk_actions-edit-product_cat', array($this, 'register_taxonomy_bulk_actions'));
+                add_filter('bulk_actions-edit-product_tag', array($this, 'register_taxonomy_bulk_actions'));
+                add_filter('handle_bulk_actions-edit-product_cat', array($this, 'handle_taxonomy_bulk_actions'), 10, 3);
+                add_filter('handle_bulk_actions-edit-product_tag', array($this, 'handle_taxonomy_bulk_actions'), 10, 3);
+            }
         }
     }
 
@@ -368,7 +386,8 @@ PROMPT;
         if (strpos($hook, 'ai-content-optimizer') !== false ||
             $hook === 'edit.php' ||
             $hook === 'post.php' ||
-            $hook === 'post-new.php') {
+            $hook === 'post-new.php' ||
+            $hook === 'edit-tags.php') {
 
             // Enqueue styles
             wp_enqueue_style(
@@ -432,6 +451,31 @@ PROMPT;
                         'optimizing' => __('Optimizing...', 'ai-content-optimizer'),
                         'success' => __('Optimized!', 'ai-content-optimizer'),
                         'error' => __('Error:', 'ai-content-optimizer'),
+                    )
+                )
+            );
+        }
+
+        if ($hook === 'edit-tags.php') {
+            wp_enqueue_script(
+                'ai-content-optimizer-taxonomy',
+                plugins_url('assets/js/taxonomy.js', __FILE__),
+                array('jquery'),
+                self::VERSION,
+                true
+            );
+
+            wp_localize_script(
+                'ai-content-optimizer-taxonomy',
+                'aicoTaxonomyData',
+                array(
+                    'ajaxUrl' => admin_url('admin-ajax.php'),
+                    'nonce' => wp_create_nonce('aico-nonce'),
+                    'strings' => array(
+                        'optimizing' => __('Optimizing...', 'ai-content-optimizer'),
+                        'success' => __('Optimized!', 'ai-content-optimizer'),
+                        'error' => __('Error:', 'ai-content-optimizer'),
+                        'confirmBulk' => __('Are you sure you want to optimize the selected terms? This may take some time.', 'ai-content-optimizer'),
                     )
                 )
             );
@@ -2381,6 +2425,103 @@ PROMPT;
         </div>
         <?php
     }
+
+    /**
+     * Add taxonomy row actions
+     */
+    public function add_taxonomy_row_actions($actions, $term) {
+        // Check license status
+        $license_status = get_option('bmo_license_status', 'invalid');
+        if ($license_status !== 'success') {
+            return $actions;
+        }
+
+        // Determine taxonomy type and appropriate action
+        $taxonomy = $term->taxonomy;
+        $action_name = '';
+        $ajax_action = '';
+        
+        if ($taxonomy === 'category') {
+            $action_name = 'aico_optimize_category';
+            $ajax_action = 'aico_optimize_category';
+        } elseif ($taxonomy === 'post_tag') {
+            $action_name = 'aico_optimize_tag';
+            $ajax_action = 'aico_optimize_tag';
+        } elseif ($taxonomy === 'product_cat') {
+            $action_name = 'aico_optimize_product_cat';
+            $ajax_action = 'aico_optimize_category'; // Use same handler
+        } elseif ($taxonomy === 'product_tag') {
+            $action_name = 'aico_optimize_product_tag';
+            $ajax_action = 'aico_optimize_tag'; // Use same handler
+        } else {
+            return $actions;
+        }
+
+        // Add optimize action
+        $actions[$action_name] = sprintf(
+            '<a href="#" class="aico-optimize-taxonomy" data-term-id="%d" data-taxonomy="%s" data-term-name="%s" data-ajax-action="%s" data-nonce="%s">%s</a>',
+            $term->term_id,
+            esc_attr($taxonomy),
+            esc_attr($term->name),
+            esc_attr($ajax_action),
+            wp_create_nonce('aico-nonce'),
+            __('Optimize with AI', 'ai-content-optimizer')
+        );
+
+        return $actions;
+    }
+
+    /**
+     * Register taxonomy bulk actions
+     */
+    public function register_taxonomy_bulk_actions($bulk_actions) {
+        // Check license status
+        $license_status = get_option('bmo_license_status', 'invalid');
+        if ($license_status !== 'success') {
+            return $bulk_actions;
+        }
+
+        $bulk_actions['aico_bulk_optimize_taxonomy'] = __('Optimize with AI', 'ai-content-optimizer');
+        return $bulk_actions;
+    }
+
+    /**
+     * Handle taxonomy bulk actions
+     */
+    public function handle_taxonomy_bulk_actions($redirect_to, $doaction, $term_ids) {
+        if ($doaction !== 'aico_bulk_optimize_taxonomy') {
+            return $redirect_to;
+        }
+
+        // Check license status
+        $license_status = get_option('bmo_license_status', 'invalid');
+        if ($license_status !== 'success') {
+            return $redirect_to;
+        }
+
+        try {
+            // Get taxonomy from current screen
+            $taxonomy = 'category';
+            if (!empty($_REQUEST['taxonomy'])) {
+                $taxonomy = sanitize_text_field($_REQUEST['taxonomy']);
+            }
+
+            // Store the term IDs for processing
+            update_option('aico_bulk_taxonomy_term_ids', $term_ids);
+            update_option('aico_bulk_taxonomy_type', $taxonomy);
+
+            // Redirect back to the list page with a success notice
+            return add_query_arg(
+                array(
+                    'taxonomy' => $taxonomy,
+                    'aico_bulk_taxonomy_notice' => '1',
+                ),
+                admin_url('edit-tags.php')
+            );
+        } catch (Exception $e) {
+            return $redirect_to;
+        }
+    }
 }
 
 // Handle license key save with SLM check
@@ -2893,6 +3034,185 @@ add_action('wp_ajax_aico_save_tag_description', function() {
     }
     
     wp_send_json_success(__('Tag description saved successfully!', 'ai-content-optimizer'));
+});
+
+// AJAX handler for getting bulk taxonomy data
+add_action('wp_ajax_aico_get_bulk_taxonomy_data', function() {
+    $license_status = get_option('bmo_license_status', 'invalid');
+    if ($license_status !== 'success') {
+        wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
+    }
+    
+    check_ajax_referer('aico-nonce', 'nonce');
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
+    }
+    
+    $term_ids = get_option('aico_bulk_taxonomy_term_ids', array());
+    $taxonomy = get_option('aico_bulk_taxonomy_type', 'category');
+    
+    // Clear the stored data
+    delete_option('aico_bulk_taxonomy_term_ids');
+    delete_option('aico_bulk_taxonomy_type');
+    
+    wp_send_json_success(array(
+        'term_ids' => $term_ids,
+        'taxonomy' => $taxonomy
+    ));
+});
+
+// Update existing category optimization to support taxonomy parameter
+add_action('wp_ajax_aico_optimize_category', function() {
+    $license_status = get_option('bmo_license_status', 'invalid');
+    if ($license_status !== 'success') {
+        wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
+    }
+    
+    check_ajax_referer('aico-nonce', 'nonce');
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
+    }
+    
+    $term_id = isset($_POST['term_id']) ? intval($_POST['term_id']) : 0;
+    $taxonomy = isset($_POST['taxonomy']) ? sanitize_text_field($_POST['taxonomy']) : 'category';
+    
+    if (!$term_id) {
+        wp_send_json_error(__('Invalid term ID.', 'ai-content-optimizer'));
+    }
+    
+    // Validate taxonomy
+    $valid_taxonomies = array('category', 'product_cat');
+    if (!in_array($taxonomy, $valid_taxonomies)) {
+        wp_send_json_error(__('Invalid taxonomy.', 'ai-content-optimizer'));
+    }
+    
+    $term = get_term($term_id, $taxonomy);
+    if (!$term || is_wp_error($term)) {
+        wp_send_json_error(__('Term not found.', 'ai-content-optimizer'));
+    }
+    
+    $api_key = get_option('aico_openai_api_key');
+    if (empty($api_key)) {
+        wp_send_json_error(__('API key is not set.', 'ai-content-optimizer'));
+    }
+    
+    $model = get_option('aico_openai_model', 'gpt-3.5-turbo');
+    $temperature = get_option('aico_openai_temperature', 0.7);
+    $max_tokens = get_option('aico_openai_max_tokens', 500);
+    
+    $meta_prompt = get_option('aico_category_meta_prompt', '');
+    if (empty($meta_prompt)) {
+        $meta_prompt = "You are an SEO expert. Write a meta description (160 chars max) for this category. Use a professional tone for a general audience. Keep it concise, no exclamation marks or quotation marks.";
+    }
+    
+    // Replace placeholders
+    $parent_category = '';
+    if ($term->parent) {
+        $parent = get_term($term->parent, $taxonomy);
+        if ($parent && !is_wp_error($parent)) {
+            $parent_category = $parent->name;
+        }
+    }
+    
+    $meta_prompt = str_replace(
+        array('{category_name}', '{category_description}', '{post_count}', '{parent_category}'),
+        array($term->name, $term->description, $term->count, $parent_category),
+        $meta_prompt
+    );
+    
+    $ai_content_optimizer = AI_Content_Optimizer::get_instance();
+    $generated_description = $ai_content_optimizer->call_openai_api_direct($api_key, $model, $meta_prompt, $max_tokens, $temperature);
+    
+    if (is_wp_error($generated_description)) {
+        wp_send_json_error($generated_description->get_error_message());
+    }
+    
+    // Update the term description
+    $result = wp_update_term($term_id, $taxonomy, array(
+        'description' => $generated_description
+    ));
+    
+    if (is_wp_error($result)) {
+        wp_send_json_error($result->get_error_message());
+    }
+    
+    wp_send_json_success(array(
+        'description' => $generated_description,
+        'message' => __('Category description optimized successfully!', 'ai-content-optimizer')
+    ));
+});
+
+// Update existing tag optimization to support taxonomy parameter
+add_action('wp_ajax_aico_optimize_tag', function() {
+    $license_status = get_option('bmo_license_status', 'invalid');
+    if ($license_status !== 'success') {
+        wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
+    }
+    
+    check_ajax_referer('aico-nonce', 'nonce');
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
+    }
+    
+    $term_id = isset($_POST['term_id']) ? intval($_POST['term_id']) : 0;
+    $taxonomy = isset($_POST['taxonomy']) ? sanitize_text_field($_POST['taxonomy']) : 'post_tag';
+    
+    if (!$term_id) {
+        wp_send_json_error(__('Invalid term ID.', 'ai-content-optimizer'));
+    }
+    
+    // Validate taxonomy
+    $valid_taxonomies = array('post_tag', 'product_tag');
+    if (!in_array($taxonomy, $valid_taxonomies)) {
+        wp_send_json_error(__('Invalid taxonomy.', 'ai-content-optimizer'));
+    }
+    
+    $term = get_term($term_id, $taxonomy);
+    if (!$term || is_wp_error($term)) {
+        wp_send_json_error(__('Term not found.', 'ai-content-optimizer'));
+    }
+    
+    $api_key = get_option('aico_openai_api_key');
+    if (empty($api_key)) {
+        wp_send_json_error(__('API key is not set.', 'ai-content-optimizer'));
+    }
+    
+    $model = get_option('aico_openai_model', 'gpt-3.5-turbo');
+    $temperature = get_option('aico_openai_temperature', 0.7);
+    $max_tokens = get_option('aico_openai_max_tokens', 500);
+    
+    $meta_prompt = get_option('aico_tag_meta_prompt', '');
+    if (empty($meta_prompt)) {
+        $meta_prompt = "You are an SEO expert. Write a meta description (160 chars max) for this tag. Use a professional tone for a general audience. Keep it concise, no exclamation marks or quotation marks.";
+    }
+    
+    // Replace placeholders
+    $meta_prompt = str_replace(
+        array('{tag_name}', '{tag_description}', '{post_count}'),
+        array($term->name, $term->description, $term->count),
+        $meta_prompt
+    );
+    
+    $ai_content_optimizer = AI_Content_Optimizer::get_instance();
+    $generated_description = $ai_content_optimizer->call_openai_api_direct($api_key, $model, $meta_prompt, $max_tokens, $temperature);
+    
+    if (is_wp_error($generated_description)) {
+        wp_send_json_error($generated_description->get_error_message());
+    }
+    
+    // Update the term description
+    $result = wp_update_term($term_id, $taxonomy, array(
+        'description' => $generated_description
+    ));
+    
+    if (is_wp_error($result)) {
+        wp_send_json_error($result->get_error_message());
+    }
+    
+    wp_send_json_success(array(
+        'description' => $generated_description,
+        'message' => __('Tag description optimized successfully!', 'ai-content-optimizer')
+    ));
 });
 
 // Add meta descriptions for categories and tags
