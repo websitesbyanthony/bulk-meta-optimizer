@@ -198,28 +198,62 @@
                         // Change button text to "Saved!" temporarily
                         $submitButton.text('Saved!');
                         
-                        // After 1.5 seconds, revert to original text
+                        // Reset button text after 2 seconds
                         setTimeout(function() {
                             $submitButton.text($submitButton.data('original-text'));
-                        }, 1500);
+                        }, 2000);
                     } else {
                         // Show error message
                         $form.before('<div class="notice notice-error is-dismissible"><p>' + response.data + '</p></div>');
-                        
-                        // Revert button text immediately
                         $submitButton.text($submitButton.data('original-text'));
                     }
                 },
                 error: function(xhr, status, error) {
                     // Show error message
                     $form.before('<div class="notice notice-error is-dismissible"><p>' + aicoData.strings.error + ' ' + error + '</p></div>');
-                    
-                    // Revert button text immediately
                     $submitButton.text($submitButton.data('original-text'));
                 },
                 complete: function() {
-                    // Re-enable the button
                     $submitButton.prop('disabled', false);
+                }
+            });
+        });
+        
+        // Manual license check
+        $('#bmo-force-license-check').on('click', function(e) {
+            e.preventDefault();
+            
+            const $button = $(this);
+            const $result = $('#bmo-license-check-result');
+            
+            // Show loading message
+            $button.prop('disabled', true);
+            $result.html('<span class="aico-loading">Checking license...</span>');
+            
+            // Send AJAX request
+            $.ajax({
+                url: aicoData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'bmo_force_license_check',
+                    nonce: aicoData.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $result.html('<span class="aico-success">' + response.data + '</span>');
+                        // Reload page after 2 seconds to show updated license status
+                        setTimeout(function() {
+                            location.reload();
+                        }, 2000);
+                    } else {
+                        $result.html('<span class="aico-error">' + aicoData.strings.error + ' ' + response.data + '</span>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $result.html('<span class="aico-error">' + aicoData.strings.error + ' ' + error + '</span>');
+                },
+                complete: function() {
+                    $button.prop('disabled', false);
                 }
             });
         });
