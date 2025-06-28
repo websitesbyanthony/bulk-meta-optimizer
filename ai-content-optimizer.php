@@ -3347,7 +3347,7 @@ add_action('wp_ajax_aico_optimize_category', function() {
         wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
     }
     
-    // Accept both term_id and category_id parameters
+    // Support both term_id and category_id parameters
     $term_id = isset($_POST['term_id']) ? intval($_POST['term_id']) : 0;
     if (!$term_id) {
         $term_id = isset($_POST['category_id']) ? intval($_POST['category_id']) : 0;
