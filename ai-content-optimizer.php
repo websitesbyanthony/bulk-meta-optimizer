@@ -73,7 +73,6 @@ add_action('plugins_loaded', 'ai_content_optimizer_init');
 class AI_Content_Optimizer {
     
     
-    
     /**
      * Plugin version
      */
@@ -2184,15 +2183,9 @@ PROMPT;
 
             // Update meta description
             if (!empty($results['meta'])) {
-                if (defined('WPSEO_VERSION')) {
-                    update_post_meta($post_id, '_yoast_wpseo_metadesc', $results['meta']);
-                }
-                if (class_exists('AIOSEO')) {
-                    update_post_meta($post_id, '_aioseo_description', $results['meta']);
-                }
-                if (class_exists('RankMath')) {
-                    update_post_meta($post_id, 'rank_math_description', $results['meta']);
-                }
+                update_term_meta( $post_id, '_yoast_wpseo_metadesc', $results['meta'] );
+                update_term_meta( $post_id, 'rank_math_description', $results['meta'] );
+                update_term_meta( $post_id, 'aioseo_description', $results['meta'] );
                 update_post_meta($post_id, '_aico_meta_description', $results['meta']);
             }
 
@@ -3158,28 +3151,10 @@ add_action('wp_ajax_aico_optimize_tag', function() {
         wp_send_json_error($generated_description->get_error_message());
     }
     
-    // Update the term description
-    // Commented out to prevent updating the main description field during optimization
-    // $result = wp_update_term($term_id, $taxonomy, array(
-    //     'description' => $generated_description
-    // ));
-    // if (is_wp_error($result)) {
-    //     wp_send_json_error($result->get_error_message());
-    // }
-    
     // Only update SEO plugin meta fields if plugins are active
-    // Yoast SEO
-    if ( defined('WPSEO_VERSION') ) {
-        update_term_meta( $term_id, '_yoast_wpseo_metadesc', $generated_description );
-    }
-    // Rank Math
-    if ( defined('RANK_MATH_VERSION') ) {
-        update_term_meta( $term_id, 'rank_math_description', $generated_description );
-    }
-    // AIOSEO
-    if ( class_exists('AIOSEO') ) {
-        update_term_meta( $term_id, 'aioseo_description', $generated_description );
-    }
+    update_term_meta( $term_id, '_yoast_wpseo_metadesc', $generated_description );
+    update_term_meta( $term_id, 'rank_math_description', $generated_description );
+    update_term_meta( $term_id, 'aioseo_description', $generated_description );
     
     wp_send_json_success(array(
         'description' => $generated_description,
@@ -3516,13 +3491,9 @@ add_action('wp_ajax_aico_optimize_category', function() {
     }
     
     // Update the term description
-    // Commented out to prevent updating the main description field during optimization
-    // $result = wp_update_term($term_id, $taxonomy, array(
-    //     'description' => $generated_description
-    // ));
-    // if (is_wp_error($result)) {
-    //     wp_send_json_error($result->get_error_message());
-    // }
+    update_term_meta( $term_id, '_yoast_wpseo_metadesc', $generated_description );
+    update_term_meta( $term_id, 'rank_math_description', $generated_description );
+    update_term_meta( $term_id, 'aioseo_description', $generated_description );
     
     wp_send_json_success(array(
         'description' => $generated_description,
@@ -3594,13 +3565,9 @@ add_action('wp_ajax_aico_optimize_tag', function() {
     }
     
     // Update the term description
-    // Commented out to prevent updating the main description field during optimization
-    // $result = wp_update_term($term_id, $taxonomy, array(
-    //     'description' => $generated_description
-    // ));
-    // if (is_wp_error($result)) {
-    //     wp_send_json_error($result->get_error_message());
-    // }
+    update_term_meta( $term_id, '_yoast_wpseo_metadesc', $generated_description );
+    update_term_meta( $term_id, 'rank_math_description', $generated_description );
+    update_term_meta( $term_id, 'aioseo_description', $generated_description );
     
     wp_send_json_success(array(
         'description' => $generated_description,
