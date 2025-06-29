@@ -363,6 +363,15 @@ PROMPT;
 
         add_submenu_page(
             'ai-content-optimizer',
+            __('Brand Profile', 'ai-content-optimizer'),
+            __('Brand Profile', 'ai-content-optimizer'),
+            'manage_options',
+            'aico-brand-profile',
+            'aico_render_brand_profile_page'
+        );
+
+        add_submenu_page(
+            'ai-content-optimizer',
             __('Settings', 'ai-content-optimizer'),
             __('Settings', 'ai-content-optimizer'),
             'manage_options',
@@ -3045,13 +3054,29 @@ add_action('wp_ajax_aico_optimize_category', function() {
         wp_send_json_error($generated_description->get_error_message());
     }
     
-    // Update Yoast's meta key for the specific taxonomy
-    update_term_meta($term_id, '_yoast_wpseo_metadesc', $generated_description);
-    
-    // Clear Yoast's internal cache so the new value is picked up immediately
-    if (class_exists('WPSEO_Meta') && method_exists('WPSEO_Meta','clear_cache')) {
-        // Passing ["term_$term_id"] forces Yoast to bust taxonomy cache
-        WPSEO_Meta::clear_cache(["term_{$term_id}"]);
+    // Update Yoast's meta description using the correct method for each taxonomy
+    if (in_array($taxonomy, ['category', 'post_tag'])) {
+        // For regular WordPress categories and tags, use wpseo_taxonomy_meta array
+        $meta = get_term_meta($term_id, 'wpseo_taxonomy_meta', true);
+        if (!is_array($meta)) {
+            $meta = array();
+        }
+        $meta['wpseo_desc'] = $generated_description;
+        update_term_meta($term_id, 'wpseo_taxonomy_meta', $meta);
+        
+        // Clear Yoast's cache
+        if (class_exists('WPSEO_Meta') && method_exists('WPSEO_Meta','clear_cache')) {
+            WPSEO_Meta::clear_cache();
+        }
+    } else if (in_array($taxonomy, ['product_cat', 'product_tag'])) {
+        // For WooCommerce product categories and tags, use _yoast_wpseo_metadesc directly
+        update_term_meta($term_id, '_yoast_wpseo_metadesc', $generated_description);
+        
+        // Clear Yoast's internal cache so the new value is picked up immediately
+        if (class_exists('WPSEO_Meta') && method_exists('WPSEO_Meta','clear_cache')) {
+            // Passing ["term_$term_id"] forces Yoast to bust taxonomy cache
+            WPSEO_Meta::clear_cache(["term_{$term_id}"]);
+        }
     }
     
     // Also update other SEO plugins
@@ -3630,9 +3655,7 @@ function aico_get_brand_prefix() {
 // ... existing code ...
 
 // 4. Add admin UI for onboarding and settings tab (pseudo-code, actual UI code would be more involved)
-add_action('admin_menu', function() {
-    add_submenu_page('ai-content-optimizer', 'Brand Profile', 'Brand Profile', 'manage_options', 'aico-brand-profile', 'aico_render_brand_profile_page');
-});
+
 
 function aico_render_brand_profile_page() {
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_admin_referer('aico_save_brand_profile')) {
@@ -3681,4 +3704,6 @@ add_action('admin_notices', function() {
         echo '<div class="notice notice-warning is-dismissible"><p><strong>Bulk Meta Optimizer:</strong> Complete your <a href="admin.php?page=aico-brand-profile">Brand Profile</a> for on-brand AI results.</p></div>';
     }
 });
+
+
 
