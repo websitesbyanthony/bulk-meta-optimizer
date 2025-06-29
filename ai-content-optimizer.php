@@ -2191,7 +2191,7 @@ PROMPT;
                 // Your plugin's own flag
                 update_post_meta($post_id, '_aico_meta_description', $results['meta']);
                 // Clear Yoast cache if available
-                if (class_exists('WPSEO_Meta')) {
+                if (class_exists('WPSEO_Meta') && method_exists('WPSEO_Meta','clear_cache')) {
                     WPSEO_Meta::clear_cache();
                 }
             }
@@ -3046,9 +3046,9 @@ add_action('wp_ajax_aico_optimize_category', function() {
         error_log('[AICO] Failed to update Yoast meta for term ' . $term_id);
         wp_send_json_error(__('Failed to update Yoast SEO meta description.', 'ai-content-optimizer'));
     }
-    // Clear Yoast taxonomy meta cache if available
-    if (class_exists('WPSEO_Taxonomy_Meta')) {
-        WPSEO_Taxonomy_Meta::clear_cache();
+    // Clear Yoast cache if available (safe for both posts and terms)
+    if (class_exists('WPSEO_Meta') && method_exists('WPSEO_Meta','clear_cache')) {
+        WPSEO_Meta::clear_cache();
     }
     update_term_meta( $term_id, 'rank_math_description', $generated_description );
     update_term_meta( $term_id, 'aioseo_description', $generated_description );
