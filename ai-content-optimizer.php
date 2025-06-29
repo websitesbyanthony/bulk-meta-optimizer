@@ -3040,14 +3040,17 @@ add_action('wp_ajax_aico_optimize_category', function() {
     // Only update SEO plugin meta fields if plugins are active
     // Yoast SEO
     if ( defined('WPSEO_VERSION') ) {
+        error_log('Updating Yoast meta for term ' . $term_id);
         update_term_meta( $term_id, '_yoast_wpseo_metadesc', $generated_description );
     }
     // Rank Math
     if ( defined('RANK_MATH_VERSION') ) {
+        error_log('Updating Rank Math meta for term ' . $term_id);
         update_term_meta( $term_id, 'rank_math_description', $generated_description );
     }
     // AIOSEO
     if ( class_exists('AIOSEO') ) {
+        error_log('Updating AIOSEO meta for term ' . $term_id);
         update_term_meta( $term_id, 'aioseo_description', $generated_description );
     }
     
