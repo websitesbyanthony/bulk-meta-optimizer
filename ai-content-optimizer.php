@@ -2183,10 +2183,17 @@ PROMPT;
 
             // Update meta description
             if (!empty($results['meta'])) {
-                update_term_meta( $post_id, '_yoast_wpseo_metadesc', $results['meta'] );
-                update_term_meta( $post_id, 'rank_math_description', $results['meta'] );
-                update_term_meta( $post_id, 'aioseo_description', $results['meta'] );
+                // Yoast (post meta)
+                update_post_meta($post_id, '_yoast_wpseo_metadesc', $results['meta']);
+                // Other SEO plugins
+                update_post_meta($post_id, 'rank_math_description', $results['meta']);
+                update_post_meta($post_id, 'aioseo_description', $results['meta']);
+                // Your plugin's own flag
                 update_post_meta($post_id, '_aico_meta_description', $results['meta']);
+                // Clear Yoast cache if available
+                if (class_exists('WPSEO_Meta')) {
+                    WPSEO_Meta::clear_cache();
+                }
             }
 
             // --- Visual Composer compatibility: preserve custom CSS meta ---
