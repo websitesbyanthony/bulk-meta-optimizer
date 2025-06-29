@@ -148,6 +148,8 @@ class AI_Content_Optimizer {
             'optimize_content' => false, // Default off
             'optimize_slug' => false,
             'preserve_html' => true,
+            'optimize_category_meta' => true,  // Add this line
+            'optimize_tag_meta' => true,       // Add this line
         );
 
         // Set defaults for each post type
