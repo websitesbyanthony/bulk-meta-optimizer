@@ -3046,16 +3046,16 @@ add_action('wp_ajax_aico_optimize_category', function() {
     
     // Only update SEO plugin meta fields if plugins are active
     // Yoast SEO
-    if (defined('WPSEO_VERSION')) {
-        update_term_meta($term_id, 'wpseo_desc', $generated_description);
+    if ( defined('WPSEO_VERSION') ) {
+        update_term_meta( $term_id, '_yoast_wpseo_metadesc', $generated_description );
     }
     // Rank Math
-    if (defined('RANK_MATH_VERSION')) {
-        update_term_meta($term_id, 'rank_math_description', $generated_description);
+    if ( defined('RANK_MATH_VERSION') ) {
+        update_term_meta( $term_id, 'rank_math_description', $generated_description );
     }
     // AIOSEO
-    if (class_exists('AIOSEO')) {
-        update_term_meta($term_id, 'aioseo_description', $generated_description);
+    if ( class_exists('AIOSEO') ) {
+        update_term_meta( $term_id, 'aioseo_description', $generated_description );
     }
     
     wp_send_json_success(array(
@@ -3169,16 +3169,16 @@ add_action('wp_ajax_aico_optimize_tag', function() {
     
     // Only update SEO plugin meta fields if plugins are active
     // Yoast SEO
-    if (defined('WPSEO_VERSION')) {
-        update_term_meta($term_id, 'wpseo_desc', $generated_description);
+    if ( defined('WPSEO_VERSION') ) {
+        update_term_meta( $term_id, '_yoast_wpseo_metadesc', $generated_description );
     }
     // Rank Math
-    if (defined('RANK_MATH_VERSION')) {
-        update_term_meta($term_id, 'rank_math_description', $generated_description);
+    if ( defined('RANK_MATH_VERSION') ) {
+        update_term_meta( $term_id, 'rank_math_description', $generated_description );
     }
     // AIOSEO
-    if (class_exists('AIOSEO')) {
-        update_term_meta($term_id, 'aioseo_description', $generated_description);
+    if ( class_exists('AIOSEO') ) {
+        update_term_meta( $term_id, 'aioseo_description', $generated_description );
     }
     
     wp_send_json_success(array(
