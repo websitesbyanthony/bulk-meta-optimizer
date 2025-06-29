@@ -3041,17 +3041,20 @@ add_action('wp_ajax_aico_optimize_category', function() {
     // Yoast SEO
     if ( defined('WPSEO_VERSION') ) {
         error_log('Updating Yoast meta for term ' . $term_id);
-        update_term_meta( $term_id, '_yoast_wpseo_metadesc', $generated_description );
+        $result = update_term_meta( $term_id, '_yoast_wpseo_metadesc', $generated_description );
+        error_log('Yoast meta update result for term ' . $term_id . ': ' . print_r($result, true));
     }
     // Rank Math
     if ( defined('RANK_MATH_VERSION') ) {
         error_log('Updating Rank Math meta for term ' . $term_id);
-        update_term_meta( $term_id, 'rank_math_description', $generated_description );
+        $result = update_term_meta( $term_id, 'rank_math_description', $generated_description );
+        error_log('Rank Math meta update result for term ' . $term_id . ': ' . print_r($result, true));
     }
     // AIOSEO
     if ( class_exists('AIOSEO') ) {
         error_log('Updating AIOSEO meta for term ' . $term_id);
-        update_term_meta( $term_id, 'aioseo_description', $generated_description );
+        $result = update_term_meta( $term_id, 'aioseo_description', $generated_description );
+        error_log('AIOSEO meta update result for term ' . $term_id . ': ' . print_r($result, true));
     }
     
     wp_send_json_success(array(
