@@ -3036,13 +3036,13 @@ add_action('wp_ajax_aico_optimize_category', function() {
     }
     
     // Update the term description
-    $result = wp_update_term($term_id, $taxonomy, array(
-        'description' => $generated_description
-    ));
-    
-    if (is_wp_error($result)) {
-        wp_send_json_error($result->get_error_message());
-    }
+    // Commented out to prevent updating the main description field during optimization
+    // $result = wp_update_term($term_id, $taxonomy, array(
+    //     'description' => $generated_description
+    // ));
+    // if (is_wp_error($result)) {
+    //     wp_send_json_error($result->get_error_message());
+    // }
     
     // Only update SEO plugin meta fields if plugins are active
     // Yoast SEO
@@ -3159,13 +3159,13 @@ add_action('wp_ajax_aico_optimize_tag', function() {
     }
     
     // Update the term description
-    $result = wp_update_term($term_id, $taxonomy, array(
-        'description' => $generated_description
-    ));
-    
-    if (is_wp_error($result)) {
-        wp_send_json_error($result->get_error_message());
-    }
+    // Commented out to prevent updating the main description field during optimization
+    // $result = wp_update_term($term_id, $taxonomy, array(
+    //     'description' => $generated_description
+    // ));
+    // if (is_wp_error($result)) {
+    //     wp_send_json_error($result->get_error_message());
+    // }
     
     // Only update SEO plugin meta fields if plugins are active
     // Yoast SEO
@@ -3516,13 +3516,13 @@ add_action('wp_ajax_aico_optimize_category', function() {
     }
     
     // Update the term description
-    $result = wp_update_term($term_id, $taxonomy, array(
-        'description' => $generated_description
-    ));
-    
-    if (is_wp_error($result)) {
-        wp_send_json_error($result->get_error_message());
-    }
+    // Commented out to prevent updating the main description field during optimization
+    // $result = wp_update_term($term_id, $taxonomy, array(
+    //     'description' => $generated_description
+    // ));
+    // if (is_wp_error($result)) {
+    //     wp_send_json_error($result->get_error_message());
+    // }
     
     wp_send_json_success(array(
         'description' => $generated_description,
@@ -3594,13 +3594,13 @@ add_action('wp_ajax_aico_optimize_tag', function() {
     }
     
     // Update the term description
-    $result = wp_update_term($term_id, $taxonomy, array(
-        'description' => $generated_description
-    ));
-    
-    if (is_wp_error($result)) {
-        wp_send_json_error($result->get_error_message());
-    }
+    // Commented out to prevent updating the main description field during optimization
+    // $result = wp_update_term($term_id, $taxonomy, array(
+    //     'description' => $generated_description
+    // ));
+    // if (is_wp_error($result)) {
+    //     wp_send_json_error($result->get_error_message());
+    // }
     
     wp_send_json_success(array(
         'description' => $generated_description,
