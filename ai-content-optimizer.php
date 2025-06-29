@@ -2635,6 +2635,11 @@ PROMPT;
             return;
         }
         
+        // If Yoast SEO is active, do not output our own meta tag
+        if (defined('WPSEO_VERSION')) {
+            return;
+        }
+
         $term = get_queried_object();
         if (!$term || is_wp_error($term)) {
             return;
@@ -3029,37 +3034,13 @@ add_action('wp_ajax_aico_optimize_category', function() {
     }
     
     // Update the term description
-    // Commented out to prevent updating the main description field during optimization
-    // $result = wp_update_term($term_id, $taxonomy, array(
-    //     'description' => $generated_description
-    // ));
-    // if (is_wp_error($result)) {
-    //     wp_send_json_error($result->get_error_message());
-    // }
-    
-    // Only update SEO plugin meta fields if plugins are active
-    // Yoast SEO
-    if ( defined('WPSEO_VERSION') ) {
-        error_log('Updating Yoast meta for term ' . $term_id);
-        $result = update_term_meta( $term_id, '_yoast_wpseo_metadesc', $generated_description );
-        $check = get_term_meta($term_id, '_yoast_wpseo_metadesc', true);
-        error_log('Yoast meta after update for term ' . $term_id . ': ' . print_r($check, true));
-        update_term_meta( $term_id, 'rank_math_description', $generated_description );
-        update_term_meta( $term_id, 'aioseo_description', $generated_description );
-        error_log('Yoast meta update result for term ' . $term_id . ': ' . print_r($result, true));
+    $result = update_term_meta( $term_id, '_yoast_wpseo_metadesc', $generated_description );
+    if ($result === false) {
+        error_log('[AICO] Failed to update Yoast meta for term ' . $term_id);
+        wp_send_json_error(__('Failed to update Yoast SEO meta description.', 'ai-content-optimizer'));
     }
-    // Rank Math
-    if ( defined('RANK_MATH_VERSION') ) {
-        error_log('Updating Rank Math meta for term ' . $term_id);
-        $result = update_term_meta( $term_id, 'rank_math_description', $generated_description );
-        error_log('Rank Math meta update result for term ' . $term_id . ': ' . print_r($result, true));
-    }
-    // AIOSEO
-    if ( class_exists('AIOSEO') ) {
-        error_log('Updating AIOSEO meta for term ' . $term_id);
-        $result = update_term_meta( $term_id, 'aioseo_description', $generated_description );
-        error_log('AIOSEO meta update result for term ' . $term_id . ': ' . print_r($result, true));
-    }
+    update_term_meta( $term_id, 'rank_math_description', $generated_description );
+    update_term_meta( $term_id, 'aioseo_description', $generated_description );
     
     wp_send_json_success(array(
         'description' => $generated_description,
