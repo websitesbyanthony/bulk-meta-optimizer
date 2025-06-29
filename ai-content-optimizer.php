@@ -3044,6 +3044,20 @@ add_action('wp_ajax_aico_optimize_category', function() {
         wp_send_json_error($result->get_error_message());
     }
     
+    // Only update SEO plugin meta fields if plugins are active
+    // Yoast SEO
+    if (defined('WPSEO_VERSION')) {
+        update_term_meta($term_id, 'wpseo_desc', $generated_description);
+    }
+    // Rank Math
+    if (defined('RANK_MATH_VERSION')) {
+        update_term_meta($term_id, 'rank_math_description', $generated_description);
+    }
+    // AIOSEO
+    if (class_exists('AIOSEO')) {
+        update_term_meta($term_id, 'aioseo_description', $generated_description);
+    }
+    
     wp_send_json_success(array(
         'description' => $generated_description,
         'message' => __('Term description optimized successfully!', 'ai-content-optimizer')
@@ -3151,6 +3165,20 @@ add_action('wp_ajax_aico_optimize_tag', function() {
     
     if (is_wp_error($result)) {
         wp_send_json_error($result->get_error_message());
+    }
+    
+    // Only update SEO plugin meta fields if plugins are active
+    // Yoast SEO
+    if (defined('WPSEO_VERSION')) {
+        update_term_meta($term_id, 'wpseo_desc', $generated_description);
+    }
+    // Rank Math
+    if (defined('RANK_MATH_VERSION')) {
+        update_term_meta($term_id, 'rank_math_description', $generated_description);
+    }
+    // AIOSEO
+    if (class_exists('AIOSEO')) {
+        update_term_meta($term_id, 'aioseo_description', $generated_description);
     }
     
     wp_send_json_success(array(
