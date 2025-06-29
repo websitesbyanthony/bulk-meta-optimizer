@@ -3042,6 +3042,10 @@ add_action('wp_ajax_aico_optimize_category', function() {
     if ( defined('WPSEO_VERSION') ) {
         error_log('Updating Yoast meta for term ' . $term_id);
         $result = update_term_meta( $term_id, '_yoast_wpseo_metadesc', $generated_description );
+        $check = get_term_meta($term_id, '_yoast_wpseo_metadesc', true);
+        error_log('Yoast meta after update for term ' . $term_id . ': ' . print_r($check, true));
+        update_term_meta( $term_id, 'rank_math_description', $generated_description );
+        update_term_meta( $term_id, 'aioseo_description', $generated_description );
         error_log('Yoast meta update result for term ' . $term_id . ': ' . print_r($result, true));
     }
     // Rank Math
