@@ -3045,32 +3045,22 @@ add_action('wp_ajax_aico_optimize_category', function() {
         wp_send_json_error($generated_description->get_error_message());
     }
     
-    // Update Yoast taxonomy meta description using the correct method for each taxonomy
-    if (in_array($taxonomy, ['category', 'post_tag'])) {
-        if (class_exists('WPSEO_Term_Meta')) {
-            WPSEO_Term_Meta::set_value($term_id, 'metadesc', $generated_description);
-            WPSEO_Term_Meta::clear_cache($term_id);
-        } else {
-            $meta = get_term_meta($term_id, 'wpseo_taxonomy_meta', true);
-            if (!is_array($meta)) {
-                $meta = array();
-            }
-            $meta['metadesc'] = $generated_description;
-            update_term_meta($term_id, 'wpseo_taxonomy_meta', $meta);
-        }
-        if (class_exists('WPSEO_Meta') && method_exists('WPSEO_Meta','clear_cache')) {
-            WPSEO_Meta::clear_cache();
-        }
-    } else if (in_array($taxonomy, ['product_cat', 'product_tag'])) {
-        update_term_meta($term_id, '_yoast_wpseo_metadesc', $generated_description);
-        if (class_exists('WPSEO_Meta') && method_exists('WPSEO_Meta','clear_cache')) {
-            WPSEO_Meta::clear_cache(["term_{$term_id}"]);
-        }
+    // Update Yoast's meta key for the specific taxonomy
+    update_term_meta($term_id, '_yoast_wpseo_metadesc', $generated_description);
+    
+    // Clear Yoast's internal cache so the new value is picked up immediately
+    if (class_exists('WPSEO_Meta') && method_exists('WPSEO_Meta','clear_cache')) {
+        // Passing ["term_$term_id"] forces Yoast to bust taxonomy cache
+        WPSEO_Meta::clear_cache(["term_{$term_id}"]);
     }
+    
+    // Also update other SEO plugins
+    update_term_meta($term_id, 'rank_math_description', $generated_description);
+    update_term_meta($term_id, 'aioseo_description', $generated_description);
     
     wp_send_json_success(array(
         'description' => $generated_description,
-        'message' => __('Term description optimized successfully!', 'ai-content-optimizer')
+        'message' => __('Yoast meta updated!', 'ai-content-optimizer')
     ));
 });
 
@@ -3691,3 +3681,4 @@ add_action('admin_notices', function() {
         echo '<div class="notice notice-warning is-dismissible"><p><strong>Bulk Meta Optimizer:</strong> Complete your <a href="admin.php?page=aico-brand-profile">Brand Profile</a> for on-brand AI results.</p></div>';
     }
 });
+
