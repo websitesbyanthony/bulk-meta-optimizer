@@ -1774,7 +1774,7 @@ PROMPT;
     /**
      * Call OpenAI API directly
      */
-    private function call_openai_api_direct($api_key, $model, $prompt, $max_tokens = 500, $temperature = 0.7) {
+    public function call_openai_api_direct($api_key, $model, $prompt, $max_tokens = 500, $temperature = 0.7) {
         try {
             error_log('Calling OpenAI API with model: ' . $model);
             
