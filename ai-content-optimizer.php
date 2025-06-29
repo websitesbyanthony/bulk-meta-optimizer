@@ -1777,6 +1777,11 @@ PROMPT;
         try {
             error_log('Calling OpenAI API with model: ' . $model);
             
+            // Inject brand profile prefix
+            if (function_exists('aico_get_brand_prefix')) {
+                $prompt = aico_get_brand_prefix() . $prompt;
+            }
+            
             $url = 'https://api.openai.com/v1/chat/completions';
             $headers = array(
                 'Authorization' => 'Bearer ' . $api_key,
@@ -3040,22 +3045,27 @@ add_action('wp_ajax_aico_optimize_category', function() {
         wp_send_json_error($generated_description->get_error_message());
     }
     
-    // Update Yoast taxonomy meta description using Yoast's API if available
-    if (class_exists('WPSEO_Term_Meta')) {
-        WPSEO_Term_Meta::set_value($term_id, 'metadesc', $generated_description);
-        WPSEO_Term_Meta::clear_cache($term_id);
-    } else {
-        // Fallback for older Yoast versions: update the serialized array
-        $meta = get_term_meta($term_id, 'wpseo_taxonomy_meta', true);
-        if (!is_array($meta)) {
-            $meta = array();
+    // Update Yoast taxonomy meta description using the correct method for each taxonomy
+    if (in_array($taxonomy, ['category', 'post_tag'])) {
+        if (class_exists('WPSEO_Term_Meta')) {
+            WPSEO_Term_Meta::set_value($term_id, 'metadesc', $generated_description);
+            WPSEO_Term_Meta::clear_cache($term_id);
+        } else {
+            $meta = get_term_meta($term_id, 'wpseo_taxonomy_meta', true);
+            if (!is_array($meta)) {
+                $meta = array();
+            }
+            $meta['metadesc'] = $generated_description;
+            update_term_meta($term_id, 'wpseo_taxonomy_meta', $meta);
         }
-        $meta['metadesc'] = $generated_description;
-        update_term_meta($term_id, 'wpseo_taxonomy_meta', $meta);
-    }
-    // Clear Yoast cache if available (safe for both posts and terms)
-    if (class_exists('WPSEO_Meta') && method_exists('WPSEO_Meta','clear_cache')) {
-        WPSEO_Meta::clear_cache();
+        if (class_exists('WPSEO_Meta') && method_exists('WPSEO_Meta','clear_cache')) {
+            WPSEO_Meta::clear_cache();
+        }
+    } else if (in_array($taxonomy, ['product_cat', 'product_tag'])) {
+        update_term_meta($term_id, '_yoast_wpseo_metadesc', $generated_description);
+        if (class_exists('WPSEO_Meta') && method_exists('WPSEO_Meta','clear_cache')) {
+            WPSEO_Meta::clear_cache(["term_{$term_id}"]);
+        }
     }
     
     wp_send_json_success(array(
@@ -3604,3 +3614,80 @@ add_action('wp_head', function() {
         }
     }
 }, 1);
+
+// 1. Add a function to get the brand profile
+function aico_get_brand_profile() {
+    return get_option('aico_brand_profile', []);
+}
+
+// 2. Add a function to build the brand prefix for AI prompts
+function aico_get_brand_prefix() {
+    $brand = aico_get_brand_profile();
+    if (empty($brand) || !is_array($brand)) return '';
+    $prefix = '';
+    if (!empty($brand['name']))    $prefix .= "Brand: {$brand['name']}\n";
+    if (!empty($brand['tagline'])) $prefix .= "Tagline: {$brand['tagline']}\n";
+    if (!empty($brand['tone']))    $prefix .= "Tone: {$brand['tone']}\n";
+    if (!empty($brand['keywords'])) $prefix .= "Keywords: ".implode(', ', (array)$brand['keywords'])."\n";
+    if (!empty($brand['audience'])) $prefix .= "Audience: {$brand['audience']}\n";
+    if (!empty($brand['banned']))   $prefix .= "Banned: ".implode(', ', (array)$brand['banned'])."\n";
+    return trim($prefix) . "\n\n";
+}
+
+// 3. Inject the brand prefix into every AI call (in call_openai_api_direct or wherever prompts are built)
+// ... In call_openai_api_direct, before sending the prompt:
+// $prompt = aico_get_brand_prefix() . $prompt;
+// ... existing code ...
+
+// 4. Add admin UI for onboarding and settings tab (pseudo-code, actual UI code would be more involved)
+add_action('admin_menu', function() {
+    add_submenu_page('ai-content-optimizer', 'Brand Profile', 'Brand Profile', 'manage_options', 'aico-brand-profile', 'aico_render_brand_profile_page');
+});
+
+function aico_render_brand_profile_page() {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_admin_referer('aico_save_brand_profile')) {
+        $profile = [
+            'name'    => sanitize_text_field($_POST['brand_name'] ?? ''),
+            'tagline' => sanitize_text_field($_POST['brand_tagline'] ?? ''),
+            'tone'    => sanitize_text_field($_POST['brand_tone'] ?? ''),
+            'keywords'=> array_filter(array_map('trim', explode(',', $_POST['brand_keywords'] ?? ''))),
+            'audience'=> sanitize_text_field($_POST['brand_audience'] ?? ''),
+            'banned'  => array_filter(array_map('trim', explode(',', $_POST['brand_banned'] ?? ''))),
+        ];
+        update_option('aico_brand_profile', $profile);
+        echo '<div class="updated"><p>Brand profile saved!</p></div>';
+    }
+    $profile = aico_get_brand_profile();
+    ?>
+    <div class="wrap"><h1>Brand Profile</h1>
+    <form method="post">
+        <?php wp_nonce_field('aico_save_brand_profile'); ?>
+        <table class="form-table">
+            <tr><th>Brand Name</th><td><input type="text" name="brand_name" value="<?php echo esc_attr($profile['name'] ?? ''); ?>" required></td></tr>
+            <tr><th>Tagline</th><td><input type="text" name="brand_tagline" value="<?php echo esc_attr($profile['tagline'] ?? ''); ?>"></td></tr>
+            <tr><th>Tone of Voice</th><td><input type="text" name="brand_tone" value="<?php echo esc_attr($profile['tone'] ?? ''); ?>" required></td></tr>
+            <tr><th>Core Keywords/Topics</th><td><input type="text" name="brand_keywords" value="<?php echo esc_attr(implode(', ', $profile['keywords'] ?? [])); ?>" placeholder="comma-separated" required></td></tr>
+            <tr><th>Target Audience</th><td><input type="text" name="brand_audience" value="<?php echo esc_attr($profile['audience'] ?? ''); ?>" required></td></tr>
+            <tr><th>Banned Words/Phrases</th><td><input type="text" name="brand_banned" value="<?php echo esc_attr(implode(', ', $profile['banned'] ?? [])); ?>" placeholder="comma-separated"></td></tr>
+        </table>
+        <p><input type="submit" class="button button-primary" value="Save Brand Profile"></p>
+    </form>
+    <form method="post" style="margin-top:2em;">
+        <?php wp_nonce_field('aico_reset_brand_profile'); ?>
+        <input type="hidden" name="reset_brand_profile" value="1">
+        <input type="submit" class="button" value="Reset Brand Profile" onclick="return confirm('Are you sure you want to reset your brand profile?');">
+    </form>
+    </div>
+    <?php
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_brand_profile']) && check_admin_referer('aico_reset_brand_profile')) {
+        delete_option('aico_brand_profile');
+        echo '<div class="updated"><p>Brand profile reset. Please reload the page.</p></div>';
+    }
+}
+
+// 5. Show admin notice if no brand profile exists
+add_action('admin_notices', function() {
+    if (!aico_get_brand_profile()) {
+        echo '<div class="notice notice-warning is-dismissible"><p><strong>Bulk Meta Optimizer:</strong> Complete your <a href="admin.php?page=aico-brand-profile">Brand Profile</a> for on-brand AI results.</p></div>';
+    }
+});
