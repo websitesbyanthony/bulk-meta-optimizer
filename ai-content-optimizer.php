@@ -8,9 +8,9 @@
  */
 
 /**
- * â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+ * â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
  * SLM License Verification & Domain Registration
- * â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+ * â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
  *
  * This plugin uses Software License Manager (SLM) endpoints on bulkmetaoptimizer.com
  * to activate, check, and deactivate licenses tied to the site's domain.
@@ -37,12 +37,12 @@
  *    â€¢ Admin notice shows "Invalid" or "Expired" messages
  *
  * 5. Hooks & Scheduling
- *    â€¢ Activation hook  â†’ slm_activate
- *    â€¢ Deactivation hookâ†’ slm_deactivate
- *    â€¢ admin_init       â†’ slm_check   (and daily via wp_schedule_event)
+ *    â€¢ Activation hook  â†' slm_activate
+ *    â€¢ Deactivation hookâ†' slm_deactivate
+ *    â€¢ admin_init       â†' slm_check   (and daily via wp_schedule_event)
  *
  * @see https://bulkmetaoptimizer.com/docs/slm
- * â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+ * â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
  */
 
 // Exit if accessed directly.
@@ -50,7 +50,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-// â”€â”€â”€â”€â”€ SLM License Verification â”€â”€â”€â”€â”€
+// â"€â"€â"€â"€â"€ SLM License Verification â"€â"€â"€â"€â"€
 if ( ! defined( 'BMO_SLM_SERVER' ) ) {
     define( 'BMO_SLM_SERVER', 'https://bulkmetaoptimizer.com' );
 }
@@ -60,7 +60,7 @@ if ( ! defined( 'BMO_SLM_ITEM' ) ) {
 if ( ! defined( 'BMO_SLM_SECRET_VERIFY' ) ) {
     define( 'BMO_SLM_SECRET_VERIFY', '685361e739ae33.52122910' );
 }
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 require_once __DIR__ . '/restore-defaults.php';
 
@@ -71,8 +71,7 @@ function ai_content_optimizer_init() {
 add_action('plugins_loaded', 'ai_content_optimizer_init');
 
 class AI_Content_Optimizer {
-    
-    
+
     /**
      * Plugin version
      */
@@ -224,327 +223,7 @@ PROMPT;
             // Register settings (always available for license management)
             add_action('admin_init', array($this, 'register_settings'));
 
-            // Check license status before enabling core functionality
-            $license_status = get_option('bmo_license_status', 'invalid');
-            if ($license_status !== 'success') {
-                // If license is not valid, prevent core functionality from loading
-                // Admin notices are handled by bmo_maybe_disable_plugin
-                return;
-            }
-
-            // Core functionality - only if license is valid
-            // Enqueue admin scripts and styles
-            add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
-
-            // Add AJAX handlers
-            add_action('wp_ajax_aico_test_api', array($this, 'ajax_test_api'));
-            add_action('wp_ajax_aico_generate_content', array($this, 'ajax_generate_content'));
-            add_action('wp_ajax_aico_bulk_optimize', array($this, 'ajax_bulk_optimize'));
-            add_action('wp_ajax_aico_save_settings', array($this, 'ajax_save_settings'));
-
-            // Add row actions
-            add_filter('post_row_actions', array($this, 'add_row_actions'), 10, 2);
-            add_filter('page_row_actions', array($this, 'add_row_actions'), 10, 2);
-
-            // Add product row actions if WooCommerce is active
-            if (class_exists('WooCommerce')) {
-                add_filter('product_row_actions', array($this, 'add_row_actions'), 10, 2);
-            }
-
-            // Add bulk actions
-            add_filter('bulk_actions-edit-post', array($this, 'register_bulk_actions'));
-            add_filter('bulk_actions-edit-page', array($this, 'register_bulk_actions'));
-
-            // Add product bulk actions if WooCommerce is active
-            if (class_exists('WooCommerce')) {
-                add_filter('bulk_actions-edit-product', array($this, 'register_bulk_actions'));
-                add_filter('handle_bulk_actions-edit-product', array($this, 'handle_bulk_actions'), 10, 3);
-            }
-
-            add_filter('handle_bulk_actions-edit-post', array($this, 'handle_bulk_actions'), 10, 3);
-            add_filter('handle_bulk_actions-edit-page', array($this, 'handle_bulk_actions'), 10, 3);
-            
-            // Add taxonomy row actions and bulk actions
-            add_filter('category_row_actions', array($this, 'add_taxonomy_row_actions'), 10, 2);
-            add_filter('post_tag_row_actions', array($this, 'add_taxonomy_row_actions'), 10, 2);
-            add_filter('bulk_actions-edit-category', array($this, 'register_taxonomy_bulk_actions'));
-            add_filter('bulk_actions-edit-post_tag', array($this, 'register_taxonomy_bulk_actions'));
-            add_filter('handle_bulk_actions-edit-category', array($this, 'handle_taxonomy_bulk_actions'), 10, 3);
-            add_filter('handle_bulk_actions-edit-post_tag', array($this, 'handle_taxonomy_bulk_actions'), 10, 3);
-            
-            // Add support for WooCommerce product categories and tags
-            if (class_exists('WooCommerce')) {
-                add_filter('product_cat_row_actions', array($this, 'add_taxonomy_row_actions'), 10, 2);
-                add_filter('product_tag_row_actions', array($this, 'add_taxonomy_row_actions'), 10, 2);
-                add_filter('bulk_actions-edit-product_cat', array($this, 'register_taxonomy_bulk_actions'));
-                add_filter('bulk_actions-edit-product_tag', array($this, 'register_taxonomy_bulk_actions'));
-                add_filter('handle_bulk_actions-edit-product_cat', array($this, 'handle_taxonomy_bulk_actions'), 10, 3);
-                add_filter('handle_bulk_actions-edit-product_tag', array($this, 'handle_taxonomy_bulk_actions'), 10, 3);
-            }
-        }
-        
-        // Frontend hooks - only if license is valid
-        $license_status = get_option('bmo_license_status', 'invalid');
-        if ($license_status === 'success') {
-            // Add frontend meta tags for categories and tags
-            add_action('wp_head', array($this, 'add_taxonomy_meta_tags'));
-            
-            // Add custom post type support
-            add_action('init', array($this, 'add_custom_post_type_support'));
-        }
-    }
-
-    /**
-     * Register settings
-     */
-    public function register_settings() {
-        // Register API settings
-        register_setting('aico_api_settings', 'aico_openai_api_key');
-        register_setting('aico_api_settings', 'aico_openai_model');
-        register_setting('aico_api_settings', 'aico_openai_temperature');
-        register_setting('aico_api_settings', 'aico_openai_max_tokens');
-
-        // Register advanced settings
-        register_setting('aico_advanced_settings', 'aico_custom_css');
-        register_setting('aico_advanced_settings', 'aico_debug_mode');
-
-        // Register content settings for each post type
-        foreach (array('post', 'page', 'product') as $post_type) {
-            register_setting('aico_content_settings', 'aico_' . $post_type . '_settings');
-            register_setting(
-                'aico_content_settings',
-                'aico_' . $post_type . '_title_prompt',
-                array('type' => 'string', 'sanitize_callback' => array($this, 'allow_html_prompts'))
-            );
-            register_setting(
-                'aico_content_settings',
-                'aico_' . $post_type . '_meta_prompt',
-                array('type' => 'string', 'sanitize_callback' => array($this, 'allow_html_prompts'))
-            );
-            register_setting(
-                'aico_content_settings',
-                'aico_' . $post_type . '_content_prompt',
-                array('type' => 'string', 'sanitize_callback' => array($this, 'allow_html_prompts'))
-            );
-        }
-    }
-
-    /**
-     * Add admin menu
-     */
-    public function add_admin_menu() {
-        add_menu_page(
-            __('Bulk Meta Optimizer', 'ai-content-optimizer'),
-            __('Bulk Meta Optimizer', 'ai-content-optimizer'),
-            'manage_options',
-            'ai-content-optimizer',
-            array($this, 'render_dashboard_page'),
-            'dashicons-chart-area',
-            30
-        );
-
-        add_submenu_page(
-            'ai-content-optimizer',
-            __('Dashboard', 'ai-content-optimizer'),
-            __('Dashboard', 'ai-content-optimizer'),
-            'manage_options',
-            'ai-content-optimizer',
-            array($this, 'render_dashboard_page')
-        );
-
-        add_submenu_page(
-            'ai-content-optimizer',
-            __('Content Settings', 'ai-content-optimizer'),
-            __('Content Settings', 'ai-content-optimizer'),
-            'manage_options',
-            'ai-content-optimizer-settings',
-            array($this, 'render_settings_page')
-        );
-
-        add_submenu_page(
-            'ai-content-optimizer',
-            __('Brand Profile', 'ai-content-optimizer'),
-            __('Brand Profile', 'ai-content-optimizer'),
-            'manage_options',
-            'aico-brand-profile',
-            'aico_render_brand_profile_page'
-        );
-
-        add_submenu_page(
-            'ai-content-optimizer',
-            __('Settings', 'ai-content-optimizer'),
-            __('Settings', 'ai-content-optimizer'),
-            'manage_options',
-            'ai-content-optimizer-advanced',
-            array($this, 'render_advanced_page')
-        );
-
-        // Removed separate Categories and Tags pages - now integrated into post type settings
-        /*
-        add_submenu_page(
-            'ai-content-optimizer',
-            __('Categories', 'ai-content-optimizer'),
-            __('Categories', 'ai-content-optimizer'),
-            'manage_options',
-            'ai-content-optimizer-categories',
-            array($this, 'render_categories_page')
-        );
-
-        add_submenu_page(
-            'ai-content-optimizer',
-            __('Tags', 'ai-content-optimizer'),
-            __('Tags', 'ai-content-optimizer'),
-            'manage_options',
-            'ai-content-optimizer-tags',
-            array($this, 'render_tags_page')
-        );
-        */
-    }
-
-    /**
-     * Enqueue admin scripts and styles
-     */
-    public function enqueue_admin_assets($hook) {
-        // Only load on our plugin pages or edit screens
-        if (strpos($hook, 'ai-content-optimizer') !== false ||
-            $hook === 'edit.php' ||
-            $hook === 'post.php' ||
-            $hook === 'post-new.php' ||
-            $hook === 'edit-tags.php') {
-
-            // Enqueue styles
-            wp_enqueue_style(
-                'ai-content-optimizer-admin',
-                plugin_dir_url(__FILE__) . 'assets/css/admin.css',
-                array(),
-                self::VERSION
-            );
-
-            // Enqueue tab-specific styles with higher priority
-            wp_enqueue_style(
-                'ai-content-optimizer-admin-tabs',
-                plugin_dir_url(__FILE__) . 'assets/css/admin-tabs.css',
-                array('ai-content-optimizer-admin'),
-                self::VERSION . '.' . time() // Force no caching
-            );
-
-            // Enqueue scripts
-            wp_enqueue_script(
-                'ai-content-optimizer-admin',
-                plugin_dir_url(__FILE__) . 'assets/js/admin.js',
-                array('jquery'),
-                self::VERSION,
-                true
-            );
-
-            // Localize script
-            wp_localize_script(
-                'ai-content-optimizer-admin',
-                'aicoData',
-                array(
-                    'ajaxUrl' => admin_url('admin-ajax.php'),
-                    'nonce' => wp_create_nonce('aico-nonce'),
-                    'strings' => array(
-                        'generating' => __('Generating...', 'ai-content-optimizer'),
-                        'success' => __('Success!', 'ai-content-optimizer'),
-                        'error' => __('Error:', 'ai-content-optimizer'),
-                        'confirmBulk' => __('Are you sure you want to optimize the selected items? This may take some time.', 'ai-content-optimizer'),
-                        'processing' => __('Processing...', 'ai-content-optimizer'),
-                    ),
-                )
-            );
-        }
-
-        if ($hook === 'edit.php') {
-            wp_enqueue_script(
-                'ai-content-optimizer-list',
-                plugins_url('assets/js/list.js', __FILE__),
-                array('jquery'),
-                self::VERSION,
-                true
-            );
-
-            wp_localize_script(
-                'ai-content-optimizer-list',
-                'aicoListData',
-                array(
-                    'ajaxUrl' => admin_url('admin-ajax.php'),
-                    'nonce' => wp_create_nonce('aico-nonce'),
-                    'strings' => array(
-                        'optimizing' => __('Optimizing...', 'ai-content-optimizer'),
-                        'success' => __('Optimized!', 'ai-content-optimizer'),
-                        'error' => __('Error:', 'ai-content-optimizer'),
-                    )
-                )
-            );
-        }
-
-        if ($hook === 'edit-tags.php') {
-            wp_enqueue_script(
-                'ai-content-optimizer-taxonomy',
-                plugins_url('assets/js/taxonomy.js', __FILE__),
-                array('jquery'),
-                self::VERSION,
-                true
-            );
-
-            wp_localize_script(
-                'ai-content-optimizer-taxonomy',
-                'aicoTaxonomyData',
-                array(
-                    'ajaxUrl' => admin_url('admin-ajax.php'),
-                    'nonce' => wp_create_nonce('aico-nonce'),
-                    'strings' => array(
-                        'optimizing' => __('Optimizing...', 'ai-content-optimizer'),
-                        'success' => __('Optimized!', 'ai-content-optimizer'),
-                        'error' => __('Error:', 'ai-content-optimizer'),
-                        'confirmBulk' => __('Are you sure you want to optimize the selected terms? This may take some time.', 'ai-content-optimizer'),
-                    )
-                )
-            );
-        }
-    }
-
-    /**
-     * Add row actions
-     */
-    public function add_row_actions($actions, $post) {
-        // Get all public post types
-        $valid_post_types = get_post_types(array('public' => true));
-        unset($valid_post_types['attachment']);
-
-        // Check if post type is supported
-        if (!in_array($post->post_type, $valid_post_types)) {
-            return $actions;
-        }
-
-        // Add optimize action
-        $actions['aico_optimize'] = sprintf(
-            '<a href="#" class="aico-optimize" data-post-id="%d" data-nonce="%s">%s</a>',
-            $post->ID,
-            wp_create_nonce('aico-nonce'),
-            __('Optimize with AI', 'ai-content-optimizer')
-        );
-
-        return $actions;
-    }
-
-    /**
-     * Register bulk actions
-     */
-    public function register_bulk_actions($bulk_actions) {
-        $bulk_actions['aico_bulk_optimize'] = __('Optimize with AI', 'ai-content-optimizer');
-        return $bulk_actions;
-    }
-
-    /**
-     * Handle bulk actions
-     */
-    public function handle_bulk_actions($redirect_to, $doaction, $post_ids) {
-        if ($doaction !== 'aico_bulk_optimize') {
-            return $redirect_to;
-        }
-        try {
+            try {
             error_log('Starting bulk action handler');
             // Get post type from referer URL or current screen
             $post_type = 'post';
@@ -1329,9 +1008,9 @@ PROMPT;
             <div class="aico-card">
                 <h2><?php _e('License Key', 'ai-content-optimizer'); ?></h2>
                 <?php if ($license_status === 'success') : ?>
-                    <div class="notice notice-success inline"><p><?php _e('âœ”ï¸ License is valid!', 'ai-content-optimizer'); ?></p></div>
+                    <div class="notice notice-success inline"><p><?php _e('âœ"ï¸ License is valid!', 'ai-content-optimizer'); ?></p></div>
                 <?php elseif ($license_status === 'expired') : ?>
-                    <div class="notice notice-warning inline"><p><?php _e('âš ï¸ License expired.', 'ai-content-optimizer'); ?></p></div>
+                    <div class="notice notice-warning inline"><p><?php _e('âš ï¸ License expired.', 'ai-content-optimizer'); ?></p></div>
                 <?php elseif ($license_status === 'invalid') : ?>
                     <div class="notice notice-error inline"><p><?php _e('âŒ Invalid license key.', 'ai-content-optimizer'); ?></p></div>
                 <?php endif; ?>
@@ -2234,396 +1913,6 @@ PROMPT;
      * Add support for custom post types
      */
     public function add_custom_post_type_support() {
-        // Check license status before enabling functionality
-        $license_status = get_option('bmo_license_status', 'invalid');
-        if ($license_status !== 'success') {
-            // If license is not valid, prevent custom post type support from loading
-            return;
-        }
-
-        // Get all public custom post types
-        $custom_post_types = get_post_types(array(
-            'public'   => true,
-            '_builtin' => false,
-        ), 'objects');
-
-        // Remove 'product' if it exists as we handle it separately
-        if (isset($custom_post_types['product'])) {
-            unset($custom_post_types['product']);
-        }
-
-        // Get page prompts to use as defaults, or use standard defaults if page prompts don't exist
-        $default_title_prompt = __('Write an SEO-optimized title for this {post_type} about {title}. Make it engaging and include the main keyword naturally. Keep it under 60 characters.', 'ai-content-optimizer');
-        $default_meta_prompt = __('Write a compelling meta description for this {post_type} about {title}. Include the main keyword and a clear call-to-action. Keep it between 150-160 characters.', 'ai-content-optimizer');
-        $default_content_prompt = __('Optimize this content while preserving its structure and meaning. Maintain all HTML tags, shortcodes, and formatting. Focus on improving readability and SEO without changing the core message.', 'ai-content-optimizer');
-
-        $page_title_prompt = get_option('aico_page_title_prompt', $default_title_prompt);
-        $page_meta_prompt = get_option('aico_page_meta_prompt', $default_meta_prompt);
-        $page_content_prompt = get_option('aico_page_content_prompt', $default_content_prompt);
-
-        // Initialize settings for each custom post type
-        foreach ($custom_post_types as $post_type) {
-            $settings_key = 'aico_' . $post_type->name . '_settings';
-            $title_prompt_key = 'aico_' . $post_type->name . '_title_prompt';
-            $meta_prompt_key = 'aico_' . $post_type->name . '_meta_prompt';
-            $content_prompt_key = 'aico_' . $post_type->name . '_content_prompt';
-
-            // Initialize settings if they don't exist
-            if (!get_option($settings_key)) {
-                $default_content_settings = array(
-                    'content_tone' => 'professional',
-                    'target_audience' => 'general',
-                    'content_focus' => 'benefit-focused',
-                    'seo_aggressiveness' => 'moderate',
-                    'keyword_density' => 'standard',
-                    'geographic_targeting' => 'global',
-                    'brand_voice' => 'trustworthy',
-                    'title_separator' => 'dash',
-                    'excluded_words' => '',
-                );
-
-                $default_toggles = array(
-                    'optimize_title' => true,
-                    'optimize_meta' => true,
-                    'optimize_content' => false,
-                    'optimize_slug' => false,
-                    'preserve_html' => true,
-                );
-
-                update_option($settings_key, array_merge($default_content_settings, $default_toggles));
-            }
-
-            // Always ensure prompts exist
-            if (!get_option($title_prompt_key)) {
-                update_option($title_prompt_key, str_replace('page', $post_type->name, $page_title_prompt));
-            }
-            if (!get_option($meta_prompt_key)) {
-                update_option($meta_prompt_key, str_replace('page', $post_type->name, $page_meta_prompt));
-            }
-            if (!get_option($content_prompt_key)) {
-                update_option($content_prompt_key, $page_content_prompt);
-            }
-
-            // Register settings for the custom post type
-            register_setting('aico_content_settings', $settings_key);
-            register_setting(
-                'aico_content_settings',
-                $title_prompt_key,
-                array('type' => 'string', 'sanitize_callback' => array($this, 'allow_html_prompts'))
-            );
-            register_setting(
-                'aico_content_settings',
-                $meta_prompt_key,
-                array('type' => 'string', 'sanitize_callback' => array($this, 'allow_html_prompts'))
-            );
-            register_setting(
-                'aico_content_settings',
-                $content_prompt_key,
-                array('type' => 'string', 'sanitize_callback' => array($this, 'allow_html_prompts'))
-            );
-
-            // Add row actions and bulk actions for the custom post type
-            add_filter($post_type->name . '_row_actions', array($this, 'add_row_actions'), 10, 2);
-            add_filter('bulk_actions-edit-' . $post_type->name, array($this, 'register_bulk_actions'));
-            add_filter('handle_bulk_actions-edit-' . $post_type->name, array($this, 'handle_bulk_actions'), 10, 3);
-        }
-    }
-
-    /**
-     * Render categories page
-     */
-    public function render_categories_page() {
-        $license_status = get_option('bmo_license_status', 'invalid');
-        if ($license_status !== 'success') {
-            echo '<div class="notice notice-error"><p>' . __('A valid license is required to use Bulk Meta Optimizer. Please enter your license key in Advanced Settings.', 'ai-content-optimizer') . '</p></div>';
-            return;
-        }
-
-        $meta_prompt = get_option('aico_category_meta_prompt', '');
-        if (empty($meta_prompt)) {
-            $meta_prompt = "You are an SEO expert. Write a meta description (160 chars max) for this category. Use a professional tone for a general audience. Keep it concise, no exclamation marks or quotation marks.";
-            update_option('aico_category_meta_prompt', $meta_prompt);
-        }
-
-        // Get all categories
-        $categories = get_categories(array(
-            'hide_empty' => false,
-            'orderby' => 'name',
-            'order' => 'ASC'
-        ));
-
-        ?>
-        <div class="wrap aico-wrap">
-            <h1><?php _e('Category Meta Descriptions', 'ai-content-optimizer'); ?></h1>
-            
-            <div class="aico-card">
-                <h2><?php _e('Category Meta Description Prompt', 'ai-content-optimizer'); ?></h2>
-                <p><?php _e('Customize the AI prompt used to generate meta descriptions for categories. Use placeholders like {category_name}, {category_description}, {post_count}, etc.', 'ai-content-optimizer'); ?></p>
-                <textarea id="aico-category-meta-prompt" rows="6" class="large-text"><?php echo esc_textarea($meta_prompt); ?></textarea>
-                <p class="description"><?php _e('Available placeholders: {category_name}, {category_description}, {post_count}, {parent_category}', 'ai-content-optimizer'); ?></p>
-                <button type="button" id="aico-save-category-prompt" class="button button-primary"><?php _e('Save Prompt', 'ai-content-optimizer'); ?></button>
-            </div>
-
-            <div class="aico-card">
-                <h2><?php _e('Categories', 'ai-content-optimizer'); ?></h2>
-                <div class="aico-categories-actions">
-                    <button type="button" id="aico-bulk-optimize-categories" class="button button-primary"><?php _e('Bulk Optimize All Categories', 'ai-content-optimizer'); ?></button>
-                    <span id="aico-categories-progress" style="display: none; margin-left: 10px;"></span>
-                </div>
-                
-                <div class="aico-categories-list">
-                    <table class="wp-list-table widefat fixed striped">
-                        <thead>
-                            <tr>
-                                <th><?php _e('Category', 'ai-content-optimizer'); ?></th>
-                                <th><?php _e('Current Description', 'ai-content-optimizer'); ?></th>
-                                <th><?php _e('Actions', 'ai-content-optimizer'); ?></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($categories as $category) : ?>
-                                <tr>
-                                    <td>
-                                        <strong><?php echo esc_html($category->name); ?></strong>
-                                        <br>
-                                        <small><?php printf(__('Posts: %d', 'ai-content-optimizer'), $category->count); ?></small>
-                                    </td>
-                                    <td>
-                                        <div class="aico-meta-preview">
-                                            <?php echo esc_html($category->description ?: __('No description set', 'ai-content-optimizer')); ?>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <button type="button" class="button aico-optimize-category" data-category-id="<?php echo $category->term_id; ?>" data-category-name="<?php echo esc_attr($category->name); ?>">
-                                            <?php _e('Optimize with AI', 'ai-content-optimizer'); ?>
-                                        </button>
-                                        <button type="button" class="button aico-edit-category" data-category-id="<?php echo $category->term_id; ?>" data-category-name="<?php echo esc_attr($category->name); ?>" data-category-description="<?php echo esc_attr($category->description); ?>">
-                                            <?php _e('Edit', 'ai-content-optimizer'); ?>
-                                        </button>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Edit Category Modal -->
-        <div id="aico-category-modal" class="aico-modal">
-            <div class="aico-modal-content">
-                <span class="aico-modal-close">&times;</span>
-                <h3><?php _e('Edit Category Description', 'ai-content-optimizer'); ?></h3>
-                <form id="aico-category-form">
-                    <input type="hidden" id="aico-category-id" name="category_id" value="">
-                    <table class="form-table">
-                        <tr>
-                            <th scope="row"><?php _e('Category Name', 'ai-content-optimizer'); ?></th>
-                            <td id="aico-category-name-display"></td>
-                        </tr>
-                        <tr>
-                            <th scope="row"><?php _e('Description', 'ai-content-optimizer'); ?></th>
-                            <td>
-                                <textarea id="aico-category-description" name="description" rows="4" class="large-text" maxlength="160"></textarea>
-                                <div class="aico-meta-counter">0 characters</div>
-                                <p class="description"><?php _e('This description will be used as the meta description for the category archive page.', 'ai-content-optimizer'); ?></p>
-                            </td>
-                        </tr>
-                    </table>
-                    <div class="aico-modal-actions">
-                        <button type="button" class="button" id="aico-category-cancel"><?php _e('Cancel', 'ai-content-optimizer'); ?></button>
-                        <button type="submit" class="button button-primary"><?php _e('Save Description', 'ai-content-optimizer'); ?></button>
-                    </div>
-                </form>
-            </div>
-        </div>
-        <?php
-    }
-
-    /**
-     * Render tags page
-     */
-    public function render_tags_page() {
-        $license_status = get_option('bmo_license_status', 'invalid');
-        if ($license_status !== 'success') {
-            echo '<div class="notice notice-error"><p>' . __('A valid license is required to use Bulk Meta Optimizer. Please enter your license key in Advanced Settings.', 'ai-content-optimizer') . '</p></div>';
-            return;
-        }
-
-        $meta_prompt = get_option('aico_tag_meta_prompt', '');
-        if (empty($meta_prompt)) {
-            $meta_prompt = "You are an SEO expert. Write a meta description (160 chars max) for this tag. Use a professional tone for a general audience. Keep it concise, no exclamation marks or quotation marks.";
-            update_option('aico_tag_meta_prompt', $meta_prompt);
-        }
-
-        // Get all tags
-        $tags = get_tags(array(
-            'hide_empty' => false,
-            'orderby' => 'name',
-            'order' => 'ASC'
-        ));
-
-        ?>
-        <div class="wrap aico-wrap">
-            <h1><?php _e('Tag Meta Descriptions', 'ai-content-optimizer'); ?></h1>
-            
-            <div class="aico-card">
-                <h2><?php _e('Tag Meta Description Prompt', 'ai-content-optimizer'); ?></h2>
-                <p><?php _e('Customize the AI prompt used to generate meta descriptions for tags. Use placeholders like {tag_name}, {tag_description}, {post_count}, etc.', 'ai-content-optimizer'); ?></p>
-                <textarea id="aico-tag-meta-prompt" rows="6" class="large-text"><?php echo esc_textarea($meta_prompt); ?></textarea>
-                <p class="description"><?php _e('Available placeholders: {tag_name}, {tag_description}, {post_count}', 'ai-content-optimizer'); ?></p>
-                <button type="button" id="aico-save-tag-prompt" class="button button-primary"><?php _e('Save Prompt', 'ai-content-optimizer'); ?></button>
-            </div>
-
-            <div class="aico-card">
-                <h2><?php _e('Tags', 'ai-content-optimizer'); ?></h2>
-                <div class="aico-tags-actions">
-                    <button type="button" id="aico-bulk-optimize-tags" class="button button-primary"><?php _e('Bulk Optimize All Tags', 'ai-content-optimizer'); ?></button>
-                    <span id="aico-tags-progress" style="display: none; margin-left: 10px;"></span>
-                </div>
-                
-                <div class="aico-tags-list">
-                    <table class="wp-list-table widefat fixed striped">
-                        <thead>
-                            <tr>
-                                <th><?php _e('Tag', 'ai-content-optimizer'); ?></th>
-                                <th><?php _e('Current Description', 'ai-content-optimizer'); ?></th>
-                                <th><?php _e('Actions', 'ai-content-optimizer'); ?></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($tags as $tag) : ?>
-                                <tr>
-                                    <td>
-                                        <strong><?php echo esc_html($tag->name); ?></strong>
-                                        <br>
-                                        <small><?php printf(__('Posts: %d', 'ai-content-optimizer'), $tag->count); ?></small>
-                                    </td>
-                                    <td>
-                                        <div class="aico-meta-preview">
-                                            <?php echo esc_html($tag->description ?: __('No description set', 'ai-content-optimizer')); ?>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <button type="button" class="button aico-optimize-tag" data-tag-id="<?php echo $tag->term_id; ?>" data-tag-name="<?php echo esc_attr($tag->name); ?>">
-                                            <?php _e('Optimize with AI', 'ai-content-optimizer'); ?>
-                                        </button>
-                                        <button type="button" class="button aico-edit-tag" data-tag-id="<?php echo $tag->term_id; ?>" data-tag-name="<?php echo esc_attr($tag->name); ?>" data-tag-description="<?php echo esc_attr($tag->description); ?>">
-                                            <?php _e('Edit', 'ai-content-optimizer'); ?>
-                                        </button>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Edit Tag Modal -->
-        <div id="aico-tag-modal" class="aico-modal">
-            <div class="aico-modal-content">
-                <span class="aico-modal-close">&times;</span>
-                <h3><?php _e('Edit Tag Description', 'ai-content-optimizer'); ?></h3>
-                <form id="aico-tag-form">
-                    <input type="hidden" id="aico-tag-id" name="tag_id" value="">
-                    <table class="form-table">
-                        <tr>
-                            <th scope="row"><?php _e('Tag Name', 'ai-content-optimizer'); ?></th>
-                            <td id="aico-tag-name-display"></td>
-                        </tr>
-                        <tr>
-                            <th scope="row"><?php _e('Description', 'ai-content-optimizer'); ?></th>
-                            <td>
-                                <textarea id="aico-tag-description" name="description" rows="4" class="large-text" maxlength="160"></textarea>
-                                <div class="aico-meta-counter">0 characters</div>
-                                <p class="description"><?php _e('This description will be used as the meta description for the tag archive page.', 'ai-content-optimizer'); ?></p>
-                            </td>
-                        </tr>
-                    </table>
-                    <div class="aico-modal-actions">
-                        <button type="button" class="button" id="aico-tag-cancel"><?php _e('Cancel', 'ai-content-optimizer'); ?></button>
-                        <button type="submit" class="button button-primary"><?php _e('Save Description', 'ai-content-optimizer'); ?></button>
-                    </div>
-                </form>
-            </div>
-        </div>
-        <?php
-    }
-
-    /**
-     * Add taxonomy row actions
-     */
-    public function add_taxonomy_row_actions($actions, $term) {
-        // Check license status
-        $license_status = get_option('bmo_license_status', 'invalid');
-        if ($license_status !== 'success') {
-            return $actions;
-        }
-
-        // Determine taxonomy type and appropriate action
-        $taxonomy = $term->taxonomy;
-        $action_name = '';
-        $ajax_action = '';
-        
-        if ($taxonomy === 'category') {
-            $action_name = 'aico_optimize_category';
-            $ajax_action = 'aico_optimize_category';
-        } elseif ($taxonomy === 'post_tag') {
-            $action_name = 'aico_optimize_tag';
-            $ajax_action = 'aico_optimize_tag';
-        } elseif ($taxonomy === 'product_cat') {
-            $action_name = 'aico_optimize_product_cat';
-            $ajax_action = 'aico_optimize_category'; // Use same handler
-        } elseif ($taxonomy === 'product_tag') {
-            $action_name = 'aico_optimize_product_tag';
-            $ajax_action = 'aico_optimize_tag'; // Use same handler
-        } else {
-            return $actions;
-        }
-
-        // Add optimize action
-        $actions[$action_name] = sprintf(
-            '<a href="#" class="aico-optimize-taxonomy" data-term-id="%d" data-taxonomy="%s" data-term-name="%s" data-ajax-action="%s" data-nonce="%s">%s</a>',
-            $term->term_id,
-            esc_attr($taxonomy),
-            esc_attr($term->name),
-            esc_attr($ajax_action),
-            wp_create_nonce('aico-nonce'),
-            __('Optimize with AI', 'ai-content-optimizer')
-        );
-
-        return $actions;
-    }
-
-    /**
-     * Register taxonomy bulk actions
-     */
-    public function register_taxonomy_bulk_actions($bulk_actions) {
-        // Check license status
-        $license_status = get_option('bmo_license_status', 'invalid');
-        if ($license_status !== 'success') {
-            return $bulk_actions;
-        }
-
-        $bulk_actions['aico_bulk_optimize_taxonomy'] = __('Optimize with AI', 'ai-content-optimizer');
-        return $bulk_actions;
-    }
-
-    /**
-     * Handle taxonomy bulk actions
-     */
-    public function handle_taxonomy_bulk_actions($redirect_to, $doaction, $term_ids) {
-        if ($doaction !== 'aico_bulk_optimize_taxonomy') {
-            return $redirect_to;
-        }
-
-        // Check license status
-        $license_status = get_option('bmo_license_status', 'invalid');
-        if ($license_status !== 'success') {
-            return $redirect_to;
-        }
-
         try {
             // Get taxonomy from current screen
             $taxonomy = 'category';
@@ -2648,55 +1937,7 @@ PROMPT;
         }
     }
 
-    /**
-     * Add frontend meta tags for categories and tags
-     */
-    public function add_taxonomy_meta_tags() {
-        if (!is_tax() && !is_category() && !is_tag()) {
-            return;
-        }
-        
-        // If Yoast SEO is active, do not output our own meta tag
-        if (defined('WPSEO_VERSION')) {
-            return;
-        }
-
-        $term = get_queried_object();
-        if (!$term || is_wp_error($term)) {
-            return;
-        }
-        
-        // Get the taxonomy
-        $taxonomy = $term->taxonomy;
-        
-        // Determine post type based on taxonomy
-        $post_type = 'post';
-        if ($taxonomy === 'product_cat' || $taxonomy === 'product_tag') {
-            $post_type = 'product';
-        }
-        
-        // Get post type settings
-        $settings_key = 'aico_' . $post_type . '_settings';
-        $settings = get_option($settings_key, array());
-        
-        // Check if optimization is enabled for this taxonomy type
-        if (($taxonomy === 'category' || $taxonomy === 'product_cat') && empty($settings['optimize_category_meta'])) {
-            return;
-        }
-        if (($taxonomy === 'post_tag' || $taxonomy === 'product_tag') && empty($settings['optimize_tag_meta'])) {
-            return;
-        }
-        
-        // Get the meta description from the term description
-        $meta_description = $term->description;
-        if (empty($meta_description)) {
-            return;
-        }
-        
-        // Output the meta description
-        echo '<meta name="description" content="' . esc_attr(wp_strip_all_tags($meta_description)) . '" />' . "\n";
     }
-}
 
 // Handle license key save with SLM check
 add_action('admin_post_bmo_save_license_key', function() {
@@ -2911,8 +2152,8 @@ add_action('wp_ajax_bmo_manual_license_check', function() {
     wp_send_json_success($response);
 });
 
-// AJAX handlers for categories and tags
-add_action('wp_ajax_aico_save_category_prompt', function() {
+// AJAX handler for generating brand profile
+add_action('wp_ajax_aico_generate_brand_profile', function() {
     $license_status = get_option('bmo_license_status', 'invalid');
     if ($license_status !== 'success') {
         wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
@@ -2923,569 +2164,99 @@ add_action('wp_ajax_aico_save_category_prompt', function() {
         wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
     }
     
-    $prompt = isset($_POST['prompt']) ? sanitize_textarea_field($_POST['prompt']) : '';
-    if (empty($prompt)) {
-        wp_send_json_error(__('Prompt cannot be empty.', 'ai-content-optimizer'));
-    }
-    
-    update_option('aico_category_meta_prompt', $prompt);
-    wp_send_json_success(__('Category prompt saved successfully!', 'ai-content-optimizer'));
-});
-
-add_action('wp_ajax_aico_save_tag_prompt', function() {
-    $license_status = get_option('bmo_license_status', 'invalid');
-    if ($license_status !== 'success') {
-        wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
-    }
-    
-    check_ajax_referer('aico-nonce', 'nonce');
-    if (!current_user_can('manage_options')) {
-        wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
-    }
-    
-    $prompt = isset($_POST['prompt']) ? sanitize_textarea_field($_POST['prompt']) : '';
-    if (empty($prompt)) {
-        wp_send_json_error(__('Prompt cannot be empty.', 'ai-content-optimizer'));
-    }
-    
-    update_option('aico_tag_meta_prompt', $prompt);
-    wp_send_json_success(__('Tag prompt saved successfully!', 'ai-content-optimizer'));
-});
-
-add_action('wp_ajax_aico_optimize_category', function() {
-    $license_status = get_option('bmo_license_status', 'invalid');
-    if ($license_status !== 'success') {
-        wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
-    }
-    
-    check_ajax_referer('aico-nonce', 'nonce');
-    if (!current_user_can('manage_options')) {
-        wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
-    }
-    
-    // Support both category_id and term_id parameters
-    $term_id = isset($_POST['category_id']) ? intval($_POST['category_id']) : 0;
-    if (!$term_id) {
-        $term_id = isset($_POST['term_id']) ? intval($_POST['term_id']) : 0;
-    }
-    if (!$term_id) {
-        error_log('[AICO] No term_id provided. POST: ' . print_r($_POST, true));
-        wp_send_json_error(__('Invalid term ID.', 'ai-content-optimizer'));
-    }
-    
-    // Get taxonomy from request, default to 'category'
-    $taxonomy = isset($_POST['taxonomy']) ? sanitize_text_field($_POST['taxonomy']) : 'category';
-    error_log("[AICO] Optimize Category: term_id={$term_id}, taxonomy={$taxonomy}");
-    
-    // Check if taxonomy exists
-    if (!taxonomy_exists($taxonomy)) {
-        error_log("[AICO] Taxonomy does not exist: {$taxonomy}");
-        wp_send_json_error(__('Taxonomy not found.', 'ai-content-optimizer'));
-    }
-    
-    // Get all terms in this taxonomy for debugging
-    $all_terms = get_terms(array(
-        'taxonomy' => $taxonomy,
-        'hide_empty' => false,
-        'fields' => 'ids'
-    ));
-    error_log("[AICO] All terms in taxonomy {$taxonomy}: " . implode(', ', $all_terms));
-    
-    $term = get_term($term_id, $taxonomy);
-    if (!$term || is_wp_error($term)) {
-        error_log("[AICO] Term not found: term_id={$term_id}, taxonomy={$taxonomy}");
-        if (is_wp_error($term)) {
-            error_log("[AICO] WP Error: " . $term->get_error_message());
-        }
-        wp_send_json_error(__('Term not found.', 'ai-content-optimizer'));
-    }
-    
-    // Get post type from request or default to 'post'
-    $post_type = isset($_POST['post_type']) ? sanitize_text_field($_POST['post_type']) : 'post';
-    
-    // Get post type settings
-    $settings_key = 'aico_' . $post_type . '_settings';
-    $settings = get_option($settings_key, array());
-    
-    // Check if category optimization is enabled for this post type
-    if (empty($settings['optimize_category_meta'])) {
-        wp_send_json_error(__('Category meta description optimization is not enabled for this post type.', 'ai-content-optimizer'));
-    }
-    
+    // Get API settings
     $api_key = get_option('aico_openai_api_key');
     if (empty($api_key)) {
-        wp_send_json_error(__('API key is not set.', 'ai-content-optimizer'));
+        wp_send_json_error(__('OpenAI API key not configured. Please configure it in the plugin settings.', 'ai-content-optimizer'));
     }
     
-    $model = get_option('aico_openai_model', 'gpt-3.5-turbo');
-    $temperature = get_option('aico_openai_temperature', 0.7);
-    $max_tokens = get_option('aico_openai_max_tokens', 500);
-    
-    // Get post type-specific category meta prompt
-    $meta_prompt = isset($settings['category_meta_prompt']) ? $settings['category_meta_prompt'] : '';
-    if (empty($meta_prompt)) {
-        $post_type_obj = get_post_type_object($post_type);
-        $post_type_label = $post_type_obj ? $post_type_obj->labels->singular_name : ucfirst($post_type);
-        $meta_prompt = "Generate a compelling meta description for the category \"{category_name}\" in the context of {$post_type_label}. Focus on SEO optimization and user engagement. Keep it under 160 characters.";
-    }
-    
-    // Replace placeholders
-    $parent_category = '';
-    if ($term->parent) {
-        $parent = get_term($term->parent, $taxonomy);
-        if ($parent && !is_wp_error($parent)) {
-            $parent_category = $parent->name;
-        }
-    }
-    
-    $post_type_obj = get_post_type_object($post_type);
-    $post_type_label = $post_type_obj ? $post_type_obj->labels->singular_name : ucfirst($post_type);
-    
-    $meta_prompt = str_replace(
-        array('{category_name}', '{category_description}', '{post_count}', '{parent_category}', '{post_type_label}'),
-        array($term->name, $term->description, $term->count, $parent_category, $post_type_label),
-        $meta_prompt
-    );
-    
-    $ai_content_optimizer = AI_Content_Optimizer::get_instance();
-    $generated_description = $ai_content_optimizer->call_openai_api_direct($api_key, $model, $meta_prompt, $max_tokens, $temperature);
-    
-    if (is_wp_error($generated_description)) {
-        wp_send_json_error($generated_description->get_error_message());
-    }
-    
-    error_log("[AICO] Generated description: " . $generated_description);
-    error_log("[AICO] About to save meta for taxonomy: " . $taxonomy);
-    
-    // Update Yoast's meta description using the correct method for each taxonomy
-    if (in_array($taxonomy, ['category', 'post_tag'])) {
-        error_log("[AICO] Saving for regular category/tag using wpseo_taxonomy_meta");
-        // For regular WordPress categories and tags, use wpseo_taxonomy_meta array
-        $meta = get_term_meta($term_id, 'wpseo_taxonomy_meta', true);
-        if (!is_array($meta)) {
-            $meta = array();
-        }
-        $meta['wpseo_desc'] = $generated_description;
-        $result = update_term_meta($term_id, 'wpseo_taxonomy_meta', $meta);
-        error_log("[AICO] wpseo_taxonomy_meta update result: " . ($result ? 'SUCCESS' : 'FAILED'));
+    try {
+        // Fetch homepage content
+        $homepage_url = home_url();
+        $response = wp_remote_get($homepage_url, array('timeout' => 30));
         
-        // Clear Yoast's cache
-        if (class_exists('WPSEO_Meta') && method_exists('WPSEO_Meta','clear_cache')) {
-            WPSEO_Meta::clear_cache();
-            error_log("[AICO] Yoast cache cleared for regular taxonomy");
+        if (is_wp_error($response)) {
+            wp_send_json_error(__('Failed to fetch homepage content: ', 'ai-content-optimizer') . $response->get_error_message());
         }
-    } else if (in_array($taxonomy, ['product_cat', 'product_tag'])) {
-        error_log("[AICO] Saving for WooCommerce category/tag using _yoast_wpseo_metadesc");
-        // For WooCommerce product categories and tags, use _yoast_wpseo_metadesc directly
-        $result = update_term_meta($term_id, '_yoast_wpseo_metadesc', $generated_description);
-        error_log("[AICO] _yoast_wpseo_metadesc update result: " . ($result ? 'SUCCESS' : 'FAILED'));
         
-        // Clear Yoast's internal cache so the new value is picked up immediately
-        if (class_exists('WPSEO_Meta') && method_exists('WPSEO_Meta','clear_cache')) {
-            // Passing ["term_$term_id"] forces Yoast to bust taxonomy cache
-            WPSEO_Meta::clear_cache(["term_{$term_id}"]);
-            error_log("[AICO] Yoast cache cleared for term: " . $term_id);
+        $html_content = wp_remote_retrieve_body($response);
+        if (empty($html_content)) {
+            wp_send_json_error(__('Homepage content is empty or could not be retrieved.', 'ai-content-optimizer'));
         }
-    }
-    
-    // Also update other SEO plugins
-    $rank_result = update_term_meta($term_id, 'rank_math_description', $generated_description);
-    $aioseo_result = update_term_meta($term_id, 'aioseo_description', $generated_description);
-    error_log("[AICO] Rank Math result: " . ($rank_result ? 'SUCCESS' : 'FAILED'));
-    error_log("[AICO] AIOSEO result: " . ($aioseo_result ? 'SUCCESS' : 'FAILED'));
-    
-    wp_send_json_success(array(
-        'description' => $generated_description,
-        'message' => __('Yoast meta updated!', 'ai-content-optimizer')
-    ));
-});
-
-add_action('wp_ajax_aico_optimize_tag', function() {
-    $license_status = get_option('bmo_license_status', 'invalid');
-    if ($license_status !== 'success') {
-        wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
-    }
-    
-    check_ajax_referer('aico-nonce', 'nonce');
-    if (!current_user_can('manage_options')) {
-        wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
-    }
-    
-    // Support both tag_id and term_id parameters
-    $term_id = isset($_POST['tag_id']) ? intval($_POST['tag_id']) : 0;
-    if (!$term_id) {
-        $term_id = isset($_POST['term_id']) ? intval($_POST['term_id']) : 0;
-    }
-    if (!$term_id) {
-        error_log('[AICO] No term_id provided. POST: ' . print_r($_POST, true));
-        wp_send_json_error(__('Invalid term ID.', 'ai-content-optimizer'));
-    }
-    
-    // Get taxonomy from request, default to 'post_tag'
-    $taxonomy = isset($_POST['taxonomy']) ? sanitize_text_field($_POST['taxonomy']) : 'post_tag';
-    error_log("[AICO] Optimize Tag: term_id={$term_id}, taxonomy={$taxonomy}");
-    
-    // Check if taxonomy exists
-    if (!taxonomy_exists($taxonomy)) {
-        error_log("[AICO] Taxonomy does not exist: {$taxonomy}");
-        wp_send_json_error(__('Taxonomy not found.', 'ai-content-optimizer'));
-    }
-    
-    // Get all terms in this taxonomy for debugging
-    $all_terms = get_terms(array(
-        'taxonomy' => $taxonomy,
-        'hide_empty' => false,
-        'fields' => 'ids'
-    ));
-    error_log("[AICO] All terms in taxonomy {$taxonomy}: " . implode(', ', $all_terms));
-    
-    $term = get_term($term_id, $taxonomy);
-    if (!$term || is_wp_error($term)) {
-        error_log("[AICO] Term not found: term_id={$term_id}, taxonomy={$taxonomy}");
-        if (is_wp_error($term)) {
-            error_log("[AICO] WP Error: " . $term->get_error_message());
+        
+        // Extract text content from HTML
+        $text_content = wp_strip_all_tags($html_content);
+        $text_content = preg_replace('/\s+/', ' ', $text_content); // Normalize whitespace
+        $text_content = trim($text_content);
+        
+        // Limit content to avoid token limits (keep first 3000 characters)
+        if (strlen($text_content) > 3000) {
+            $text_content = substr($text_content, 0, 3000) . '...';
         }
-        wp_send_json_error(__('Term not found.', 'ai-content-optimizer'));
-    }
-    
-    // Get post type from request or default to 'post'
-    $post_type = isset($_POST['post_type']) ? sanitize_text_field($_POST['post_type']) : 'post';
-    
-    // Get post type settings
-    $settings_key = 'aico_' . $post_type . '_settings';
-    $settings = get_option($settings_key, array());
-    
-    // Check if tag optimization is enabled for this post type
-    if (empty($settings['optimize_tag_meta'])) {
-        wp_send_json_error(__('Tag meta description optimization is not enabled for this post type.', 'ai-content-optimizer'));
-    }
-    
-    $api_key = get_option('aico_openai_api_key');
-    if (empty($api_key)) {
-        wp_send_json_error(__('API key is not set.', 'ai-content-optimizer'));
-    }
-    
-    $model = get_option('aico_openai_model', 'gpt-3.5-turbo');
-    $temperature = get_option('aico_openai_temperature', 0.7);
-    $max_tokens = get_option('aico_openai_max_tokens', 500);
-    
-    // Get post type-specific tag meta prompt
-    $meta_prompt = isset($settings['tag_meta_prompt']) ? $settings['tag_meta_prompt'] : '';
-    if (empty($meta_prompt)) {
-        $post_type_obj = get_post_type_object($post_type);
-        $post_type_label = $post_type_obj ? $post_type_obj->labels->singular_name : ucfirst($post_type);
-        $meta_prompt = "Generate a compelling meta description for the tag \"{tag_name}\" in the context of {$post_type_label}. Focus on SEO optimization and user engagement. Keep it under 160 characters.";
-    }
-    
-    // Replace placeholders
-    $post_type_obj = get_post_type_object($post_type);
-    $post_type_label = $post_type_obj ? $post_type_obj->labels->singular_name : ucfirst($post_type);
-    
-    $meta_prompt = str_replace(
-        array('{tag_name}', '{tag_description}', '{post_count}', '{post_type_label}'),
-        array($term->name, $term->description, $term->count, $post_type_label),
-        $meta_prompt
-    );
-    
-    $ai_content_optimizer = AI_Content_Optimizer::get_instance();
-    $generated_description = $ai_content_optimizer->call_openai_api_direct($api_key, $model, $meta_prompt, $max_tokens, $temperature);
-    
-    if (is_wp_error($generated_description)) {
-        wp_send_json_error($generated_description->get_error_message());
-    }
-    
-    // Only update SEO plugin meta fields if plugins are active
-    update_term_meta( $term_id, '_yoast_wpseo_metadesc', $generated_description );
-    update_term_meta( $term_id, 'rank_math_description', $generated_description );
-    update_term_meta( $term_id, 'aioseo_description', $generated_description );
-    
-    wp_send_json_success(array(
-        'description' => $generated_description,
-        'message' => __('Term description optimized successfully!', 'ai-content-optimizer')
-    ));
-});
-
-add_action('wp_ajax_aico_bulk_optimize_categories', function() {
-    $license_status = get_option('bmo_license_status', 'invalid');
-    if ($license_status !== 'success') {
-        wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
-    }
-    
-    check_ajax_referer('aico-nonce', 'nonce');
-    if (!current_user_can('manage_options')) {
-        wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
-    }
-    
-    // Get post type from request or default to 'post'
-    $post_type = isset($_POST['post_type']) ? sanitize_text_field($_POST['post_type']) : 'post';
-    
-    // Get post type settings
-    $settings_key = 'aico_' . $post_type . '_settings';
-    $settings = get_option($settings_key, array());
-    
-    // Check if category optimization is enabled for this post type
-    if (empty($settings['optimize_category_meta'])) {
-        wp_send_json_error(__('Category meta description optimization is not enabled for this post type.', 'ai-content-optimizer'));
-    }
-    
-    $categories = get_categories(array('hide_empty' => false));
-    $total = count($categories);
-    $processed = 0;
-    $errors = array();
-    
-    $api_key = get_option('aico_openai_api_key');
-    if (empty($api_key)) {
-        wp_send_json_error(__('API key is not set.', 'ai-content-optimizer'));
-    }
-    
-    $model = get_option('aico_openai_model', 'gpt-3.5-turbo');
-    $temperature = get_option('aico_openai_temperature', 0.7);
-    $max_tokens = get_option('aico_openai_max_tokens', 500);
-    
-    $ai_content_optimizer = AI_Content_Optimizer::get_instance();
-    $post_type_obj = get_post_type_object($post_type);
-    $post_type_label = $post_type_obj ? $post_type_obj->labels->singular_name : ucfirst($post_type);
-    
-    foreach ($categories as $category) {
-        try {
-            // Get post type-specific category meta prompt
-            $meta_prompt = isset($settings['category_meta_prompt']) ? $settings['category_meta_prompt'] : '';
-            if (empty($meta_prompt)) {
-                $meta_prompt = "Generate a compelling meta description for the category \"{category_name}\" in the context of {$post_type_label}. Focus on SEO optimization and user engagement. Keep it under 160 characters.";
-            }
-            
-            // Replace placeholders
-            $parent_category = '';
-            if ($category->parent) {
-                $parent = get_term($category->parent, 'category');
-                if ($parent && !is_wp_error($parent)) {
-                    $parent_category = $parent->name;
-                }
-            }
-            
-            $meta_prompt = str_replace(
-                array('{category_name}', '{category_description}', '{post_count}', '{parent_category}', '{post_type_label}'),
-                array($category->name, $category->description, $category->count, $parent_category, $post_type_label),
-                $meta_prompt
-            );
-            
-            $generated_description = $ai_content_optimizer->call_openai_api_direct($api_key, $model, $meta_prompt, $max_tokens, $temperature);
-            
-            if (!is_wp_error($generated_description)) {
-                // Only update SEO plugin meta fields, not the main description
-                update_term_meta($category->term_id, '_yoast_wpseo_metadesc', $generated_description);
-                update_term_meta($category->term_id, 'rank_math_description', $generated_description);
-                update_term_meta($category->term_id, 'aioseo_description', $generated_description);
-                $processed++;
-            } else {
-                $errors[] = sprintf(__('Error optimizing category "%s": %s', 'ai-content-optimizer'), $category->name, $generated_description->get_error_message());
-            }
-            
-            // Add a small delay to prevent overwhelming the API
-            usleep(100000); // 0.1 second delay
-            
-        } catch (Exception $e) {
-            $errors[] = sprintf(__('Error optimizing category "%s": %s', 'ai-content-optimizer'), $category->name, $e->getMessage());
+        
+        if (empty($text_content)) {
+            wp_send_json_error(__('No text content found on homepage.', 'ai-content-optimizer'));
         }
-    }
-    
-    wp_send_json_success(array(
-        'total' => $total,
-        'processed' => $processed,
-        'errors' => $errors,
-        'message' => sprintf(__('Processed %d categories successfully!', 'ai-content-optimizer'), $processed)
-    ));
-});
+        
+        // Create AI prompt for brand analysis
+        $prompt = "Analyze the following website homepage content and create a comprehensive brand profile. Based on this content, please provide the following information in JSON format:
 
-add_action('wp_ajax_aico_bulk_optimize_tags', function() {
-    $license_status = get_option('bmo_license_status', 'invalid');
-    if ($license_status !== 'success') {
-        wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
-    }
-    
-    check_ajax_referer('aico-nonce', 'nonce');
-    if (!current_user_can('manage_options')) {
-        wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
-    }
-    
-    // Get post type from request or default to 'post'
-    $post_type = isset($_POST['post_type']) ? sanitize_text_field($_POST['post_type']) : 'post';
-    
-    // Get post type settings
-    $settings_key = 'aico_' . $post_type . '_settings';
-    $settings = get_option($settings_key, array());
-    
-    // Check if tag optimization is enabled for this post type
-    if (empty($settings['optimize_tag_meta'])) {
-        wp_send_json_error(__('Tag meta description optimization is not enabled for this post type.', 'ai-content-optimizer'));
-    }
-    
-    $tags = get_tags(array('hide_empty' => false));
-    $total = count($tags);
-    $processed = 0;
-    $errors = array();
-    
-    $api_key = get_option('aico_openai_api_key');
-    if (empty($api_key)) {
-        wp_send_json_error(__('API key is not set.', 'ai-content-optimizer'));
-    }
-    
-    $model = get_option('aico_openai_model', 'gpt-3.5-turbo');
-    $temperature = get_option('aico_openai_temperature', 0.7);
-    $max_tokens = get_option('aico_openai_max_tokens', 500);
-    
-    $ai_content_optimizer = AI_Content_Optimizer::get_instance();
-    $post_type_obj = get_post_type_object($post_type);
-    $post_type_label = $post_type_obj ? $post_type_obj->labels->singular_name : ucfirst($post_type);
-    
-    foreach ($tags as $tag) {
-        try {
-            // Get post type-specific tag meta prompt
-            $meta_prompt = isset($settings['tag_meta_prompt']) ? $settings['tag_meta_prompt'] : '';
-            if (empty($meta_prompt)) {
-                $meta_prompt = "Generate a compelling meta description for the tag \"{tag_name}\" in the context of {$post_type_label}. Focus on SEO optimization and user engagement. Keep it under 160 characters.";
-            }
-            
-            // Replace placeholders
-            $meta_prompt = str_replace(
-                array('{tag_name}', '{tag_description}', '{post_count}', '{post_type_label}'),
-                array($tag->name, $tag->description, $tag->count, $post_type_label),
-                $meta_prompt
-            );
-            
-            $generated_description = $ai_content_optimizer->call_openai_api_direct($api_key, $model, $meta_prompt, $max_tokens, $temperature);
-            
-            if (!is_wp_error($generated_description)) {
-                // Only update SEO plugin meta fields, not the main description
-                update_term_meta($tag->term_id, '_yoast_wpseo_metadesc', $generated_description);
-                update_term_meta($tag->term_id, 'rank_math_description', $generated_description);
-                update_term_meta($tag->term_id, 'aioseo_description', $generated_description);
-                $processed++;
-            } else {
-                $errors[] = sprintf(__('Error optimizing tag "%s": %s', 'ai-content-optimizer'), $tag->name, $generated_description->get_error_message());
-            }
-            
-            // Add a small delay to prevent overwhelming the API
-            usleep(100000); // 0.1 second delay
-            
-        } catch (Exception $e) {
-            $errors[] = sprintf(__('Error optimizing tag "%s": %s', 'ai-content-optimizer'), $tag->name, $e->getMessage());
+{
+  \"name\": \"Company/Brand name\",
+  \"tagline\": \"Main tagline or slogan\",
+  \"tone\": \"Tone of voice (e.g., Professional, Friendly, Authoritative, Casual)\",
+  \"keywords\": \"Main keywords/topics (comma-separated)\",
+  \"audience\": \"Target audience description\",
+  \"overview\": \"Comprehensive company overview explaining who they are, what they do, why people should choose them, and their value proposition\"
+}
+
+Website content:
+{$text_content}
+
+Please analyze this content and extract the brand information. Focus on identifying:
+1. The company name and any taglines
+2. The tone and voice used in the content
+3. Main products, services, or topics
+4. Who the target audience appears to be
+5. What makes this company unique and why customers should choose them
+
+Respond only with valid JSON.";
+        
+        // Call OpenAI API
+        $ai_content_optimizer = AI_Content_Optimizer::get_instance();
+        $model = get_option('aico_openai_model', 'gpt-3.5-turbo');
+        $temperature = 0.3; // Lower temperature for more consistent results
+        $max_tokens = 1000;
+        
+        $ai_response = $ai_content_optimizer->call_openai_api_direct($api_key, $model, $prompt, $max_tokens, $temperature);
+        
+        if (is_wp_error($ai_response)) {
+            wp_send_json_error(__('AI analysis failed: ', 'ai-content-optimizer') . $ai_response->get_error_message());
         }
-    }
-    
-    wp_send_json_success(array(
-        'total' => $total,
-        'processed' => $processed,
-        'errors' => $errors,
-        'message' => sprintf(__('Processed %d tags successfully!', 'ai-content-optimizer'), $processed)
-    ));
-});
-
-add_action('wp_ajax_aico_save_category_description', function() {
-    $license_status = get_option('bmo_license_status', 'invalid');
-    if ($license_status !== 'success') {
-        wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
-    }
-    
-    check_ajax_referer('aico-nonce', 'nonce');
-    if (!current_user_can('manage_options')) {
-        wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
-    }
-    
-    $category_id = isset($_POST['category_id']) ? intval($_POST['category_id']) : 0;
-    $description = isset($_POST['description']) ? sanitize_textarea_field($_POST['description']) : '';
-    
-    if (!$category_id) {
-        wp_send_json_error(__('Invalid category ID.', 'ai-content-optimizer'));
-    }
-    
-    $result = wp_update_term($category_id, 'category', array(
-        'description' => $description
-    ));
-    
-    if (is_wp_error($result)) {
-        wp_send_json_error($result->get_error_message());
-    }
-    
-    wp_send_json_success(__('Category description saved successfully!', 'ai-content-optimizer'));
-});
-
-add_action('wp_ajax_aico_save_tag_description', function() {
-    $license_status = get_option('bmo_license_status', 'invalid');
-    if ($license_status !== 'success') {
-        wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
-    }
-    
-    check_ajax_referer('aico-nonce', 'nonce');
-    if (!current_user_can('manage_options')) {
-        wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
-    }
-    
-    $tag_id = isset($_POST['tag_id']) ? intval($_POST['tag_id']) : 0;
-    $description = isset($_POST['description']) ? sanitize_textarea_field($_POST['description']) : '';
-    
-    if (!$tag_id) {
-        wp_send_json_error(__('Invalid tag ID.', 'ai-content-optimizer'));
-    }
-    
-    $result = wp_update_term($tag_id, 'post_tag', array(
-        'description' => $description
-    ));
-    
-    if (is_wp_error($result)) {
-        wp_send_json_error($result->get_error_message());
-    }
-    
-    wp_send_json_success(__('Tag description saved successfully!', 'ai-content-optimizer'));
-});
-
-// AJAX handler for getting bulk taxonomy data
-add_action('wp_ajax_aico_get_bulk_taxonomy_data', function() {
-    $license_status = get_option('bmo_license_status', 'invalid');
-    if ($license_status !== 'success') {
-        wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
-    }
-    
-    check_ajax_referer('aico-nonce', 'nonce');
-    if (!current_user_can('manage_options')) {
-        wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
-    }
-    
-    $term_ids = get_option('aico_bulk_taxonomy_term_ids', array());
-    $taxonomy = get_option('aico_bulk_taxonomy_type', 'category');
-    
-    // Clear the stored data
-    delete_option('aico_bulk_taxonomy_term_ids');
-    delete_option('aico_bulk_taxonomy_type');
-    
-    wp_send_json_success(array(
-        'term_ids' => $term_ids,
-        'taxonomy' => $taxonomy
-    ));
-});
-
-
-
-// Add meta descriptions for categories and tags
-add_action('wp_head', function() {
-    $license_status = get_option('bmo_license_status', 'invalid');
-    if ($license_status !== 'success') {
-        return;
-    }
-    
-    // Check if we're on a category or tag archive page
-    if (is_category()) {
-        $category = get_queried_object();
-        if ($category && !empty($category->description)) {
-            echo '<meta name="description" content="' . esc_attr($category->description) . '" />' . "\n";
+        
+        // Parse JSON response
+        $brand_data = json_decode($ai_response, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            wp_send_json_error(__('Failed to parse AI response. Please try again.', 'ai-content-optimizer'));
         }
-    } elseif (is_tag()) {
-        $tag = get_queried_object();
-        if ($tag && !empty($tag->description)) {
-            echo '<meta name="description" content="' . esc_attr($tag->description) . '" />' . "\n";
-        }
+        
+        // Validate and sanitize the response
+        $brand_profile = array(
+            'name' => sanitize_text_field($brand_data['name'] ?? ''),
+            'tagline' => sanitize_text_field($brand_data['tagline'] ?? ''),
+            'tone' => sanitize_text_field($brand_data['tone'] ?? ''),
+            'keywords' => sanitize_text_field($brand_data['keywords'] ?? ''),
+            'audience' => sanitize_text_field($brand_data['audience'] ?? ''),
+            'overview' => sanitize_textarea_field($brand_data['overview'] ?? ''),
+        );
+        
+        wp_send_json_success($brand_profile);
+        
+    } catch (Exception $e) {
+        error_log('Exception in aico_generate_brand_profile: ' . $e->getMessage());
+        wp_send_json_error(__('Error generating brand profile: ', 'ai-content-optimizer') . $e->getMessage());
     }
-}, 1);
+});
 
 // 1. Add a function to get the brand profile
 function aico_get_brand_profile() {
@@ -3496,13 +2267,30 @@ function aico_get_brand_profile() {
 function aico_get_brand_prefix() {
     $brand = aico_get_brand_profile();
     if (empty($brand) || !is_array($brand)) return '';
+    
     $prefix = '';
-    if (!empty($brand['name']))    $prefix .= "Brand: {$brand['name']}\n";
-    if (!empty($brand['tagline'])) $prefix .= "Tagline: {$brand['tagline']}\n";
-    if (!empty($brand['tone']))    $prefix .= "Tone: {$brand['tone']}\n";
-    if (!empty($brand['keywords'])) $prefix .= "Keywords: ".implode(', ', (array)$brand['keywords'])."\n";
-    if (!empty($brand['audience'])) $prefix .= "Audience: {$brand['audience']}\n";
-    if (!empty($brand['banned']))   $prefix .= "Banned: ".implode(', ', (array)$brand['banned'])."\n";
+    if (!empty($brand['overview'])) {
+        $prefix .= "Company Overview: {$brand['overview']}\n\n";
+    }
+    if (!empty($brand['name'])) {
+        $prefix .= "Brand: {$brand['name']}\n";
+    }
+    if (!empty($brand['tagline'])) {
+        $prefix .= "Tagline: {$brand['tagline']}\n";
+    }
+    if (!empty($brand['tone'])) {
+        $prefix .= "Tone: {$brand['tone']}\n";
+    }
+    if (!empty($brand['keywords'])) {
+        $prefix .= "Keywords: ".implode(', ', (array)$brand['keywords'])."\n";
+    }
+    if (!empty($brand['audience'])) {
+        $prefix .= "Audience: {$brand['audience']}\n";
+    }
+    if (!empty($brand['banned'])) {
+        $prefix .= "Banned: ".implode(', ', (array)$brand['banned'])."\n";
+    }
+    
     return trim($prefix) . "\n\n";
 }
 
@@ -3513,41 +2301,150 @@ function aico_get_brand_prefix() {
 
 // 4. Add admin UI for onboarding and settings tab (pseudo-code, actual UI code would be more involved)
 
-
 function aico_render_brand_profile_page() {
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_admin_referer('aico_save_brand_profile')) {
         $profile = [
-            'name'    => sanitize_text_field($_POST['brand_name'] ?? ''),
-            'tagline' => sanitize_text_field($_POST['brand_tagline'] ?? ''),
-            'tone'    => sanitize_text_field($_POST['brand_tone'] ?? ''),
-            'keywords'=> array_filter(array_map('trim', explode(',', $_POST['brand_keywords'] ?? ''))),
-            'audience'=> sanitize_text_field($_POST['brand_audience'] ?? ''),
-            'banned'  => array_filter(array_map('trim', explode(',', $_POST['brand_banned'] ?? ''))),
+            'name'     => sanitize_text_field($_POST['brand_name'] ?? ''),
+            'tagline'  => sanitize_text_field($_POST['brand_tagline'] ?? ''),
+            'tone'     => sanitize_text_field($_POST['brand_tone'] ?? ''),
+            'keywords' => array_filter(array_map('trim', explode(',', $_POST['brand_keywords'] ?? ''))),
+            'audience' => sanitize_text_field($_POST['brand_audience'] ?? ''),
+            'banned'   => array_filter(array_map('trim', explode(',', $_POST['brand_banned'] ?? ''))),
+            'overview' => sanitize_textarea_field($_POST['brand_overview'] ?? ''),
         ];
         update_option('aico_brand_profile', $profile);
         echo '<div class="updated"><p>Brand profile saved!</p></div>';
     }
     $profile = aico_get_brand_profile();
     ?>
-    <div class="wrap"><h1>Brand Profile</h1>
-    <form method="post">
-        <?php wp_nonce_field('aico_save_brand_profile'); ?>
-        <table class="form-table">
-            <tr><th>Brand Name</th><td><input type="text" name="brand_name" value="<?php echo esc_attr($profile['name'] ?? ''); ?>" required></td></tr>
-            <tr><th>Tagline</th><td><input type="text" name="brand_tagline" value="<?php echo esc_attr($profile['tagline'] ?? ''); ?>"></td></tr>
-            <tr><th>Tone of Voice</th><td><input type="text" name="brand_tone" value="<?php echo esc_attr($profile['tone'] ?? ''); ?>" required></td></tr>
-            <tr><th>Core Keywords/Topics</th><td><input type="text" name="brand_keywords" value="<?php echo esc_attr(implode(', ', $profile['keywords'] ?? [])); ?>" placeholder="comma-separated" required></td></tr>
-            <tr><th>Target Audience</th><td><input type="text" name="brand_audience" value="<?php echo esc_attr($profile['audience'] ?? ''); ?>" required></td></tr>
-            <tr><th>Banned Words/Phrases</th><td><input type="text" name="brand_banned" value="<?php echo esc_attr(implode(', ', $profile['banned'] ?? [])); ?>" placeholder="comma-separated"></td></tr>
-        </table>
-        <p><input type="submit" class="button button-primary" value="Save Brand Profile"></p>
-    </form>
-    <form method="post" style="margin-top:2em;">
-        <?php wp_nonce_field('aico_reset_brand_profile'); ?>
-        <input type="hidden" name="reset_brand_profile" value="1">
-        <input type="submit" class="button" value="Reset Brand Profile" onclick="return confirm('Are you sure you want to reset your brand profile?');">
-    </form>
+    <div class="wrap aico-wrap">
+        <h1><?php _e('Brand Profile', 'ai-content-optimizer'); ?></h1>
+        
+        <div class="aico-card">
+            <h2><?php _e('AI Brand Profile Generator', 'ai-content-optimizer'); ?></h2>
+            <p><?php _e('Let AI analyze your homepage and generate a comprehensive brand profile automatically.', 'ai-content-optimizer'); ?></p>
+            <button type="button" id="aico-generate-brand-profile" class="button button-secondary">
+                <?php _e('Generate Brand Profile with AI', 'ai-content-optimizer'); ?>
+            </button>
+            <div id="aico-brand-generation-status" style="margin-top: 10px; display: none;"></div>
+        </div>
+        
+        <form method="post" id="aico-brand-profile-form">
+            <?php wp_nonce_field('aico_save_brand_profile'); ?>
+            
+            <div class="aico-card">
+                <h2><?php _e('Company Overview', 'ai-content-optimizer'); ?></h2>
+                <table class="form-table">
+                    <tr>
+                        <th scope="row"><?php _e('Company Overview', 'ai-content-optimizer'); ?></th>
+                        <td>
+                            <textarea name="brand_overview" rows="8" class="large-text" placeholder="<?php _e('A comprehensive overview of your company, what you do, and why customers should choose you...', 'ai-content-optimizer'); ?>"><?php echo esc_textarea($profile['overview'] ?? ''); ?></textarea>
+                            <p class="description"><?php _e('This overview will be included with every AI request to ensure on-brand content generation.', 'ai-content-optimizer'); ?></p>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div class="aico-card">
+                <h2><?php _e('Brand Details', 'ai-content-optimizer'); ?></h2>
+                <table class="form-table">
+                    <tr>
+                        <th scope="row"><?php _e('Brand Name', 'ai-content-optimizer'); ?></th>
+                        <td><input type="text" name="brand_name" value="<?php echo esc_attr($profile['name'] ?? ''); ?>" class="regular-text" required></td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php _e('Tagline', 'ai-content-optimizer'); ?></th>
+                        <td><input type="text" name="brand_tagline" value="<?php echo esc_attr($profile['tagline'] ?? ''); ?>" class="regular-text"></td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php _e('Tone of Voice', 'ai-content-optimizer'); ?></th>
+                        <td>
+                            <input type="text" name="brand_tone" value="<?php echo esc_attr($profile['tone'] ?? ''); ?>" class="regular-text" required>
+                            <p class="description"><?php _e('e.g., Professional, Friendly, Authoritative, Casual', 'ai-content-optimizer'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php _e('Core Keywords/Topics', 'ai-content-optimizer'); ?></th>
+                        <td>
+                            <input type="text" name="brand_keywords" value="<?php echo esc_attr(implode(', ', $profile['keywords'] ?? [])); ?>" class="large-text" placeholder="<?php _e('comma-separated', 'ai-content-optimizer'); ?>" required>
+                            <p class="description"><?php _e('Main topics, products, or services your brand focuses on.', 'ai-content-optimizer'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php _e('Target Audience', 'ai-content-optimizer'); ?></th>
+                        <td>
+                            <input type="text" name="brand_audience" value="<?php echo esc_attr($profile['audience'] ?? ''); ?>" class="large-text" required>
+                            <p class="description"><?php _e('Who is your ideal customer? Be specific about demographics, interests, or needs.', 'ai-content-optimizer'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php _e('Banned Words/Phrases', 'ai-content-optimizer'); ?></th>
+                        <td>
+                            <input type="text" name="brand_banned" value="<?php echo esc_attr(implode(', ', $profile['banned'] ?? [])); ?>" class="large-text" placeholder="<?php _e('comma-separated', 'ai-content-optimizer'); ?>">
+                            <p class="description"><?php _e('Words or phrases that should never appear in your content.', 'ai-content-optimizer'); ?></p>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            
+            <p class="submit">
+                <input type="submit" class="button button-primary" value="<?php _e('Save Brand Profile', 'ai-content-optimizer'); ?>">
+            </p>
+        </form>
+        
+        <div class="aico-card">
+            <h2><?php _e('Reset Brand Profile', 'ai-content-optimizer'); ?></h2>
+            <p><?php _e('This will completely reset your brand profile. All current information will be lost.', 'ai-content-optimizer'); ?></p>
+            <form method="post" style="display: inline;">
+                <?php wp_nonce_field('aico_reset_brand_profile'); ?>
+                <input type="hidden" name="reset_brand_profile" value="1">
+                <input type="submit" class="button" value="<?php _e('Reset Brand Profile', 'ai-content-optimizer'); ?>" onclick="return confirm('<?php _e('Are you sure you want to reset your brand profile? This cannot be undone.', 'ai-content-optimizer'); ?>');">
+            </form>
+        </div>
     </div>
+    
+    <script>
+    jQuery(document).ready(function($) {
+        $('#aico-generate-brand-profile').on('click', function() {
+            const $button = $(this);
+            const $status = $('#aico-brand-generation-status');
+            
+            // Show loading state
+            $button.prop('disabled', true).text('<?php _e('Analyzing Website...', 'ai-content-optimizer'); ?>');
+            $status.show().html('<p><?php _e('Fetching homepage content and analyzing with AI...', 'ai-content-optimizer'); ?></p>');
+            
+            $.ajax({
+                url: ajaxurl,
+                type: 'POST',
+                data: {
+                    action: 'aico_generate_brand_profile',
+                    nonce: '<?php echo wp_create_nonce('aico-nonce'); ?>'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Populate the form fields
+                        if (response.data.name) $('input[name="brand_name"]').val(response.data.name);
+                        if (response.data.tagline) $('input[name="brand_tagline"]').val(response.data.tagline);
+                        if (response.data.tone) $('input[name="brand_tone"]').val(response.data.tone);
+                        if (response.data.keywords) $('input[name="brand_keywords"]').val(response.data.keywords);
+                        if (response.data.audience) $('input[name="brand_audience"]').val(response.data.audience);
+                        if (response.data.overview) $('textarea[name="brand_overview"]').val(response.data.overview);
+                        
+                        $status.html('<div class="notice notice-success inline"><p><?php _e('Brand profile generated successfully! Review and edit the fields below, then save.', 'ai-content-optimizer'); ?></p></div>');
+                    } else {
+                        $status.html('<div class="notice notice-error inline"><p><?php _e('Error: ', 'ai-content-optimizer'); ?>' + response.data + '</p></div>');
+                    }
+                },
+                error: function() {
+                    $status.html('<div class="notice notice-error inline"><p><?php _e('Error generating brand profile. Please try again.', 'ai-content-optimizer'); ?></p></div>');
+                },
+                complete: function() {
+                    $button.prop('disabled', false).text('<?php _e('Generate Brand Profile with AI', 'ai-content-optimizer'); ?>');
+                }
+            });
+        });
+    });
+    </script>
     <?php
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_brand_profile']) && check_admin_referer('aico_reset_brand_profile')) {
         delete_option('aico_brand_profile');
@@ -3561,8 +2458,5 @@ add_action('admin_notices', function() {
         echo '<div class="notice notice-warning is-dismissible"><p><strong>Bulk Meta Optimizer:</strong> Complete your <a href="admin.php?page=aico-brand-profile">Brand Profile</a> for on-brand AI results.</p></div>';
     }
 });
-
-
-
 
 

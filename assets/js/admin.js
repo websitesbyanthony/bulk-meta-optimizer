@@ -1,4 +1,4 @@
-/**
+﻿/**
  * AI Content Optimizer Admin JavaScript
  */
 (function($) {
@@ -344,14 +344,14 @@
                     if (response.success) {
                         const data = response.data;
                         let statusClass = 'aico-error';
-                        let statusIcon = '❌';
+                        let statusIcon = 'âŒ';
                         
                         if (data.status === 'success') {
                             statusClass = 'aico-success';
-                            statusIcon = '✔️';
+                            statusIcon = 'âœ”ï¸';
                         } else if (data.status === 'expired') {
                             statusClass = 'aico-warning';
-                            statusIcon = '⚠️';
+                            statusIcon = 'âš ï¸';
                         }
                         
                         $result.html(
@@ -464,528 +464,42 @@
             const $value = $range.next('.aico-range-value');
             $value.text($range.val());
         });
-        
-        // Categories and Tags functionality
-        
-        // Save category prompt
-        $('#aico-save-category-prompt').on('click', function(e) {
-            e.preventDefault();
-            
-            const $button = $(this);
-            const prompt = $('#aico-category-meta-prompt').val();
-            
-            if (!prompt.trim()) {
-                alert('Please enter a prompt.');
-                return;
-            }
-            
-            // Store original text
-            const originalText = $button.text();
-            
-            // Show loading state
-            $button.text('Saving...').prop('disabled', true);
-            
-            $.ajax({
-                url: aicoData.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'aico_save_category_prompt',
-                    prompt: prompt,
-                    nonce: aicoData.nonce
-                },
-                success: function(response) {
-                    if (response.success) {
-                        $button.text('Saved!');
-                        setTimeout(function() {
-                            $button.text(originalText).prop('disabled', false);
-                        }, 1500);
-                    } else {
-                        alert('Error: ' + response.data);
-                        $button.text(originalText).prop('disabled', false);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    alert('Error: ' + error);
-                    $button.text(originalText).prop('disabled', false);
-                }
-            });
+
         });
-        
-        // Save tag prompt
-        $('#aico-save-tag-prompt').on('click', function(e) {
-            e.preventDefault();
-            
-            const $button = $(this);
-            const prompt = $('#aico-tag-meta-prompt').val();
-            
-            if (!prompt.trim()) {
-                alert('Please enter a prompt.');
-                return;
-            }
-            
-            // Store original text
-            const originalText = $button.text();
-            
-            // Show loading state
-            $button.text('Saving...').prop('disabled', true);
-            
-            $.ajax({
-                url: aicoData.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'aico_save_tag_prompt',
-                    prompt: prompt,
-                    nonce: aicoData.nonce
-                },
-                success: function(response) {
-                    if (response.success) {
-                        $button.text('Saved!');
-                        setTimeout(function() {
-                            $button.text(originalText).prop('disabled', false);
-                        }, 1500);
-                    } else {
-                        alert('Error: ' + response.data);
-                        $button.text(originalText).prop('disabled', false);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    alert('Error: ' + error);
-                    $button.text(originalText).prop('disabled', false);
-                }
-            });
+
         });
-        
-        // Optimize individual category
-        $('.aico-optimize-category').on('click', function(e) {
-            e.preventDefault();
-            
-            const $button = $(this);
-            const categoryId = $button.data('category-id');
-            const categoryName = $button.data('category-name');
-            
-            if (!confirm('Generate AI meta description for "' + categoryName + '"?')) {
-                return;
-            }
-            
-            // Store original text
-            const originalText = $button.text();
-            
-            // Show loading state
-            $button.text(aicoData.strings.generating).prop('disabled', true);
-            
-            $.ajax({
-                url: aicoData.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'aico_optimize_category',
-                    category_id: categoryId,
-                    nonce: aicoData.nonce
-                },
-                success: function(response) {
-                    if (response.success) {
-                        $button.text(aicoData.strings.success);
-                        
-                        // Update the description in the table
-                        const $row = $button.closest('tr');
-                        $row.find('.aico-meta-preview').text(response.data.description);
-                        
-                        setTimeout(function() {
-                            $button.text('Optimize with AI').prop('disabled', false);
-                        }, 2000);
-                    } else {
-                        $button.text('Error: ' + response.data);
-                        setTimeout(function() {
-                            $button.text(originalText).prop('disabled', false);
-                        }, 3000);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    $button.text('Error: ' + error);
-                    setTimeout(function() {
-                        $button.text(originalText).prop('disabled', false);
-                    }, 3000);
-                }
-            });
+
         });
-        
-        // Optimize individual tag
-        $('.aico-optimize-tag').on('click', function(e) {
-            e.preventDefault();
-            
-            const $button = $(this);
-            const tagId = $button.data('tag-id');
-            const tagName = $button.data('tag-name');
-            
-            if (!confirm('Generate AI meta description for "' + tagName + '"?')) {
-                return;
-            }
-            
-            // Store original text
-            const originalText = $button.text();
-            
-            // Show loading state
-            $button.text(aicoData.strings.generating).prop('disabled', true);
-            
-            $.ajax({
-                url: aicoData.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'aico_optimize_tag',
-                    tag_id: tagId,
-                    nonce: aicoData.nonce
-                },
-                success: function(response) {
-                    if (response.success) {
-                        $button.text(aicoData.strings.success);
-                        
-                        // Update the description in the table
-                        const $row = $button.closest('tr');
-                        $row.find('.aico-meta-preview').text(response.data.description);
-                        
-                        setTimeout(function() {
-                            $button.text('Optimize with AI').prop('disabled', false);
-                        }, 2000);
-                    } else {
-                        $button.text('Error: ' + response.data);
-                        setTimeout(function() {
-                            $button.text(originalText).prop('disabled', false);
-                        }, 3000);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    $button.text('Error: ' + error);
-                    setTimeout(function() {
-                        $button.text(originalText).prop('disabled', false);
-                    }, 3000);
-                }
-            });
+
         });
-        
-        // Bulk optimize categories
-        $('#aico-bulk-optimize-categories').on('click', function(e) {
-            e.preventDefault();
-            
-            if (!confirm('Generate AI meta descriptions for ALL categories? This may take some time.')) {
-                return;
-            }
-            
-            const $button = $(this);
-            const $progress = $('#aico-categories-progress');
-            
-            // Store original text
-            const originalText = $button.text();
-            
-            // Show loading state
-            $button.text('Processing...').prop('disabled', true);
-            $progress.text('Starting bulk optimization...').show();
-            
-            $.ajax({
-                url: aicoData.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'aico_bulk_optimize_categories',
-                    nonce: aicoData.nonce
-                },
-                success: function(response) {
-                    if (response.success) {
-                        $button.text('Completed!');
-                        $progress.text(response.data.message);
-                        
-                        setTimeout(function() {
-                            window.location.reload();
-                        }, 2000);
-                    } else {
-                        $button.text('Error: ' + response.data);
-                        $progress.text('Bulk optimization failed.');
-                        setTimeout(function() {
-                            $button.text(originalText).prop('disabled', false);
-                            $progress.hide();
-                        }, 3000);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    $button.text('Error: ' + error);
-                    $progress.text('Bulk optimization failed.');
-                    setTimeout(function() {
-                        $button.text(originalText).prop('disabled', false);
-                        $progress.hide();
-                    }, 3000);
-                }
-            });
+
         });
-        
-        // Bulk optimize tags
-        $('#aico-bulk-optimize-tags').on('click', function(e) {
-            e.preventDefault();
-            
-            if (!confirm('Generate AI meta descriptions for ALL tags? This may take some time.')) {
-                return;
-            }
-            
-            const $button = $(this);
-            const $progress = $('#aico-tags-progress');
-            
-            // Store original text
-            const originalText = $button.text();
-            
-            // Show loading state
-            $button.text('Processing...').prop('disabled', true);
-            $progress.text('Starting bulk optimization...').show();
-            
-            $.ajax({
-                url: aicoData.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'aico_bulk_optimize_tags',
-                    nonce: aicoData.nonce
-                },
-                success: function(response) {
-                    if (response.success) {
-                        $button.text('Completed!');
-                        $progress.text(response.data.message);
-                        
-                        setTimeout(function() {
-                            window.location.reload();
-                        }, 2000);
-                    } else {
-                        $button.text('Error: ' + response.data);
-                        $progress.text('Bulk optimization failed.');
-                        setTimeout(function() {
-                            $button.text(originalText).prop('disabled', false);
-                            $progress.hide();
-                        }, 3000);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    $button.text('Error: ' + error);
-                    $progress.text('Bulk optimization failed.');
-                    setTimeout(function() {
-                        $button.text(originalText).prop('disabled', false);
-                        $progress.hide();
-                    }, 3000);
-                }
-            });
+
         });
-        
-        // Modal functionality for categories
-        $('.aico-edit-category').on('click', function(e) {
-            e.preventDefault();
-            
-            const categoryId = $(this).data('category-id');
-            const categoryName = $(this).data('category-name');
-            const categoryDescription = $(this).data('category-description');
-            
-            $('#aico-category-id').val(categoryId);
-            $('#aico-category-name-display').text(categoryName);
-            $('#aico-category-description').val(categoryDescription);
-            
-            // Update character counter
-            updateCategoryCounter();
-            
-            $('#aico-category-modal').show();
-        });
-        
-        // Modal functionality for tags
-        $('.aico-edit-tag').on('click', function(e) {
-            e.preventDefault();
-            
-            const tagId = $(this).data('tag-id');
-            const tagName = $(this).data('tag-name');
-            const tagDescription = $(this).data('tag-description');
-            
-            $('#aico-tag-id').val(tagId);
-            $('#aico-tag-name-display').text(tagName);
-            $('#aico-tag-description').val(tagDescription);
-            
-            // Update character counter
-            updateTagCounter();
-            
-            $('#aico-tag-modal').show();
-        });
-        
-        // Close modals
-        $('.aico-modal-close, #aico-category-cancel, #aico-tag-cancel').on('click', function() {
-            $('.aico-modal').hide();
-        });
-        
-        // Click outside modal to close
-        $(window).on('click', function(e) {
-            if ($(e.target).hasClass('aico-modal')) {
-                $('.aico-modal').hide();
-            }
-        });
-        
+
         // Character counters
         $('#aico-category-description').on('input', updateCategoryCounter);
         $('#aico-tag-description').on('input', updateTagCounter);
         
-        function updateCategoryCounter() {
-            const length = $('#aico-category-description').val().length;
-            const $counter = $('#aico-category-description').next('.aico-meta-counter');
-            $counter.text(length + ' characters');
-            
-            $counter.removeClass('warning error');
-            if (length > 160) {
-                $counter.addClass('error');
-            } else if (length > 150) {
+         else if (length > 150) {
                 $counter.addClass('warning');
             }
         }
         
-        function updateTagCounter() {
-            const length = $('#aico-tag-description').val().length;
-            const $counter = $('#aico-tag-description').next('.aico-meta-counter');
-            $counter.text(length + ' characters');
-            
-            $counter.removeClass('warning error');
-            if (length > 160) {
-                $counter.addClass('error');
-            } else if (length > 150) {
+         else if (length > 150) {
                 $counter.addClass('warning');
             }
         }
-        
-        // Save category description
-        $('#aico-category-form').on('submit', function(e) {
-            e.preventDefault();
-            
-            const categoryId = $('#aico-category-id').val();
-            const description = $('#aico-category-description').val();
-            
-            $.ajax({
-                url: aicoData.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'aico_save_category_description',
-                    category_id: categoryId,
-                    description: description,
-                    nonce: aicoData.nonce
-                },
-                success: function(response) {
-                    if (response.success) {
-                        // Update the description in the table
-                        const $row = $('button[data-category-id="' + categoryId + '"]').closest('tr');
-                        $row.find('.aico-meta-preview').text(description);
-                        
-                        $('#aico-category-modal').hide();
-                        alert('Category description saved successfully!');
-                    } else {
-                        alert('Error: ' + response.data);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    alert('Error: ' + error);
-                }
-            });
+
+        });
+
+        });
+
         });
         
-        // Save tag description
-        $('#aico-tag-form').on('submit', function(e) {
-            e.preventDefault();
-            
-            const tagId = $('#aico-tag-id').val();
-            const description = $('#aico-tag-description').val();
-            
-            $.ajax({
-                url: aicoData.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'aico_save_tag_description',
-                    tag_id: tagId,
-                    description: description,
-                    nonce: aicoData.nonce
-                },
-                success: function(response) {
-                    if (response.success) {
-                        // Update the description in the table
-                        const $row = $('button[data-tag-id="' + tagId + '"]').closest('tr');
-                        $row.find('.aico-meta-preview').text(description);
-                        
-                        $('#aico-tag-modal').hide();
-                        alert('Tag description saved successfully!');
-                    } else {
-                        alert('Error: ' + response.data);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    alert('Error: ' + error);
-                }
-            });
-        });
-        
-        // Category and Tag Optimization
-        $('.aico-optimize-categories').on('click', function(e) {
-            e.preventDefault();
-            
-            const $button = $(this);
-            const postType = $button.data('post-type');
-            
-            if (!confirm('Are you sure you want to optimize all categories for this post type? This may take some time.')) {
-                return;
-            }
-            
-            // Show loading message
-            $button.prop('disabled', true).text('Optimizing Categories...');
-            
-            // Send AJAX request
-            $.ajax({
-                url: aicoData.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'aico_bulk_optimize_categories',
-                    post_type: postType,
-                    nonce: aicoData.nonce
-                },
-                success: function(response) {
-                    if (response.success) {
-                        alert('Success: ' + response.data.message);
-                    } else {
-                        alert('Error: ' + response.data);
-                    }
-                    $button.prop('disabled', false).text('Optimize All Categories');
-                },
-                error: function(xhr, status, error) {
-                    alert('Error: ' + error);
-                    $button.prop('disabled', false).text('Optimize All Categories');
-                }
-            });
-        });
-        
-        $('.aico-optimize-tags').on('click', function(e) {
-            e.preventDefault();
-            
-            const $button = $(this);
-            const postType = $button.data('post-type');
-            
-            if (!confirm('Are you sure you want to optimize all tags for this post type? This may take some time.')) {
-                return;
-            }
-            
-            // Show loading message
-            $button.prop('disabled', true).text('Optimizing Tags...');
-            
-            // Send AJAX request
-            $.ajax({
-                url: aicoData.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'aico_bulk_optimize_tags',
-                    post_type: postType,
-                    nonce: aicoData.nonce
-                },
-                success: function(response) {
-                    if (response.success) {
-                        alert('Success: ' + response.data.message);
-                    } else {
-                        alert('Error: ' + response.data);
-                    }
-                    $button.prop('disabled', false).text('Optimize All Tags');
-                },
-                error: function(xhr, status, error) {
-                    alert('Error: ' + error);
-                    $button.prop('disabled', false).text('Optimize All Tags');
-                }
-            });
+        $('
         });
     });
 })(jQuery);
+
+
