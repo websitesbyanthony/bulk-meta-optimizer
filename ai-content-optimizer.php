@@ -742,7 +742,29 @@ PROMPT;
         $post_type_label = $post_type_obj ? $post_type_obj->labels->singular_name : ucfirst($post_type);
 
         $settings_key = 'aico_' . $post_type . '_settings';
-        $settings = get_option($settings_key, array());
+        $loaded_settings = get_option($settings_key, array());
+
+        // Define defaults for all toggles and options
+        $default_settings = array(
+            'optimize_title' => true,
+            'optimize_meta' => true,
+            'optimize_content' => false,
+            'optimize_slug' => false,
+            'preserve_html' => true,
+            'optimize_category_meta' => false,
+            'optimize_tag_meta' => false,
+            'title_separator' => 'dash',
+            'excluded_words' => '',
+            'content_tone' => 'professional',
+            'target_audience' => 'general',
+            'content_focus' => 'benefit-focused',
+            'seo_aggressiveness' => 'moderate',
+            'keyword_density' => 'standard',
+            'geographic_targeting' => 'global',
+            'brand_voice' => 'trustworthy',
+        );
+        // Merge loaded settings with defaults
+        $settings = array_merge($default_settings, $loaded_settings);
 
         ?>
         <div class="aico-settings-grid">
@@ -837,8 +859,17 @@ PROMPT;
                 </div>
 
                 <?php
-                $has_categories = is_object_in_taxonomy($post_type, 'category') || is_object_in_taxonomy($post_type, 'product_cat');
-                $has_tags = is_object_in_taxonomy($post_type, 'post_tag') || is_object_in_taxonomy($post_type, 'product_tag');
+                // Determine if this post type supports categories or tags
+                if ($post_type === 'post') {
+                    $has_categories = is_object_in_taxonomy($post_type, 'category');
+                    $has_tags = is_object_in_taxonomy($post_type, 'post_tag');
+                } elseif ($post_type === 'product') {
+                    $has_categories = is_object_in_taxonomy($post_type, 'product_cat');
+                    $has_tags = is_object_in_taxonomy($post_type, 'product_tag');
+                } else {
+                    $has_categories = is_object_in_taxonomy($post_type, 'category');
+                    $has_tags = is_object_in_taxonomy($post_type, 'post_tag');
+                }
                 ?>
                 <?php if ($has_categories) : ?>
                 <div class="aico-card">
