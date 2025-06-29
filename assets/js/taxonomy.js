@@ -64,12 +64,7 @@
                     if (response.success) {
                         $link.text(aicoTaxonomyData.strings.success);
                         
-                        // Update the description in the table if it exists
-                        const $row = $link.closest('tr');
-                        const $descriptionCell = $row.find('td:nth-child(2)'); // Description column
-                        if ($descriptionCell.length && response.data.description) {
-                            $descriptionCell.text(response.data.description);
-                        }
+                        // Do not update the description cell; just show success
                         
                         setTimeout(function() {
                             $link.text('Optimize with AI');

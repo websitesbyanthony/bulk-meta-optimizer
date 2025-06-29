@@ -3039,6 +3039,10 @@ add_action('wp_ajax_aico_optimize_category', function() {
         error_log('[AICO] Failed to update Yoast meta for term ' . $term_id);
         wp_send_json_error(__('Failed to update Yoast SEO meta description.', 'ai-content-optimizer'));
     }
+    // Clear Yoast taxonomy meta cache if available
+    if (class_exists('WPSEO_Taxonomy_Meta')) {
+        WPSEO_Taxonomy_Meta::clear_cache();
+    }
     update_term_meta( $term_id, 'rank_math_description', $generated_description );
     update_term_meta( $term_id, 'aioseo_description', $generated_description );
     
