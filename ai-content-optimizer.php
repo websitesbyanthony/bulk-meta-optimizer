@@ -3239,9 +3239,10 @@ add_action('wp_ajax_aico_bulk_optimize_categories', function() {
             $generated_description = $ai_content_optimizer->call_openai_api_direct($api_key, $model, $meta_prompt, $max_tokens, $temperature);
             
             if (!is_wp_error($generated_description)) {
-                wp_update_term($category->term_id, 'category', array(
-                    'description' => $generated_description
-                ));
+                // Only update SEO plugin meta fields, not the main description
+                update_term_meta($category->term_id, '_yoast_wpseo_metadesc', $generated_description);
+                update_term_meta($category->term_id, 'rank_math_description', $generated_description);
+                update_term_meta($category->term_id, 'aioseo_description', $generated_description);
                 $processed++;
             } else {
                 $errors[] = sprintf(__('Error optimizing category "%s": %s', 'ai-content-optimizer'), $category->name, $generated_description->get_error_message());
@@ -3322,9 +3323,10 @@ add_action('wp_ajax_aico_bulk_optimize_tags', function() {
             $generated_description = $ai_content_optimizer->call_openai_api_direct($api_key, $model, $meta_prompt, $max_tokens, $temperature);
             
             if (!is_wp_error($generated_description)) {
-                wp_update_term($tag->term_id, 'post_tag', array(
-                    'description' => $generated_description
-                ));
+                // Only update SEO plugin meta fields, not the main description
+                update_term_meta($tag->term_id, '_yoast_wpseo_metadesc', $generated_description);
+                update_term_meta($tag->term_id, 'rank_math_description', $generated_description);
+                update_term_meta($tag->term_id, 'aioseo_description', $generated_description);
                 $processed++;
             } else {
                 $errors[] = sprintf(__('Error optimizing tag "%s": %s', 'ai-content-optimizer'), $tag->name, $generated_description->get_error_message());
