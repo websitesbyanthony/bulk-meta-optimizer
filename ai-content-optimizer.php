@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Plugin Name: Bulk Meta Optimizer
  * Description: A comprehensive AI-powered content optimization tool for WordPress that generates and optimizes meta titles, descriptions, content, and permalinks for posts, pages, and WooCommerce products.
@@ -8,41 +8,41 @@
  */
 
 /**
- * ────────────────────────────────────────────────────────────────────────────
+ * â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
  * SLM License Verification & Domain Registration
- * ────────────────────────────────────────────────────────────────────────────
+ * â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
  *
  * This plugin uses Software License Manager (SLM) endpoints on bulkmetaoptimizer.com
  * to activate, check, and deactivate licenses tied to the site's domain.
  *
  * 1. Endpoints & Constants
- *    • BMO_SLM_SERVER          = 'https://bulkmetaoptimizer.com'
- *    • BMO_SLM_ITEM            = 'Bulk Meta Optimizer Plugin'
- *    • BMO_SLM_SECRET_VERIFY   = '685361e739ae33.52122910'
+ *    â€¢ BMO_SLM_SERVER          = 'https://bulkmetaoptimizer.com'
+ *    â€¢ BMO_SLM_ITEM            = 'Bulk Meta Optimizer Plugin'
+ *    â€¢ BMO_SLM_SECRET_VERIFY   = '685361e739ae33.52122910'
  *
  * 2. POST Parameters (all requests)
- *    • slm_action     : 'slm_activate' | 'slm_check' | 'slm_deactivate'
- *    • secret_key     : BMO_SLM_SECRET_VERIFY
- *    • license_key    : (user-entered license string)
- *    • item_reference : BMO_SLM_ITEM
- *    • url            : full site URL (scheme + host), e.g. https://example.com
- *    • domain_name    : host only, e.g. example.com
+ *    â€¢ slm_action     : 'slm_activate' | 'slm_check' | 'slm_deactivate'
+ *    â€¢ secret_key     : BMO_SLM_SECRET_VERIFY
+ *    â€¢ license_key    : (user-entered license string)
+ *    â€¢ item_reference : BMO_SLM_ITEM
+ *    â€¢ url            : full site URL (scheme + host), e.g. https://example.com
+ *    â€¢ domain_name    : host only, e.g. example.com
  *
  * 3. Expected Response
- *    • JSON payload: { "result": "success"|"expired"|"error", "message": "…optional details…" }
- *    • On activate/check, stored in WP option 'bmo_license_status'
+ *    â€¢ JSON payload: { "result": "success"|"expired"|"error", "message": "â€¦optional detailsâ€¦" }
+ *    â€¢ On activate/check, stored in WP option 'bmo_license_status'
  *
  * 4. Gating Logic
- *    • If bmo_license_status !== 'success', plugin hooks and AJAX are disabled
- *    • Admin notice shows "Invalid" or "Expired" messages
+ *    â€¢ If bmo_license_status !== 'success', plugin hooks and AJAX are disabled
+ *    â€¢ Admin notice shows "Invalid" or "Expired" messages
  *
  * 5. Hooks & Scheduling
- *    • Activation hook  → slm_activate
- *    • Deactivation hook→ slm_deactivate
- *    • admin_init       → slm_check   (and daily via wp_schedule_event)
+ *    â€¢ Activation hook  â†’ slm_activate
+ *    â€¢ Deactivation hookâ†’ slm_deactivate
+ *    â€¢ admin_init       â†’ slm_check   (and daily via wp_schedule_event)
  *
  * @see https://bulkmetaoptimizer.com/docs/slm
- * ────────────────────────────────────────────────────────────────────────────
+ * â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
  */
 
 // Exit if accessed directly.
@@ -50,7 +50,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-// ───── SLM License Verification ─────
+// â”€â”€â”€â”€â”€ SLM License Verification â”€â”€â”€â”€â”€
 if ( ! defined( 'BMO_SLM_SERVER' ) ) {
     define( 'BMO_SLM_SERVER', 'https://bulkmetaoptimizer.com' );
 }
@@ -60,7 +60,7 @@ if ( ! defined( 'BMO_SLM_ITEM' ) ) {
 if ( ! defined( 'BMO_SLM_SECRET_VERIFY' ) ) {
     define( 'BMO_SLM_SECRET_VERIFY', '685361e739ae33.52122910' );
 }
-// ───────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 require_once __DIR__ . '/restore-defaults.php';
 
@@ -799,9 +799,9 @@ PROMPT;
                                         'dash' => __('Dash (-)', 'ai-content-optimizer'),
                                         'pipe' => __('Pipe (|)', 'ai-content-optimizer'),
                                         'colon' => __('Colon (:)', 'ai-content-optimizer'),
-                                        'bullet' => __('Bullet (•)', 'ai-content-optimizer'),
-                                        'arrow' => __('Arrow (»)', 'ai-content-optimizer'),
-                                        'dot' => __('Dot (·)', 'ai-content-optimizer'),
+                                        'bullet' => __('Bullet (â€¢)', 'ai-content-optimizer'),
+                                        'arrow' => __('Arrow (Â»)', 'ai-content-optimizer'),
+                                        'dot' => __('Dot (Â·)', 'ai-content-optimizer'),
                                         'tilde' => __('Tilde (~)', 'ai-content-optimizer'),
                                     );
 
@@ -1329,11 +1329,11 @@ PROMPT;
             <div class="aico-card">
                 <h2><?php _e('License Key', 'ai-content-optimizer'); ?></h2>
                 <?php if ($license_status === 'success') : ?>
-                    <div class="notice notice-success inline"><p><?php _e('✔️ License is valid!', 'ai-content-optimizer'); ?></p></div>
+                    <div class="notice notice-success inline"><p><?php _e('âœ”ï¸ License is valid!', 'ai-content-optimizer'); ?></p></div>
                 <?php elseif ($license_status === 'expired') : ?>
-                    <div class="notice notice-warning inline"><p><?php _e('⚠️ License expired.', 'ai-content-optimizer'); ?></p></div>
+                    <div class="notice notice-warning inline"><p><?php _e('âš ï¸ License expired.', 'ai-content-optimizer'); ?></p></div>
                 <?php elseif ($license_status === 'invalid') : ?>
-                    <div class="notice notice-error inline"><p><?php _e('❌ Invalid license key.', 'ai-content-optimizer'); ?></p></div>
+                    <div class="notice notice-error inline"><p><?php _e('âŒ Invalid license key.', 'ai-content-optimizer'); ?></p></div>
                 <?php endif; ?>
                 <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                     <input type="hidden" name="action" value="bmo_save_license_key" />
@@ -2109,10 +2109,10 @@ PROMPT;
                     $masked_prompt = $content_prompt . "\n\n";
                     $masked_prompt .= "Below is the existing page content, but ALL HTML tags and WordPress shortcodes\n";
                     $masked_prompt .= "have been replaced by placeholders (%%TAG_x%% or %%SC_y%%).\n";
-                    $masked_prompt .= "Please rewrite or improve **only the plain‐text portions**. Do NOT modify or remove\n";
+                    $masked_prompt .= "Please rewrite or improve **only the plainâ€text portions**. Do NOT modify or remove\n";
                     $masked_prompt .= "any placeholder. After rewriting, return the entire content with placeholders preserved.\n\n";
                     $masked_prompt .= "Masked Content:\n" . $masked . "\n\n";
-                    $masked_prompt .= "Remember: Keep all placeholders (%%TAG_x%%, %%SC_y%%) exactly as‐is.\n";
+                    $masked_prompt .= "Remember: Keep all placeholders (%%TAG_x%%, %%SC_y%%) exactly asâ€is.\n";
 
                     $ai_response = $this->call_openai_api_direct($api_key, $model, $masked_prompt, $max_tokens, $temperature);
                     if (is_wp_error($ai_response)) {
@@ -2734,7 +2734,7 @@ add_action('admin_post_bmo_save_license_key', function() {
 
     if (!empty($data['result']) && $data['result'] === 'error') {
         if (stripos($data['message'], 'maximum allowable domains') !== false) {
-            // a license‐limit violation
+            // a licenseâ€limit violation
             wp_redirect(add_query_arg('bmo_license_status', 'limit_reached', admin_url('admin.php?page=ai-content-optimizer-advanced')));
             exit;
         }
@@ -3054,34 +3054,45 @@ add_action('wp_ajax_aico_optimize_category', function() {
         wp_send_json_error($generated_description->get_error_message());
     }
     
+    error_log("[AICO] Generated description: " . $generated_description);
+    error_log("[AICO] About to save meta for taxonomy: " . $taxonomy);
+    
     // Update Yoast's meta description using the correct method for each taxonomy
     if (in_array($taxonomy, ['category', 'post_tag'])) {
+        error_log("[AICO] Saving for regular category/tag using wpseo_taxonomy_meta");
         // For regular WordPress categories and tags, use wpseo_taxonomy_meta array
         $meta = get_term_meta($term_id, 'wpseo_taxonomy_meta', true);
         if (!is_array($meta)) {
             $meta = array();
         }
         $meta['wpseo_desc'] = $generated_description;
-        update_term_meta($term_id, 'wpseo_taxonomy_meta', $meta);
+        $result = update_term_meta($term_id, 'wpseo_taxonomy_meta', $meta);
+        error_log("[AICO] wpseo_taxonomy_meta update result: " . ($result ? 'SUCCESS' : 'FAILED'));
         
         // Clear Yoast's cache
         if (class_exists('WPSEO_Meta') && method_exists('WPSEO_Meta','clear_cache')) {
             WPSEO_Meta::clear_cache();
+            error_log("[AICO] Yoast cache cleared for regular taxonomy");
         }
     } else if (in_array($taxonomy, ['product_cat', 'product_tag'])) {
+        error_log("[AICO] Saving for WooCommerce category/tag using _yoast_wpseo_metadesc");
         // For WooCommerce product categories and tags, use _yoast_wpseo_metadesc directly
-        update_term_meta($term_id, '_yoast_wpseo_metadesc', $generated_description);
+        $result = update_term_meta($term_id, '_yoast_wpseo_metadesc', $generated_description);
+        error_log("[AICO] _yoast_wpseo_metadesc update result: " . ($result ? 'SUCCESS' : 'FAILED'));
         
         // Clear Yoast's internal cache so the new value is picked up immediately
         if (class_exists('WPSEO_Meta') && method_exists('WPSEO_Meta','clear_cache')) {
             // Passing ["term_$term_id"] forces Yoast to bust taxonomy cache
             WPSEO_Meta::clear_cache(["term_{$term_id}"]);
+            error_log("[AICO] Yoast cache cleared for term: " . $term_id);
         }
     }
     
     // Also update other SEO plugins
-    update_term_meta($term_id, 'rank_math_description', $generated_description);
-    update_term_meta($term_id, 'aioseo_description', $generated_description);
+    $rank_result = update_term_meta($term_id, 'rank_math_description', $generated_description);
+    $aioseo_result = update_term_meta($term_id, 'aioseo_description', $generated_description);
+    error_log("[AICO] Rank Math result: " . ($rank_result ? 'SUCCESS' : 'FAILED'));
+    error_log("[AICO] AIOSEO result: " . ($aioseo_result ? 'SUCCESS' : 'FAILED'));
     
     wp_send_json_success(array(
         'description' => $generated_description,
@@ -3453,161 +3464,7 @@ add_action('wp_ajax_aico_get_bulk_taxonomy_data', function() {
     ));
 });
 
-// Update existing category optimization to support taxonomy parameter
-add_action('wp_ajax_aico_optimize_category', function() {
-    $license_status = get_option('bmo_license_status', 'invalid');
-    if ($license_status !== 'success') {
-        wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
-    }
-    
-    check_ajax_referer('aico-nonce', 'nonce');
-    if (!current_user_can('manage_options')) {
-        wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
-    }
-    
-    // Support both term_id and category_id parameters
-    $term_id = isset($_POST['term_id']) ? intval($_POST['term_id']) : 0;
-    if (!$term_id) {
-        $term_id = isset($_POST['category_id']) ? intval($_POST['category_id']) : 0;
-    }
-    
-    $taxonomy = isset($_POST['taxonomy']) ? sanitize_text_field($_POST['taxonomy']) : 'category';
-    
-    if (!$term_id) {
-        wp_send_json_error(__('Invalid term ID.', 'ai-content-optimizer'));
-    }
-    
-    // Validate taxonomy
-    $valid_taxonomies = array('category', 'product_cat');
-    if (!in_array($taxonomy, $valid_taxonomies)) {
-        wp_send_json_error(__('Invalid taxonomy.', 'ai-content-optimizer'));
-    }
-    
-    $term = get_term($term_id, $taxonomy);
-    if (!$term || is_wp_error($term)) {
-        wp_send_json_error(__('Term not found.', 'ai-content-optimizer'));
-    }
-    
-    $api_key = get_option('aico_openai_api_key');
-    if (empty($api_key)) {
-        wp_send_json_error(__('API key is not set.', 'ai-content-optimizer'));
-    }
-    
-    $model = get_option('aico_openai_model', 'gpt-3.5-turbo');
-    $temperature = get_option('aico_openai_temperature', 0.7);
-    $max_tokens = get_option('aico_openai_max_tokens', 500);
-    
-    $meta_prompt = get_option('aico_category_meta_prompt', '');
-    if (empty($meta_prompt)) {
-        $meta_prompt = "You are an SEO expert. Write a meta description (160 chars max) for this category. Use a professional tone for a general audience. Keep it concise, no exclamation marks or quotation marks.";
-    }
-    
-    // Replace placeholders
-    $parent_category = '';
-    if ($term->parent) {
-        $parent = get_term($term->parent, $taxonomy);
-        if ($parent && !is_wp_error($parent)) {
-            $parent_category = $parent->name;
-        }
-    }
-    
-    $meta_prompt = str_replace(
-        array('{category_name}', '{category_description}', '{post_count}', '{parent_category}'),
-        array($term->name, $term->description, $term->count, $parent_category),
-        $meta_prompt
-    );
-    
-    $ai_content_optimizer = AI_Content_Optimizer::get_instance();
-    $generated_description = $ai_content_optimizer->call_openai_api_direct($api_key, $model, $meta_prompt, $max_tokens, $temperature);
-    
-    if (is_wp_error($generated_description)) {
-        wp_send_json_error($generated_description->get_error_message());
-    }
-    
-    // Update the term description
-    update_term_meta( $term_id, '_yoast_wpseo_metadesc', $generated_description );
-    update_term_meta( $term_id, 'rank_math_description', $generated_description );
-    update_term_meta( $term_id, 'aioseo_description', $generated_description );
-    
-    wp_send_json_success(array(
-        'description' => $generated_description,
-        'message' => __('Category description optimized successfully!', 'ai-content-optimizer')
-    ));
-});
 
-// Update existing tag optimization to support taxonomy parameter
-add_action('wp_ajax_aico_optimize_tag', function() {
-    $license_status = get_option('bmo_license_status', 'invalid');
-    if ($license_status !== 'success') {
-        wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
-    }
-    
-    check_ajax_referer('aico-nonce', 'nonce');
-    if (!current_user_can('manage_options')) {
-        wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
-    }
-    
-    // Accept both term_id and tag_id parameters
-    $term_id = isset($_POST['term_id']) ? intval($_POST['term_id']) : 0;
-    if (!$term_id) {
-        $term_id = isset($_POST['tag_id']) ? intval($_POST['tag_id']) : 0;
-    }
-    
-    $taxonomy = isset($_POST['taxonomy']) ? sanitize_text_field($_POST['taxonomy']) : 'post_tag';
-    
-    if (!$term_id) {
-        wp_send_json_error(__('Invalid term ID.', 'ai-content-optimizer'));
-    }
-    
-    // Validate taxonomy
-    $valid_taxonomies = array('post_tag', 'product_tag');
-    if (!in_array($taxonomy, $valid_taxonomies)) {
-        wp_send_json_error(__('Invalid taxonomy.', 'ai-content-optimizer'));
-    }
-    
-    $term = get_term($term_id, $taxonomy);
-    if (!$term || is_wp_error($term)) {
-        wp_send_json_error(__('Term not found.', 'ai-content-optimizer'));
-    }
-    
-    $api_key = get_option('aico_openai_api_key');
-    if (empty($api_key)) {
-        wp_send_json_error(__('API key is not set.', 'ai-content-optimizer'));
-    }
-    
-    $model = get_option('aico_openai_model', 'gpt-3.5-turbo');
-    $temperature = get_option('aico_openai_temperature', 0.7);
-    $max_tokens = get_option('aico_openai_max_tokens', 500);
-    
-    $meta_prompt = get_option('aico_tag_meta_prompt', '');
-    if (empty($meta_prompt)) {
-        $meta_prompt = "You are an SEO expert. Write a meta description (160 chars max) for this tag. Use a professional tone for a general audience. Keep it concise, no exclamation marks or quotation marks.";
-    }
-    
-    // Replace placeholders
-    $meta_prompt = str_replace(
-        array('{tag_name}', '{tag_description}', '{post_count}'),
-        array($term->name, $term->description, $term->count),
-        $meta_prompt
-    );
-    
-    $ai_content_optimizer = AI_Content_Optimizer::get_instance();
-    $generated_description = $ai_content_optimizer->call_openai_api_direct($api_key, $model, $meta_prompt, $max_tokens, $temperature);
-    
-    if (is_wp_error($generated_description)) {
-        wp_send_json_error($generated_description->get_error_message());
-    }
-    
-    // Update the term description
-    update_term_meta( $term_id, '_yoast_wpseo_metadesc', $generated_description );
-    update_term_meta( $term_id, 'rank_math_description', $generated_description );
-    update_term_meta( $term_id, 'aioseo_description', $generated_description );
-    
-    wp_send_json_success(array(
-        'description' => $generated_description,
-        'message' => __('Tag description optimized successfully!', 'ai-content-optimizer')
-    ));
-});
 
 // Add meta descriptions for categories and tags
 add_action('wp_head', function() {
@@ -3704,6 +3561,8 @@ add_action('admin_notices', function() {
         echo '<div class="notice notice-warning is-dismissible"><p><strong>Bulk Meta Optimizer:</strong> Complete your <a href="admin.php?page=aico-brand-profile">Brand Profile</a> for on-brand AI results.</p></div>';
     }
 });
+
+
 
 
 
