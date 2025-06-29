@@ -2190,7 +2190,7 @@ PROMPT;
                 update_post_meta($post_id, 'aioseo_description', $results['meta']);
                 // Your plugin's own flag
                 update_post_meta($post_id, '_aico_meta_description', $results['meta']);
-                // Clear Yoast cache if available
+                // Clear Yoast cache if available (safe for both posts and terms)
                 if (class_exists('WPSEO_Meta') && method_exists('WPSEO_Meta','clear_cache')) {
                     WPSEO_Meta::clear_cache();
                 }
@@ -3040,18 +3040,23 @@ add_action('wp_ajax_aico_optimize_category', function() {
         wp_send_json_error($generated_description->get_error_message());
     }
     
-    // Update the term description
-    $result = update_term_meta( $term_id, '_yoast_wpseo_metadesc', $generated_description );
-    if ($result === false) {
-        error_log('[AICO] Failed to update Yoast meta for term ' . $term_id);
-        wp_send_json_error(__('Failed to update Yoast SEO meta description.', 'ai-content-optimizer'));
+    // Update Yoast taxonomy meta description using Yoast's API if available
+    if (class_exists('WPSEO_Term_Meta')) {
+        WPSEO_Term_Meta::set_value($term_id, 'metadesc', $generated_description);
+        WPSEO_Term_Meta::clear_cache($term_id);
+    } else {
+        // Fallback for older Yoast versions: update the serialized array
+        $meta = get_term_meta($term_id, 'wpseo_taxonomy_meta', true);
+        if (!is_array($meta)) {
+            $meta = array();
+        }
+        $meta['metadesc'] = $generated_description;
+        update_term_meta($term_id, 'wpseo_taxonomy_meta', $meta);
     }
     // Clear Yoast cache if available (safe for both posts and terms)
     if (class_exists('WPSEO_Meta') && method_exists('WPSEO_Meta','clear_cache')) {
         WPSEO_Meta::clear_cache();
     }
-    update_term_meta( $term_id, 'rank_math_description', $generated_description );
-    update_term_meta( $term_id, 'aioseo_description', $generated_description );
     
     wp_send_json_success(array(
         'description' => $generated_description,
