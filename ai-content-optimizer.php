@@ -2498,8 +2498,7 @@ add_action('admin_post_bmo_save_license_key', function() {
         'registered_domain' => $full_url,
     ];
 
-    error_log(__METHOD__ . ' → SLM payload: ' . print_r($body, true));
-
+    // Removed error_log for SLM payload
     $response = wp_remote_post(BMO_SLM_SERVER, [
         'body' => $body,
         'timeout' => 15,
@@ -2509,8 +2508,7 @@ add_action('admin_post_bmo_save_license_key', function() {
     $data = is_wp_error($response)
           ? ['result' => 'error', 'message' => $response->get_error_message()]
           : json_decode(wp_remote_retrieve_body($response), true);
-    
-    error_log(__METHOD__ . ' SLM response for activate: ' . print_r($data, true));
+    // Removed error_log for SLM response
 
     if (!empty($data['result']) && $data['result'] === 'error') {
         if (stripos($data['message'], 'maximum allowable domains') !== false) {
@@ -2538,9 +2536,16 @@ add_action('admin_post_bmo_save_license_key', function() {
 
 // License status check function
 function bmo_check_license_status() {
+    // Check if we already checked today
+    $last_check = get_transient('bmo_license_last_check');
+    if ($last_check && (time() - $last_check) < DAY_IN_SECONDS) {
+        return; // Already checked today
+    }
+
     $key = get_option('bmo_license_key', '');
     if (empty($key)) {
         update_option('bmo_license_status', 'invalid');
+        set_transient('bmo_license_last_check', time(), DAY_IN_SECONDS);
         return;
     }
 
@@ -2558,8 +2563,6 @@ function bmo_check_license_status() {
         'registered_domain' => $full_url,
     ];
 
-    error_log(__METHOD__ . ' → SLM payload: ' . print_r($body, true));
-
     $response = wp_remote_post(BMO_SLM_SERVER, [
         'body' => $body,
         'timeout' => 10,
@@ -2570,7 +2573,9 @@ function bmo_check_license_status() {
     if (!empty($data['result'])) {
         update_option('bmo_license_status', $data['result']);
     }
-    error_log(__FUNCTION__ . ' SLM response for check: ' . print_r($data, true));
+    
+    // Set the last check time
+    set_transient('bmo_license_last_check', time(), DAY_IN_SECONDS);
 }
 add_action('admin_init','bmo_check_license_status');
 
@@ -2594,8 +2599,6 @@ function bmo_deactivate_license() {
         'domain_name'       => $host_only,
         'registered_domain' => $full_url,
     ];
-
-    error_log(__METHOD__ . ' → SLM payload: ' . print_r($body, true));
 
     wp_remote_post(BMO_SLM_SERVER, [
         'body' => $body,
