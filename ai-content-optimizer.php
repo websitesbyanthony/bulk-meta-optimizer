@@ -2275,45 +2275,109 @@ PROMPT;
         $api_key = get_option('aico_openai_api_key');
         $model = get_option('aico_openai_model', 'gpt-3.5-turbo');
         $temperature = get_option('aico_openai_temperature', 0.7);
-        $max_tokens = get_option('aico_openai_max_tokens', 1000);
+        $max_tokens = 2000; // Increased for brand profile generation to handle larger content
 
         if (empty($api_key)) {
             wp_send_json_error(__('OpenAI API key not configured.', 'ai-content-optimizer'));
         }
 
         try {
-            // Get homepage content
-            $homepage = (get_page_by_path('home') ?: get_page_by_path('front-page')) ?: (get_option('page_on_front') ? get_post(get_option('page_on_front')) : null);
+            // Get homepage content - prioritize the front page setting
+            $homepage = null;
             
+            // Method 1: Check if a page is set as the front page in Reading Settings (PRIORITY)
+            if (get_option('show_on_front') === 'page') {
+                $front_page_id = get_option('page_on_front');
+                if ($front_page_id) {
+                    $homepage = get_post($front_page_id);
+                }
+            }
+            
+            // Method 2: If no front page is set, check for a page with slug 'home' or 'front-page'
             if (!$homepage) {
-                // Try to get the first page or post
-                $homepage = get_posts(array('numberposts' => 1, 'post_type' => 'page', 'post_status' => 'publish'));
-                $homepage = !empty($homepage) ? $homepage[0] : null;
+                $homepage = get_page_by_path('home') ?: get_page_by_path('front-page');
+            }
+            
+            // Method 3: Check for a page with front-page template
+            if (!$homepage) {
+                $homepage_posts = get_posts(array(
+                    'post_type' => 'page',
+                    'post_status' => 'publish',
+                    'numberposts' => 10,
+                    'meta_query' => array(
+                        'relation' => 'OR',
+                        array(
+                            'key' => '_wp_page_template',
+                            'value' => 'front-page.php',
+                            'compare' => 'LIKE'
+                        )
+                    )
+                ));
+                
+                if (!empty($homepage_posts)) {
+                    $homepage = $homepage_posts[0];
+                }
+            }
+            
+            // Method 4: Get the first published page as fallback
+            if (!$homepage) {
+                $homepage_posts = get_posts(array(
+                    'post_type' => 'page',
+                    'post_status' => 'publish',
+                    'numberposts' => 1,
+                    'orderby' => 'menu_order',
+                    'order' => 'ASC'
+                ));
+                $homepage = !empty($homepage_posts) ? $homepage_posts[0] : null;
             }
 
             if (!$homepage) {
-                wp_send_json_error(__('Could not find homepage content to analyze.', 'ai-content-optimizer'));
+                wp_send_json_error(__('Could not find homepage content to analyze. Please ensure you have at least one published page.', 'ai-content-optimizer'));
             }
 
-            // Extract content from homepage
-            $content = wp_strip_all_tags($homepage->post_content);
+            // Get website title and tagline from WordPress settings
+            $site_title = get_bloginfo('name');
+            $site_tagline = get_bloginfo('description');
+            
+            // Extract full content from homepage
+            $content = $homepage->post_content;
             $title = $homepage->post_title;
             
-            // Limit content length to avoid token limits
-            $content = mb_substr($content, 0, 2000);
+            // Clean the content but preserve structure
+            $content = wp_strip_all_tags($content);
+            
+            // Remove extra whitespace and normalize
+            $content = preg_replace('/\s+/', ' ', $content);
+            $content = trim($content);
+            
+            // If content is still very long, we'll need to handle it in chunks
+            // For now, let's increase the limit significantly but still be reasonable
+            $max_content_length = 8000; // Increased from 2000 to 8000 characters
+            
+            if (mb_strlen($content) > $max_content_length) {
+                // Take the first part and add a note
+                $content = mb_substr($content, 0, $max_content_length) . '... [Content truncated for analysis]';
+            }
 
-            // Create the prompt
-            $prompt = "Please review my website homepage and put together a brand profile. It must include a short overview, who our target audience is, the tone we should use for meta data to attract new customers, what sets us apart.\n\n";
-            $prompt .= "Website Title: {$title}\n";
-            $prompt .= "Website Content: {$content}\n\n";
+            // Create the prompt with full content, website title, and tagline
+            $prompt = "Please review my website homepage and put together a comprehensive brand profile. Analyze the full content provided along with the website title and tagline to understand our business, services, and brand identity.\n\n";
+            $prompt .= "Website Title: {$site_title}\n";
+            $prompt .= "Website Tagline: {$site_tagline}\n";
+            $prompt .= "Homepage Title: {$title}\n";
+            $prompt .= "Full Homepage Content: {$content}\n\n";
+            $prompt .= "Based on this content, website title, and tagline, please create a detailed brand profile that includes:\n";
+            $prompt .= "1. A comprehensive brand overview that captures our business essence\n";
+            $prompt .= "2. A detailed description of our target audience based on the content\n";
+            $prompt .= "3. The appropriate tone and voice we should use in our content and meta data\n";
+            $prompt .= "4. What sets us apart from competitors based on the content analysis\n\n";
             $prompt .= "Please provide your response in the following JSON format:\n";
             $prompt .= "{\n";
-            $prompt .= "  \"overview\": \"Brief brand overview\",\n";
-            $prompt .= "  \"target_audience\": \"Description of target audience\",\n";
-            $prompt .= "  \"tone\": \"Recommended tone for content\",\n";
-            $prompt .= "  \"unique_selling_points\": \"What sets the brand apart\"\n";
+            $prompt .= "  \"overview\": \"Comprehensive brand overview based on the full content, title, and tagline\",\n";
+            $prompt .= "  \"target_audience\": \"Detailed description of target audience\",\n";
+            $prompt .= "  \"tone\": \"Recommended tone and voice for content\",\n";
+            $prompt .= "  \"unique_selling_points\": \"What sets the brand apart based on content analysis\"\n";
             $prompt .= "}\n\n";
-            $prompt .= "Make sure the response is valid JSON format.";
+            $prompt .= "Make sure the response is valid JSON format and provides detailed, actionable insights based on the full content, website title, and tagline provided.";
 
             // Call OpenAI API
             $response = $this->call_openai_api_direct($api_key, $model, $prompt, $max_tokens, $temperature);
