@@ -64,6 +64,9 @@
 /* Rest of the existing CSS */
 .aico-wrap {
     margin: 20px 0;
+    background: #f5f6fa !important;
+    min-height: 100vh;
+    padding: 32px 0 !important;
 }
 
 .aico-card {
@@ -477,101 +480,133 @@
 
 /* --- Yoast-style Sidebar --- */
 .aico-settings-layout {
-  display: flex;
-  gap: 32px;
+  display: flex !important;
+  gap: 32px !important;
+  align-items: flex-start;
 }
 .aico-sidebar {
-  width: 240px;
-  background: #f7f8fa;
-  border-radius: 8px;
-  padding: 24px 0 24px 0;
-  min-height: 600px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
+  width: 240px !important;
+  background: #fff !important;
+  border-radius: 10px !important;
+  padding: 24px 0 24px 0 !important;
+  min-height: 600px !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
 }
 .aico-sidebar-item {
-  padding: 12px 32px;
-  color: #333;
-  font-size: 16px;
-  border-left: 4px solid transparent;
-  cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
+  padding: 14px 36px !important;
+  color: #333 !important;
+  font-size: 17px !important;
+  border-left: 4px solid transparent !important;
+  cursor: pointer !important;
+  background: none !important;
+  transition: background 0.2s, border-color 0.2s !important;
+  text-decoration: none !important;
+  font-weight: 500 !important;
 }
 .aico-sidebar-item.active, .aico-sidebar-item:hover {
-  background: #fff;
-  border-left: 4px solid #a72886;
-  color: #a72886;
-  font-weight: 600;
+  background: #f7e9f5 !important;
+  border-left: 4px solid #a72886 !important;
+  color: #a72886 !important;
+  font-weight: 700 !important;
 }
 
 .aico-main-content {
-  flex: 1;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
-  padding: 32px;
-  min-width: 0;
+  flex: 1 !important;
+  background: #fff !important;
+  border-radius: 10px !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07) !important;
+  padding: 40px 48px !important;
+  min-width: 0 !important;
+  max-width: 900px;
 }
 
 /* --- Toggle Switch --- */
 .aico-toggle {
-  position: relative;
-  display: inline-block;
-  width: 48px;
-  height: 28px;
-  vertical-align: middle;
+  position: relative !important;
+  display: inline-block !important;
+  width: 48px !important;
+  height: 28px !important;
+  vertical-align: middle !important;
 }
-.aico-toggle input {
-  opacity: 0;
-  width: 0;
-  height: 0;
+.aico-toggle input[type="checkbox"] {
+  opacity: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  position: absolute !important;
+  left: 0; top: 0;
+  margin: 0 !important;
+  z-index: 1;
 }
 .aico-toggle-slider {
-  position: absolute;
-  cursor: pointer;
+  position: absolute !important;
+  cursor: pointer !important;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: #e4e4e4;
-  border-radius: 28px;
-  transition: background 0.2s;
+  background: #e4e4e4 !important;
+  border-radius: 28px !important;
+  transition: background 0.2s !important;
 }
 .aico-toggle-slider:before {
-  position: absolute;
-  content: "";
-  height: 22px;
-  width: 22px;
-  left: 3px;
-  bottom: 3px;
-  background: #fff;
-  border-radius: 50%;
-  transition: transform 0.2s;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  position: absolute !important;
+  content: "" !important;
+  height: 22px !important;
+  width: 22px !important;
+  left: 3px !important;
+  bottom: 3px !important;
+  background: #fff !important;
+  border-radius: 50% !important;
+  transition: transform 0.2s !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08) !important;
 }
-.aico-toggle input:checked + .aico-toggle-slider {
-  background: #a72886;
+.aico-toggle input[type="checkbox"]:checked + .aico-toggle-slider {
+  background: #a72886 !important;
 }
-.aico-toggle input:checked + .aico-toggle-slider:before {
-  transform: translateX(20px);
+.aico-toggle input[type="checkbox"]:checked + .aico-toggle-slider:before {
+  transform: translateX(20px) !important;
+}
+
+/* Hide default checkboxes in toggles */
+.aico-toggle input[type="checkbox"] {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 /* --- Prompt Field --- */
 .aico-prompt-box {
-  margin-top: 8px;
-  margin-bottom: 24px;
+  margin-top: 8px !important;
+  margin-bottom: 24px !important;
 }
 .aico-prompt-box textarea {
-  width: 100%;
-  min-height: 48px;
-  border: 1px solid #ccd0d4;
-  border-radius: 6px;
-  padding: 12px;
-  font-size: 15px;
-  background: #f7f8fa;
-  resize: vertical;
-  transition: border 0.2s;
+  width: 100% !important;
+  min-height: 48px !important;
+  border: 1px solid #ccd0d4 !important;
+  border-radius: 6px !important;
+  padding: 12px !important;
+  font-size: 15px !important;
+  background: #f7f8fa !important;
+  resize: vertical !important;
+  transition: border 0.2s !important;
 }
 .aico-prompt-box textarea:focus {
-  border-color: #a72886;
-  outline: none;
+  border-color: #a72886 !important;
+  outline: none !important;
+}
+
+/* --- Headings and Labels --- */
+.aico-main-content label, .aico-main-content h2, .aico-main-content h3 {
+  color: #222 !important;
+}
+.aico-main-content label {
+  font-size: 16px !important;
+  font-weight: 500 !important;
+}
+.aico-main-content h2 {
+  font-size: 22px !important;
+  font-weight: 700 !important;
+  margin-bottom: 24px !important;
 }
