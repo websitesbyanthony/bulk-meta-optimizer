@@ -210,11 +210,6 @@
     font-weight: bold;
 }
 
-.aico-warning {
-    color: #dba617;
-    font-weight: bold;
-}
-
 .aico-loading {
     color: #757575;
     font-style: italic;
@@ -236,6 +231,55 @@
 #aico-test-result,
 #aico-test-result-page {
     margin-top: 10px;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+/* Category Meta Description Styles */
+.aico-categories-actions {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 4px;
+}
+
+.aico-taxonomy-selector {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 4px;
+}
+
+.aico-taxonomy-selector label {
+    font-weight: 600;
+    margin-right: 10px;
+}
+
+.aico-taxonomy-selector select {
+    min-width: 200px;
+}
+
+.aico-categories-actions .spinner {
+    margin-left: 10px;
+    float: none;
+}
+
+.aico-categories-list table {
+    margin-top: 20px;
+}
+
+.aico-meta-preview {
+    background: #f9f9f9;
+    padding: 8px 12px;
+    border-radius: 3px;
+    font-size: 13px;
+    line-height: 1.4;
+    max-width: 300px;
+    word-wrap: break-word;
+}
+
+.aico-categories-list .button {
+    margin-right: 5px;
 }
 
 /* Modal Styles */
@@ -253,12 +297,12 @@
 .aico-modal-content {
     background-color: #fff;
     margin: 5% auto;
-    padding: 24px;
-    border-radius: 8px;
+    padding: 20px;
+    border-radius: 4px;
     width: 90%;
     max-width: 500px;
     position: relative;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .aico-modal-close {
@@ -278,7 +322,6 @@
 .aico-modal h3 {
     margin-top: 0;
     margin-bottom: 20px;
-    color: #1d2327;
 }
 
 .aico-modal-actions {
@@ -305,55 +348,19 @@
     color: #dc3232;
 }
 
-/* Meta preview styles */
-.aico-meta-preview {
-    background: #f9f9f9;
-    padding: 8px 12px;
-    border-radius: 4px;
-    font-size: 13px;
-    line-height: 1.4;
-    max-width: 300px;
-    word-wrap: break-word;
-    border: 1px solid #ddd;
-    min-height: 20px;
-}
-
-/* Categories and Tags specific styles */
-.aico-categories-actions,
-.aico-tags-actions {
-    margin-bottom: 20px;
-    padding: 20px;
-    background: #f9f9f9;
-    border-radius: 4px;
-    border: 1px solid #ddd;
-}
-
-.aico-categories-list table,
-.aico-tags-list table {
-    margin-top: 20px;
-    border-collapse: collapse;
-    width: 100%;
-}
-
-.aico-categories-list table th,
-.aico-categories-list table td,
-.aico-tags-list table th,
-.aico-tags-list table td {
-    padding: 12px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-}
-
-.aico-categories-list table th,
-.aico-tags-list table th {
-    background: #f9f9f9;
-    font-weight: 600;
-    color: #1d2327;
-}
-
-.aico-categories-list .button,
-.aico-tags-list .button {
-    margin-right: 5px;
-    font-size: 12px;
-    padding: 6px 12px;
+/* Responsive adjustments */
+@media (max-width: 782px) {
+    .aico-categories-list table {
+        font-size: 12px;
+    }
+    
+    .aico-categories-list .button {
+        font-size: 11px;
+        padding: 4px 8px;
+    }
+    
+    .aico-modal-content {
+        width: 95%;
+        margin: 10% auto;
+    }
 }

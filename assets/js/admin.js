@@ -1,4 +1,4 @@
-﻿/**
+/**
  * AI Content Optimizer Admin JavaScript
  */
 (function($) {
@@ -198,28 +198,290 @@
                         // Change button text to "Saved!" temporarily
                         $submitButton.text('Saved!');
                         
-                        // After 1.5 seconds, revert to original text
+                        // Reset button text after 2 seconds
                         setTimeout(function() {
                             $submitButton.text($submitButton.data('original-text'));
-                        }, 1500);
+                        }, 2000);
                     } else {
                         // Show error message
                         $form.before('<div class="notice notice-error is-dismissible"><p>' + response.data + '</p></div>');
-                        
-                        // Revert button text immediately
                         $submitButton.text($submitButton.data('original-text'));
                     }
                 },
                 error: function(xhr, status, error) {
                     // Show error message
                     $form.before('<div class="notice notice-error is-dismissible"><p>' + aicoData.strings.error + ' ' + error + '</p></div>');
-                    
-                    // Revert button text immediately
                     $submitButton.text($submitButton.data('original-text'));
                 },
                 complete: function() {
-                    // Re-enable the button
                     $submitButton.prop('disabled', false);
+                }
+            });
+        });
+        
+        // Manual license check
+        $('#bmo-force-license-check').on('click', function(e) {
+            e.preventDefault();
+            
+            const $button = $(this);
+            const $result = $('#bmo-license-check-result');
+            
+            // Show loading message
+            $button.prop('disabled', true);
+            $result.html('<span class="aico-loading">Checking license...</span>');
+            
+            // Send AJAX request
+            $.ajax({
+                url: aicoData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'bmo_force_license_check',
+                    nonce: aicoData.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $result.html('<span class="aico-success">' + response.data + '</span>');
+                        // Reload page after 2 seconds to show updated license status
+                        setTimeout(function() {
+                            location.reload();
+                        }, 2000);
+                    } else {
+                        $result.html('<span class="aico-error">' + aicoData.strings.error + ' ' + response.data + '</span>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $result.html('<span class="aico-error">' + aicoData.strings.error + ' ' + error + '</span>');
+                },
+                complete: function() {
+                    $button.prop('disabled', false);
+                }
+            });
+        });
+        
+        // Category meta description generation
+        $('.aico-generate-category-meta').on('click', function(e) {
+            e.preventDefault();
+            
+            const $button = $(this);
+            const categoryId = $button.data('category-id');
+            const categoryName = $button.data('category-name');
+            const categoryDescription = $button.data('category-description');
+            
+            // Show loading message
+            $button.prop('disabled', true).text(aicoData.strings.generating);
+            
+            // Send AJAX request
+            $.ajax({
+                url: aicoData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'aico_generate_category_meta',
+                    category_id: categoryId,
+                    category_name: categoryName,
+                    category_description: categoryDescription,
+                    nonce: aicoData.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Save the generated meta description
+                        $.ajax({
+                            url: aicoData.ajaxUrl,
+                            type: 'POST',
+                            data: {
+                                action: 'aico_save_category_meta',
+                                category_id: categoryId,
+                                meta_description: response.data.meta_description,
+                                nonce: aicoData.nonce
+                            },
+                            success: function(saveResponse) {
+                                if (saveResponse.success) {
+                                    $button.text(aicoData.strings.success);
+                                    // Reload page to show updated meta description
+                                    setTimeout(function() {
+                                        location.reload();
+                                    }, 1500);
+                                } else {
+                                    $button.text(aicoData.strings.error + ' ' + saveResponse.data);
+                                    setTimeout(function() {
+                                        $button.text('Regenerate');
+                                    }, 3000);
+                                }
+                            },
+                            error: function() {
+                                $button.text(aicoData.strings.error);
+                                setTimeout(function() {
+                                    $button.text('Regenerate');
+                                }, 3000);
+                            }
+                        });
+                    } else {
+                        $button.text(aicoData.strings.error + ' ' + response.data);
+                        setTimeout(function() {
+                            $button.text('Regenerate');
+                        }, 3000);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $button.text(aicoData.strings.error + ' ' + error);
+                    setTimeout(function() {
+                        $button.text('Regenerate');
+                    }, 3000);
+                },
+                complete: function() {
+                    $button.prop('disabled', false);
+                }
+            });
+        });
+
+        // Bulk generate category meta descriptions
+        $('#aico-bulk-generate-categories').on('click', function(e) {
+            e.preventDefault();
+            
+            const $button = $(this);
+            const $spinner = $button.siblings('.spinner');
+            
+            if (!confirm('Are you sure you want to generate meta descriptions for all categories? This may take some time.')) {
+                return;
+            }
+            
+            // Show loading
+            $button.prop('disabled', true);
+            $spinner.addClass('is-active');
+            
+            // Send AJAX request
+            $.ajax({
+                url: aicoData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'aico_bulk_generate_categories',
+                    nonce: aicoData.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        const results = response.data;
+                        const successCount = results.success.length;
+                        const errorCount = results.error.length;
+                        
+                        let message = `Generated ${successCount} meta descriptions successfully.`;
+                        if (errorCount > 0) {
+                            message += ` ${errorCount} failed.`;
+                        }
+                        
+                        alert(message);
+                        
+                        // Reload page to show updated meta descriptions
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.data);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    alert('Error: ' + error);
+                },
+                complete: function() {
+                    $button.prop('disabled', false);
+                    $spinner.removeClass('is-active');
+                }
+            });
+        });
+
+        // Edit category meta description modal
+        $('.aico-edit-category-meta').on('click', function(e) {
+            e.preventDefault();
+            
+            const categoryId = $(this).data('category-id');
+            const metaDescription = $(this).data('meta-description');
+            
+            $('#edit-category-id').val(categoryId);
+            $('#edit-meta-description').val(metaDescription);
+            
+            // Add character counter if it doesn't exist
+            if ($('#edit-meta-description').siblings('.aico-meta-counter').length === 0) {
+                $('#edit-meta-description').after('<div class="aico-meta-counter">0 / 160 characters</div>');
+            }
+            
+            // Update character counter
+            updateMetaCounter();
+            
+            $('#aico-edit-meta-modal').show();
+        });
+
+        // Character counter function
+        function updateMetaCounter() {
+            const textarea = $('#edit-meta-description');
+            const counter = textarea.siblings('.aico-meta-counter');
+            const length = textarea.val().length;
+            const maxLength = 160;
+            
+            counter.text(length + ' / ' + maxLength + ' characters');
+            
+            // Update counter color based on length
+            counter.removeClass('warning error');
+            if (length > maxLength) {
+                counter.addClass('error');
+            } else if (length > maxLength * 0.9) {
+                counter.addClass('warning');
+            }
+        }
+
+        // Update character counter on input
+        $(document).on('input', '#edit-meta-description', function() {
+            updateMetaCounter();
+        });
+
+        // Close modal
+        $('.aico-modal-close, .aico-modal-cancel').on('click', function() {
+            $('#aico-edit-meta-modal').hide();
+        });
+
+        // Close modal when clicking outside
+        $(window).on('click', function(e) {
+            if ($(e.target).hasClass('aico-modal')) {
+                $('.aico-modal').hide();
+            }
+        });
+
+        // Save edited meta description
+        $('#aico-edit-meta-form').on('submit', function(e) {
+            e.preventDefault();
+            
+            const $form = $(this);
+            const $submitButton = $form.find('button[type="submit"]');
+            const categoryId = $('#edit-category-id').val();
+            const metaDescription = $('#edit-meta-description').val();
+            
+            // Show loading
+            $submitButton.prop('disabled', true).text('Saving...');
+            
+            // Send AJAX request
+            $.ajax({
+                url: aicoData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'aico_save_category_meta',
+                    category_id: categoryId,
+                    meta_description: metaDescription,
+                    nonce: aicoData.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $submitButton.text('Saved!');
+                        setTimeout(function() {
+                            $('#aico-edit-meta-modal').hide();
+                            location.reload();
+                        }, 1000);
+                    } else {
+                        $submitButton.text('Error: ' + response.data);
+                        setTimeout(function() {
+                            $submitButton.text('Save').prop('disabled', false);
+                        }, 3000);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $submitButton.text('Error: ' + error);
+                    setTimeout(function() {
+                        $submitButton.text('Save').prop('disabled', false);
+                    }, 3000);
                 }
             });
         });
@@ -279,104 +541,36 @@
             }
         });
         
-        // Reset defaults
+        // Reset to defaults
         $('.aico-reset-defaults').on('click', function(e) {
             e.preventDefault();
             
-            const $button = $(this);
-            const postType = $button.data('post-type');
-            
-            if (!confirm('Are you sure you want to reset all settings and prompts for this post type to default values?')) {
-                return;
-            }
-            
-            // Show loading message
-            $button.prop('disabled', true).text('Resetting...');
-            
-            // Send AJAX request
-            $.ajax({
-                url: aicoData.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'aico_reset_defaults',
-                    post_type: postType,
-                    nonce: aicoData.nonce
-                },
-                success: function(response) {
-                    if (response.success) {
-                        // Reload the page to show updated settings
-                        window.location.reload();
-                    } else {
-                        alert('Error: ' + response.data);
-                        $button.prop('disabled', false).text('Reset to Defaults');
-                    }
-                },
-                error: function(xhr, status, error) {
-                    alert('Error: ' + error);
-                    $button.prop('disabled', false).text('Reset to Defaults');
-                }
-            });
-        });
-        
-        // Manual license check
-        $('#bmo-manual-license-check').on('click', function(e) {
-            e.preventDefault();
-            
-            const $button = $(this);
-            const $result = $('#bmo-license-check-result');
-            
-            // Store original text
-            const originalText = $button.text();
-            
-            // Show loading state
-            $button.text('Checking...').prop('disabled', true);
-            $result.html('<span class="aico-loading">Checking license status...</span>');
-            
-            // Send AJAX request
-            $.ajax({
-                url: aicoData.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'bmo_manual_license_check',
-                    nonce: aicoData.nonce
-                },
-                success: function(response) {
-                    if (response.success) {
-                        const data = response.data;
-                        let statusClass = 'aico-error';
-                        let statusIcon = 'âŒ';
-                        
-                        if (data.status === 'success') {
-                            statusClass = 'aico-success';
-                            statusIcon = 'âœ”ï¸';
-                        } else if (data.status === 'expired') {
-                            statusClass = 'aico-warning';
-                            statusIcon = 'âš ï¸';
-                        }
-                        
-                        $result.html(
-                            '<div class="' + statusClass + '">' +
-                            '<strong>' + statusIcon + ' ' + data.message + '</strong><br>' +
-                            '<small>Last checked: ' + data.last_check + '</small>' +
-                            '</div>'
-                        );
-                        
-                        // Reload page after 2 seconds to update the license status display
-                        setTimeout(function() {
+            if (confirm('Are you sure you want to reset all settings to defaults? This cannot be undone.')) {
+                const $button = $(this);
+                const postType = $button.data('post-type');
+                
+                // Send AJAX request
+                $.ajax({
+                    url: aicoData.ajaxUrl,
+                    type: 'POST',
+                    data: {
+                        action: 'aico_reset_defaults',
+                        post_type: postType,
+                        nonce: aicoData.nonce
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Reload page
                             window.location.reload();
-                        }, 2000);
-                    } else {
-                        $result.html('<span class="aico-error">Error: ' + response.data + '</span>');
+                        } else {
+                            alert(aicoData.strings.error + ' ' + response.data);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        alert(aicoData.strings.error + ' ' + error);
                     }
-                },
-                error: function(xhr, status, error) {
-                    $result.html('<span class="aico-error">Error: ' + error + '</span>');
-                },
-                complete: function() {
-                    // Restore button state
-                    $button.text(originalText).prop('disabled', false);
-                }
-            });
+                });
+            }
         });
         
         // Export settings
@@ -465,41 +659,12 @@
             $value.text($range.val());
         });
 
-        });
-
-        });
-
-        });
-
-        });
-
-        });
-
-        });
-
-        // Character counters
-        $('#aico-category-description').on('input', updateCategoryCounter);
-        $('#aico-tag-description').on('input', updateTagCounter);
-        
-         else if (length > 150) {
-                $counter.addClass('warning');
-            }
-        }
-        
-         else if (length > 150) {
-                $counter.addClass('warning');
-            }
-        }
-
-        });
-
-        });
-
-        });
-        
-        $('
+        // Taxonomy selector functionality
+        $('#taxonomy-selector').on('change', function() {
+            const selectedTaxonomy = $(this).val();
+            const currentUrl = new URL(window.location);
+            currentUrl.searchParams.set('taxonomy', selectedTaxonomy);
+            window.location.href = currentUrl.toString();
         });
     });
 })(jQuery);
-
-
