@@ -1,6 +1,10 @@
 <?php
 /**
- * Plugin Name: Bulk Meta Optimizer
+ * BACKUP FILE - NOT A PLUGIN
+ * This is a backup of the Bulk Meta Optimizer plugin.
+ * WordPress should NOT load this file as a plugin.
+ * 
+ * Original Plugin Name: Bulk Meta Optimizer
  * Description: A comprehensive AI-powered content optimization tool for WordPress that generates and optimizes meta titles, descriptions, content, and permalinks for posts, pages, and WooCommerce products.
  * Version: 1.0.3
  * Author: Dapper Dev
