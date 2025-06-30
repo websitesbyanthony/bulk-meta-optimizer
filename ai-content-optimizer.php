@@ -548,6 +548,11 @@ PROMPT;
      * Render dashboard page
      */
     public function render_dashboard_page() {
+        // Check user capabilities
+        if (!current_user_can('manage_options')) {
+            wp_die(__('You do not have sufficient permissions to access this page.', 'ai-content-optimizer'));
+        }
+
         $license_status = get_option('bmo_license_status', 'invalid');
         if ($license_status !== 'success') {
             echo '<div class="notice notice-error"><p>' . __('A valid license is required to use Bulk Meta Optimizer. Please enter your license key in Advanced Settings.', 'ai-content-optimizer') . '</p></div>';
@@ -632,6 +637,11 @@ PROMPT;
      * Render settings page
      */
     public function render_settings_page() {
+        // Check user capabilities
+        if (!current_user_can('manage_options')) {
+            wp_die(__('You do not have sufficient permissions to access this page.', 'ai-content-optimizer'));
+        }
+
         $license_status = get_option('bmo_license_status', 'invalid');
         if ($license_status !== 'success') {
             echo '<div class="notice notice-error"><p>' . __('A valid license is required to use Bulk Meta Optimizer. Please enter your license key in Advanced Settings.', 'ai-content-optimizer') . '</p></div>';
@@ -867,6 +877,11 @@ PROMPT;
      * Render API page
      */
     public function render_api_page() {
+        // Check user capabilities
+        if (!current_user_can('manage_options')) {
+            wp_die(__('You do not have sufficient permissions to access this page.', 'ai-content-optimizer'));
+        }
+
         $license_status = get_option('bmo_license_status', 'invalid');
         if ($license_status !== 'success') {
             echo '<div class="notice notice-error"><p>' . __('A valid license is required to use Bulk Meta Optimizer. Please enter your license key in Advanced Settings.', 'ai-content-optimizer') . '</p></div>';
@@ -954,6 +969,11 @@ PROMPT;
      * Render advanced page
      */
     public function render_advanced_page() {
+        // Check user capabilities
+        if (!current_user_can('manage_options')) {
+            wp_die(__('You do not have sufficient permissions to access this page.', 'ai-content-optimizer'));
+        }
+
         $license_status = get_option('bmo_license_status', 'invalid');
         if ($license_status !== 'success') {
             // Show only the license key card (reuse existing code for license key form)
@@ -1995,6 +2015,11 @@ PROMPT;
      * Render brand profile page
      */
     public function render_brand_profile_page() {
+        // Check user capabilities
+        if (!current_user_can('manage_options')) {
+            wp_die(__('You do not have sufficient permissions to access this page.', 'ai-content-optimizer'));
+        }
+
         $license_status = get_option('bmo_license_status', 'invalid');
         if ($license_status !== 'success') {
             echo '<div class="notice notice-error"><p>' . __('A valid license is required to use Bulk Meta Optimizer. Please enter your license key in Advanced Settings.', 'ai-content-optimizer') . '</p></div>';
@@ -2321,6 +2346,11 @@ PROMPT;
      * Render bulk process page
      */
     public function render_bulk_process_page() {
+        // Check user capabilities
+        if (!current_user_can('manage_options')) {
+            wp_die(__('You do not have sufficient permissions to access this page.', 'ai-content-optimizer'));
+        }
+
         $license_status = get_option('bmo_license_status', 'invalid');
         if ($license_status !== 'success') {
             echo '<div class="notice notice-error"><p>' . __('A valid license is required to use Bulk Meta Optimizer.', 'ai-content-optimizer') . '</p></div>';
