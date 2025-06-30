@@ -610,3 +610,15 @@
   font-weight: 700 !important;
   margin-bottom: 24px !important;
 }
+
+/* DEBUG BANNER - REMOVE AFTER TESTING */
+.aico-debug-banner {
+  background: #ff006e !important;
+  color: #fff !important;
+  font-size: 20px !important;
+  text-align: center !important;
+  padding: 16px !important;
+  font-weight: bold !important;
+  letter-spacing: 2px;
+  z-index: 9999;
+}
