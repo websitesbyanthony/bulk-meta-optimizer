@@ -171,14 +171,21 @@ class AI_Content_Optimizer {
      */
     private function set_default_prompts() {
         // Default prompts for post type
-        $post_title_prompt = "You are an SEO expert. Write an SEO-friendly post title (60 chars max). Use a {content_tone} tone for a {target_audience} audience. No exclamation marks or quotation marks.";
-        $post_meta_prompt = "You are an SEO expert. Write a meta description (160 chars max) for this post. Use a {content_tone} tone for a {target_audience} audience. Keep it concise, no exclamation marks or quotation marks.";
+        $post_title_prompt = "You are an SEO expert. Write an SEO-friendly post title (60 chars max). Use a {brand_tone} tone for a {target_audience} audience. Consider our brand overview: {brand_overview}. No exclamation marks or quotation marks.";
+        $post_meta_prompt = "You are an SEO expert. Write a meta description (160 chars max) for this post. Use a {brand_tone} tone for a {target_audience} audience. Consider our brand overview: {brand_overview}. Keep it concise, no exclamation marks or quotation marks.";
 
         // Preserve HTML prompt
         $preserve_prompt = <<<'PROMPT'
 Generate HTML output based on the structure provided below, but only update the text content to focus on {PAGE TITLE}. It is crucial to:{
 Preserve all shortcodes, CSS, HTML classes, IDs, and structure exactly as they are. This includes all Visual Composer elements, styling, and embedded HTML tags. Do not alter or remove any CSS, HTML classes, or structural elements within the template.
 Update only the text content (e.g., headers, body text, and calls to action) to focus clarity, using SEO keywords, service descriptions, and location-based phrases related to {existing content}.
+
+Brand Context:
+Our brand overview: {brand_overview}
+Our target audience: {target_audience}
+Our brand tone: {brand_tone}
+Our unique selling points: {unique_selling_points}
+
 SEO and Content Guidelines:
 Ensure headers follow best practices, using one <h1> tag for the main keyword, and <h2> and <h3> tags for secondary keywords relevant to specific services or benefits.
 Keep all headers and body text informative and optimized for readability and SEO, maintaining relevance to the new service and location.
@@ -803,217 +810,14 @@ PROMPT;
                     </table>
                 </div>
 
-                <div class="aico-card">
-                    <h2><?php _e('Content Style Options', 'ai-content-optimizer'); ?></h2>
+                <!-- Content Style Options removed - now using brand profile instead -->
 
-                    <table class="form-table">
-                        <tr>
-                            <th scope="row"><?php _e('Content Tone', 'ai-content-optimizer'); ?></th>
-                            <td>
-                                <select name="settings[content_tone]">
-                                    <?php
-                                    $tones = array(
-                                        'professional' => __('Professional', 'ai-content-optimizer'),
-                                        'conversational' => __('Conversational', 'ai-content-optimizer'),
-                                        'educational' => __('Educational', 'ai-content-optimizer'),
-                                        'persuasive' => __('Persuasive', 'ai-content-optimizer'),
-                                        'technical' => __('Technical', 'ai-content-optimizer'),
-                                        'enthusiastic' => __('Enthusiastic', 'ai-content-optimizer'),
-                                    );
-
-                                    $selected_tone = isset($settings['content_tone']) ? $settings['content_tone'] : 'professional';
-
-                                    foreach ($tones as $value => $label) {
-                                        printf(
-                                            '<option value="%s" %s>%s</option>',
-                                            esc_attr($value),
-                                            selected($selected_tone, $value, false),
-                                            esc_html($label)
-                                        );
-                                    }
-                                    ?>
-                                </select>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row"><?php _e('Target Audience', 'ai-content-optimizer'); ?></th>
-                            <td>
-                                <select name="settings[target_audience]">
-                                    <?php
-                                    $audiences = array(
-                                        'general' => __('General', 'ai-content-optimizer'),
-                                        'beginners' => __('Beginners', 'ai-content-optimizer'),
-                                        'intermediate' => __('Intermediate', 'ai-content-optimizer'),
-                                        'experts' => __('Experts', 'ai-content-optimizer'),
-                                        'business' => __('Business', 'ai-content-optimizer'),
-                                        'technical' => __('Technical', 'ai-content-optimizer'),
-                                    );
-
-                                    $selected_audience = isset($settings['target_audience']) ? $settings['target_audience'] : 'general';
-
-                                    foreach ($audiences as $value => $label) {
-                                        printf(
-                                            '<option value="%s" %s>%s</option>',
-                                            esc_attr($value),
-                                            selected($selected_audience, $value, false),
-                                            esc_html($label)
-                                        );
-                                    }
-                                    ?>
-                                </select>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row"><?php _e('Content Focus', 'ai-content-optimizer'); ?></th>
-                            <td>
-                                <select name="settings[content_focus]">
-                                    <?php
-                                    $focuses = array(
-                                        'benefit-focused' => __('Benefit-Focused', 'ai-content-optimizer'),
-                                        'feature-focused' => __('Feature-Focused', 'ai-content-optimizer'),
-                                        'problem-solving' => __('Problem-Solving', 'ai-content-optimizer'),
-                                        'informational' => __('Informational', 'ai-content-optimizer'),
-                                        'storytelling' => __('Storytelling', 'ai-content-optimizer'),
-                                    );
-
-                                    $selected_focus = isset($settings['content_focus']) ? $settings['content_focus'] : 'benefit-focused';
-
-                                    foreach ($focuses as $value => $label) {
-                                        printf(
-                                            '<option value="%s" %s>%s</option>',
-                                            esc_attr($value),
-                                            selected($selected_focus, $value, false),
-                                            esc_html($label)
-                                        );
-                                    }
-                                    ?>
-                                </select>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row"><?php _e('SEO Aggressiveness', 'ai-content-optimizer'); ?></th>
-                            <td>
-                                <select name="settings[seo_aggressiveness]">
-                                    <?php
-                                    $aggressiveness = array(
-                                        'minimal' => __('Minimal', 'ai-content-optimizer'),
-                                        'moderate' => __('Moderate', 'ai-content-optimizer'),
-                                        'aggressive' => __('Aggressive', 'ai-content-optimizer'),
-                                    );
-
-                                    $selected_aggressiveness = isset($settings['seo_aggressiveness']) ? $settings['seo_aggressiveness'] : 'moderate';
-
-                                    foreach ($aggressiveness as $value => $label) {
-                                        printf(
-                                            '<option value="%s" %s>%s</option>',
-                                            esc_attr($value),
-                                            selected($selected_aggressiveness, $value, false),
-                                            esc_html($label)
-                                        );
-                                    }
-                                    ?>
-                                </select>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row"><?php _e('Keyword Density', 'ai-content-optimizer'); ?></th>
-                            <td>
-                                <select name="settings[keyword_density]" id="aico-keyword-density">
-                                    <?php
-                                    $densities = array(
-                                        'minimal' => __('Minimal (0.5-1%)', 'ai-content-optimizer'),
-                                        'standard' => __('Standard (1-2%)', 'ai-content-optimizer'),
-                                        'high' => __('High (2-3%)', 'ai-content-optimizer'),
-                                        'custom' => __('Custom', 'ai-content-optimizer'),
-                                    );
-
-                                    $selected_density = isset($settings['keyword_density']) ? $settings['keyword_density'] : 'standard';
-
-                                    foreach ($densities as $value => $label) {
-                                        printf(
-                                            '<option value="%s" %s>%s</option>',
-                                            esc_attr($value),
-                                            selected($selected_density, $value, false),
-                                            esc_html($label)
-                                        );
-                                    }
-                                    ?>
-                                </select>
-
-                                <div id="aico-custom-density-container" style="<?php echo $selected_density === 'custom' ? '' : 'display: none;'; ?>">
-                                    <input type="number" name="settings[custom_density]" value="<?php echo esc_attr(isset($settings['custom_density']) ? $settings['custom_density'] : 1.5); ?>" step="0.1" min="0.1" max="5" />
-                                    <span>%</span>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row"><?php _e('Geographic Targeting', 'ai-content-optimizer'); ?></th>
-                            <td>
-                                <select name="settings[geographic_targeting]" id="aico-geographic-targeting">
-                                    <?php
-                                    $regions = array(
-                                        'global' => __('Global', 'ai-content-optimizer'),
-                                        'us' => __('United States', 'ai-content-optimizer'),
-                                        'uk' => __('United Kingdom', 'ai-content-optimizer'),
-                                        'eu' => __('European Union', 'ai-content-optimizer'),
-                                        'asia' => __('Asia', 'ai-content-optimizer'),
-                                        'custom' => __('Custom', 'ai-content-optimizer'),
-                                    );
-
-                                    $selected_region = isset($settings['geographic_targeting']) ? $settings['geographic_targeting'] : 'global';
-
-                                    foreach ($regions as $value => $label) {
-                                        printf(
-                                            '<option value="%s" %s>%s</option>',
-                                            esc_attr($value),
-                                            selected($selected_region, $value, false),
-                                            esc_html($label)
-                                        );
-                                    }
-                                    ?>
-                                </select>
-
-                                <div id="aico-custom-region-container" style="<?php echo $selected_region === 'custom' ? '' : 'display: none;'; ?>">
-                                    <input type="text" name="settings[custom_region]" value="<?php echo esc_attr(isset($settings['custom_region']) ? $settings['custom_region'] : ''); ?>" placeholder="<?php _e('Enter region or country', 'ai-content-optimizer'); ?>" />
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row"><?php _e('Brand Voice', 'ai-content-optimizer'); ?></th>
-                            <td>
-                                <select name="settings[brand_voice]">
-                                    <?php
-                                    $voices = array(
-                                        'trustworthy' => __('Trustworthy', 'ai-content-optimizer'),
-                                        'authoritative' => __('Authoritative', 'ai-content-optimizer'),
-                                        'friendly' => __('Friendly', 'ai-content-optimizer'),
-                                        'innovative' => __('Innovative', 'ai-content-optimizer'),
-                                        'playful' => __('Playful', 'ai-content-optimizer'),
-                                        'luxurious' => __('Luxurious', 'ai-content-optimizer'),
-                                    );
-
-                                    $selected_voice = isset($settings['brand_voice']) ? $settings['brand_voice'] : 'trustworthy';
-
-                                    foreach ($voices as $value => $label) {
-                                        printf(
-                                            '<option value="%s" %s>%s</option>',
-                                            esc_attr($value),
-                                            selected($selected_voice, $value, false),
-                                            esc_html($label)
-                                        );
-                                    }
-                                    ?>
-                                </select>
-                            </td>
-                        </tr>
-                    </table>
-                </div>
             </div>
 
             <div class="aico-settings-column">
                 <div class="aico-card">
                     <h2><?php _e('AI Prompts', 'ai-content-optimizer'); ?></h2>
-                    <p class="description"><?php _e('Customize the prompts used to generate content. You can use variables like {content_tone}, {target_audience}, etc.', 'ai-content-optimizer'); ?></p>
+                    <p class="description"><?php _e('Customize the prompts used to generate content. You can use variables like {brand_overview}, {target_audience}, etc.', 'ai-content-optimizer'); ?></p>
 
                     <table class="form-table">
                         <tr>
@@ -1039,13 +843,12 @@ PROMPT;
                     <div class="aico-prompt-variables">
                         <h3><?php _e('Available Variables', 'ai-content-optimizer'); ?></h3>
                         <ul>
-                            <li><code>{content_tone}</code> - <?php _e('Selected content tone', 'ai-content-optimizer'); ?></li>
-                            <li><code>{target_audience}</code> - <?php _e('Selected target audience', 'ai-content-optimizer'); ?></li>
-                            <li><code>{content_focus}</code> - <?php _e('Selected content focus', 'ai-content-optimizer'); ?></li>
-                            <li><code>{seo_aggressiveness}</code> - <?php _e('Selected SEO aggressiveness', 'ai-content-optimizer'); ?></li>
-                            <li><code>{keyword_density}</code> - <?php _e('Selected keyword density', 'ai-content-optimizer'); ?></li>
-                            <li><code>{geographic_targeting}</code> - <?php _e('Selected geographic targeting', 'ai-content-optimizer'); ?></li>
-                            <li><code>{brand_voice}</code> - <?php _e('Selected brand voice', 'ai-content-optimizer'); ?></li>
+                            <li><code>{brand_overview}</code> - <?php _e('Brand overview from brand profile', 'ai-content-optimizer'); ?></li>
+                            <li><code>{target_audience}</code> - <?php _e('Target audience from brand profile', 'ai-content-optimizer'); ?></li>
+                            <li><code>{brand_tone}</code> - <?php _e('Brand tone from brand profile', 'ai-content-optimizer'); ?></li>
+                            <li><code>{unique_selling_points}</code> - <?php _e('Unique selling points from brand profile', 'ai-content-optimizer'); ?></li>
+                            <li><code>{site_title}</code> - <?php _e('Website title from WordPress settings', 'ai-content-optimizer'); ?></li>
+                            <li><code>{site_tagline}</code> - <?php _e('Website tagline from WordPress settings', 'ai-content-optimizer'); ?></li>
                         </ul>
                     </div>
                 </div>
@@ -1874,15 +1677,25 @@ PROMPT;
             error_log('Meta prompt: ' . $meta_prompt);
             error_log('Content prompt: ' . $content_prompt);
 
+            // Get brand profile data
+            $brand_profile = get_option('aico_brand_profile', array());
+            $brand_overview = isset($brand_profile['overview']) ? $brand_profile['overview'] : '';
+            $brand_target_audience = isset($brand_profile['target_audience']) ? $brand_profile['target_audience'] : '';
+            $brand_tone = isset($brand_profile['tone']) ? $brand_profile['tone'] : '';
+            $brand_unique_selling_points = isset($brand_profile['unique_selling_points']) ? $brand_profile['unique_selling_points'] : '';
+
+            // Get site information
+            $site_title = get_bloginfo('name');
+            $site_tagline = get_bloginfo('description');
+
             // Replace variables in prompts
             $replacements = array(
-                '{content_tone}' => $content_tone,
-                '{target_audience}' => $target_audience,
-                '{content_focus}' => $content_focus,
-                '{seo_aggressiveness}' => $seo_aggressiveness,
-                '{keyword_density}' => $keyword_density_text,
-                '{geographic_targeting}' => $geo_targeting_text,
-                '{brand_voice}' => $brand_voice,
+                '{brand_overview}' => $brand_overview,
+                '{target_audience}' => $brand_target_audience,
+                '{brand_tone}' => $brand_tone,
+                '{unique_selling_points}' => $brand_unique_selling_points,
+                '{site_title}' => $site_title,
+                '{site_tagline}' => $site_tagline,
                 '{PAGE TITLE}' => $current_title,
                 '{EXISTINGCONTENT OF POST/PAGE/PRODUCT HERE}' => $current_content,
                 '{existing content}' => $current_content,

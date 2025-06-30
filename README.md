@@ -1,7 +1,7 @@
-# Bulk Meta Optimizer - Brand Profile Feature
+# Bulk Meta Optimizer - Brand Profile Integration
 
 ## Overview
-The Bulk Meta Optimizer plugin now includes a new "Brand Profile" feature that helps you create and manage a comprehensive brand profile for your website using AI.
+The Bulk Meta Optimizer plugin now includes a comprehensive "Brand Profile" feature that integrates with all AI content generation. The brand profile is automatically used in all prompts sent to OpenAI, ensuring consistent brand voice and messaging across all optimized content.
 
 ## Brand Profile Features
 
@@ -13,12 +13,43 @@ The Bulk Meta Optimizer plugin now includes a new "Brand Profile" feature that h
   - Brand Tone
   - Unique Selling Points
 - **Smart Content Extraction**: Automatically finds and analyzes your homepage content
+- **Site Information Integration**: Includes your website title and tagline in the analysis
 
 ### 2. Edit Profile
 - **Editable Sections**: All generated content is presented in editable text blocks
 - **User-Friendly Interface**: Clean, organized layout with clear section headers
 - **Real-time Saving**: Save changes instantly with AJAX-powered updates
 - **Rebuild Option**: Regenerate the entire profile if needed
+
+### 3. Automatic Integration
+- **All Prompts**: Brand profile data is automatically integrated into all AI prompts
+- **Consistent Branding**: Ensures all generated content follows your brand guidelines
+- **Dynamic Variables**: Uses brand profile data in title, meta description, and content prompts
+
+## Content Style Options Removal
+
+### What Changed
+- **Removed**: Content Style Options section from all settings pages
+- **Replaced**: Old style variables with brand profile variables
+- **Simplified**: Settings interface now focuses on core optimization options
+
+### New Prompt Variables
+The following variables are now available in all AI prompts:
+- `{brand_overview}` - Brand overview from brand profile
+- `{target_audience}` - Target audience from brand profile  
+- `{brand_tone}` - Brand tone from brand profile
+- `{unique_selling_points}` - Unique selling points from brand profile
+- `{site_title}` - Website title from WordPress settings
+- `{site_tagline}` - Website tagline from WordPress settings
+
+### Removed Variables
+The following old variables are no longer available:
+- `{content_tone}` - Replaced by `{brand_tone}`
+- `{content_focus}` - Removed
+- `{seo_aggressiveness}` - Removed
+- `{keyword_density}` - Removed
+- `{geographic_targeting}` - Removed
+- `{brand_voice}` - Replaced by `{brand_tone}`
 
 ## Bulk Optimize Feature
 
@@ -37,6 +68,7 @@ The Bulk Meta Optimizer plugin now includes a new "Brand Profile" feature that h
 - **Results Summary**: Clear summary of successful and failed optimizations
 - **License Verification**: Ensures valid license before processing
 - **Permission Checks**: Verifies user permissions for bulk operations
+- **Brand Profile Integration**: All bulk optimizations use your brand profile data
 
 ## How to Use
 
@@ -56,6 +88,11 @@ The Bulk Meta Optimizer plugin now includes a new "Brand Profile" feature that h
 3. Click "Save Profile" to store your changes
 4. Use "Rebuild Profile" if you want to regenerate everything
 
+### Step 4: Optimize Content
+1. All content optimization (individual and bulk) now automatically uses your brand profile
+2. No additional configuration needed - brand profile is integrated seamlessly
+3. Customize prompts in Content Settings if needed, using the new brand profile variables
+
 ## Requirements
 - Valid Bulk Meta Optimizer license
 - OpenAI API key configured in plugin settings
@@ -69,11 +106,13 @@ The Bulk Meta Optimizer plugin now includes a new "Brand Profile" feature that h
 - Responsive design that works on all devices
 - Bulk operations use WordPress transients for data storage
 - Progress tracking with individual item processing
+- Brand profile data automatically integrated into all AI prompts
+- Simplified settings interface without content style options
 
 ## File Structure
 ```
 bulk-meta-optimizer/
-├── ai-content-optimizer.php (main plugin file with brand profile and bulk optimize functionality)
+├── ai-content-optimizer.php (main plugin file with brand profile integration and bulk optimize functionality)
 ├── assets/
 │   ├── css/
 │   │   └── admin.css (brand profile and bulk progress styles)
