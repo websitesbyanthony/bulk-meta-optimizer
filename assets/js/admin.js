@@ -86,88 +86,21 @@
             });
         });
         
-        // Bulk optimize
-        let bulkOptimizeRunning = false;
-        let bulkOptimizePostIds = [];
-        let bulkOptimizeCurrentIndex = 0;
-
-        // Add bulk optimize button handler
+        // Bulk optimize - show confirmation and redirect
         $('.aico-bulk-optimize').on('click', function(e) {
             e.preventDefault();
-            if (bulkOptimizeRunning) {
-                return;
-            }
             const $button = $(this);
             const postIds = $button.data('post-ids') ? $button.data('post-ids').toString().split(',') : [];
             if (!postIds.length) {
+                alert('No items selected for bulk optimization.');
                 return;
             }
             if (!confirm(aicoData.strings.confirmBulk)) {
                 return;
             }
-            startBulkOptimize(postIds);
+            // The bulk action will be handled by WordPress bulk actions
+            // This is just for custom bulk buttons if needed
         });
-
-        function startBulkOptimize(postIds) {
-            if (bulkOptimizeRunning) {
-                return;
-            }
-            // Create progress bar if it doesn't exist
-            if ($('#aico-bulk-progress').length === 0) {
-                $('h1.wp-heading-inline').after(
-                    '<div id="aico-bulk-progress" class="aico-bulk-progress">' +
-                    '<div class="aico-progress-bar"><div class="aico-progress"></div></div>' +
-                    '<div class="aico-progress-text"></div>' +
-                    '</div>'
-                );
-            }
-            bulkOptimizeRunning = true;
-            bulkOptimizePostIds = postIds;
-            bulkOptimizeCurrentIndex = 0;
-            processBulkOptimize();
-        }
-        function processBulkOptimize() {
-            const total = bulkOptimizePostIds.length;
-            const progress = Math.round((bulkOptimizeCurrentIndex / total) * 100);
-            // Update progress bar
-            $('#aico-bulk-progress .aico-progress').css('width', progress + '%');
-            $('#aico-bulk-progress .aico-progress-text').text(aicoData.strings.processing + ' ' + bulkOptimizeCurrentIndex + ' / ' + total);
-            // Send AJAX request
-            $.ajax({
-                url: aicoData.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'aico_bulk_optimize',
-                    post_ids: bulkOptimizePostIds,
-                    current_index: bulkOptimizeCurrentIndex,
-                    nonce: aicoData.nonce
-                },
-                success: function(response) {
-                    if (response.success) {
-                        if (response.data.done) {
-                            // All done
-                            bulkOptimizeRunning = false;
-                            $('#aico-bulk-progress .aico-progress').css('width', '100%');
-                            $('#aico-bulk-progress .aico-progress-text').text(response.data.message);
-                        } else {
-                            // Continue with next post
-                            bulkOptimizeCurrentIndex = response.data.current_index;
-                            $('#aico-bulk-progress .aico-progress-text').text(response.data.message);
-                            setTimeout(processBulkOptimize, 500);
-                        }
-                    } else {
-                        // Error
-                        bulkOptimizeRunning = false;
-                        $('#aico-bulk-progress .aico-progress-text').text(aicoData.strings.error + ' ' + response.data);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    // Error
-                    bulkOptimizeRunning = false;
-                    $('#aico-bulk-progress .aico-progress-text').text(aicoData.strings.error + ' ' + error);
-                }
-            });
-        }
         
         // Settings form submission
         $('.aico-settings-form').on('submit', function(e) {

@@ -20,6 +20,24 @@ The Bulk Meta Optimizer plugin now includes a new "Brand Profile" feature that h
 - **Real-time Saving**: Save changes instantly with AJAX-powered updates
 - **Rebuild Option**: Regenerate the entire profile if needed
 
+## Bulk Optimize Feature
+
+### How to Use Bulk Optimization
+1. **Select Items**: Go to any post, page, or custom post type list (e.g., Posts, Pages, Products)
+2. **Choose Items**: Select multiple items using the checkboxes
+3. **Bulk Action**: From the "Bulk Actions" dropdown, select "Optimize with AI"
+4. **Apply**: Click "Apply" to start the bulk optimization process
+5. **Progress Bar**: A dedicated page will show the progress with a real-time progress bar
+6. **Results**: View detailed results including success count and any errors
+
+### Bulk Optimization Features
+- **Real-time Progress**: Live progress bar showing current item being processed
+- **Error Handling**: Detailed error reporting for failed optimizations
+- **Retry Functionality**: Option to retry failed items
+- **Results Summary**: Clear summary of successful and failed optimizations
+- **License Verification**: Ensures valid license before processing
+- **Permission Checks**: Verifies user permissions for bulk operations
+
 ## How to Use
 
 ### Step 1: Access Brand Profile
@@ -49,16 +67,18 @@ The Bulk Meta Optimizer plugin now includes a new "Brand Profile" feature that h
 - Implements AJAX for smooth user experience
 - Includes fallback parsing for non-JSON AI responses
 - Responsive design that works on all devices
+- Bulk operations use WordPress transients for data storage
+- Progress tracking with individual item processing
 
 ## File Structure
 ```
 bulk-meta-optimizer/
-├── ai-content-optimizer.php (main plugin file with brand profile functionality)
+├── ai-content-optimizer.php (main plugin file with brand profile and bulk optimize functionality)
 ├── assets/
 │   ├── css/
-│   │   └── admin.css (brand profile styles)
+│   │   └── admin.css (brand profile and bulk progress styles)
 │   └── js/
-│       └── admin.js (brand profile JavaScript)
+│       └── admin.js (brand profile and bulk optimize JavaScript)
 └── README.md (this file)
 ```
 
