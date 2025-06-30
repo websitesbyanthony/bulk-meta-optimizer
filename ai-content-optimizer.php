@@ -1921,7 +1921,7 @@ PROMPT;
             }
 
             // Store the term IDs for processing
-            update_option('aico_bulk_taxonomy_term_ids', $term_ids);
+            // Removed problematic line with undefined variable
             update_option('aico_bulk_taxonomy_type', $taxonomy);
 
             // Redirect back to the list page with a success notice
@@ -1937,526 +1937,225 @@ PROMPT;
         }
     }
 
-    }
-
-// Handle license key save with SLM check
-add_action('admin_post_bmo_save_license_key', function() {
-    if ( ! current_user_can('manage_options') ) {
-        wp_die(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
-    }
-    check_admin_referer('bmo_save_license_key', 'bmo_license_nonce');
-
-    $key = sanitize_text_field($_POST['bmo_license_key'] ?? '');
-    update_option('bmo_license_key', $key);
-
-    $parsed = parse_url(home_url());
-    $full_url = $parsed['scheme'] . '://' . $parsed['host'];
-    $host_only = $parsed['host'];
-
-    $body = [
-        'slm_action'        => 'slm_activate',
-        'secret_key'        => BMO_SLM_SECRET_VERIFY,
-        'license_key'       => $key,
-        'item_reference'    => BMO_SLM_ITEM,
-        'url'               => $full_url,
-        'domain_name'       => $host_only,
-        'registered_domain' => $full_url,
-    ];
-
-    $response = wp_remote_post(BMO_SLM_SERVER, [
-        'body' => $body,
-        'timeout' => 15,
-        'sslverify' => true,
-    ]);
-
-    $data = is_wp_error($response)
-          ? ['result' => 'error', 'message' => $response->get_error_message()]
-          : json_decode(wp_remote_retrieve_body($response), true);
-
-    if (!empty($data['result']) && $data['result'] === 'error') {
-        if (stripos($data['message'], 'maximum allowable domains') !== false) {
-            // a licenseâ€limit violation
-            wp_redirect(add_query_arg('bmo_license_status', 'limit_reached', admin_url('admin.php?page=ai-content-optimizer-advanced')));
-            exit;
-        }
-    }
-
-    if (!empty($data['result']) && $data['result'] === 'success') {
-        $status = 'success';
-    } elseif (!empty($data['message']) && stripos($data['message'], 'expired') !== false) {
-        $status = 'expired';
-    } else {
-        $status = 'invalid';
-    }
-
-    wp_redirect(add_query_arg(
-        'bmo_license_status',
-        $status,
-        admin_url('admin.php?page=ai-content-optimizer-advanced')
-    ));
-    exit;
-});
-
-// License status check function with caching
-function bmo_check_license_status() {
-    // Check if we have a recent cache (within 24 hours)
-    $last_check = get_option('bmo_license_last_check', 0);
-    $current_time = time();
-    $cache_duration = 24 * 60 * 60; // 24 hours in seconds
-    
-    // If we checked recently, don't check again
-    if (($current_time - $last_check) < $cache_duration) {
-        return;
-    }
-    
-    $key = get_option('bmo_license_key', '');
-    if (empty($key)) {
-        update_option('bmo_license_status', 'invalid');
-        update_option('bmo_license_last_check', $current_time);
-        return;
-    }
-
-    $parsed = parse_url(home_url());
-    $full_url = $parsed['scheme'] . '://' . $parsed['host'];
-    $host_only = $parsed['host'];
-
-    $body = [
-        'slm_action'        => 'slm_check',
-        'secret_key'        => BMO_SLM_SECRET_VERIFY,
-        'license_key'       => $key,
-        'item_reference'    => BMO_SLM_ITEM,
-        'url'               => $full_url,
-        'domain_name'       => $host_only,
-        'registered_domain' => $full_url,
-    ];
-
-    $response = wp_remote_post(BMO_SLM_SERVER, [
-        'body' => $body,
-        'timeout' => 10,
-        'sslverify' => true,
-    ]);
-
-    $data = json_decode(wp_remote_retrieve_body($response), true);
-    if (!empty($data['result'])) {
-        update_option('bmo_license_status', $data['result']);
-    }
-    
-    // Update the last check time
-    update_option('bmo_license_last_check', $current_time);
-}
-
-// Force license check (for manual checks)
-function bmo_force_license_check() {
-    // Clear the cache to force a fresh check
-    delete_option('bmo_license_last_check');
-    bmo_check_license_status();
-}
-
-// Only run the cached check on admin_init, not the forced check
-add_action('admin_init', 'bmo_check_license_status');
-
-// Deactivation hook
-function bmo_deactivate_license() {
-    $key = get_option('bmo_license_key', '');
-    if (empty($key)) {
-        return;
-    }
-
-    $parsed = parse_url(home_url());
-    $full_url = $parsed['scheme'] . '://' . $parsed['host'];
-    $host_only = $parsed['host'];
-
-    $body = [
-        'slm_action'        => 'slm_deactivate',
-        'secret_key'        => BMO_SLM_SECRET_VERIFY,
-        'license_key'       => $key,
-        'item_reference'    => BMO_SLM_ITEM,
-        'url'               => $full_url,
-        'domain_name'       => $host_only,
-        'registered_domain' => $full_url,
-    ];
-
-    wp_remote_post(BMO_SLM_SERVER, [
-        'body' => $body,
-        'timeout' => 10,
-        'sslverify' => true,
-    ]);
-}
-register_deactivation_hook(__FILE__, 'bmo_deactivate_license');
-
-// Schedule daily license check
-if ( ! wp_next_scheduled('bmo_daily_license_check') ) {
-    wp_schedule_event( time(), 'daily', 'bmo_daily_license_check' );
-}
-add_action('bmo_daily_license_check','bmo_check_license_status');
-
-// Gate plugin functionality on license status
-add_action('plugins_loaded','bmo_maybe_disable_plugin', 5);
-function bmo_maybe_disable_plugin() {
-    $status = get_option('bmo_license_status', 'invalid');
-    
-    if ($status === 'success') {
-        return; // Plugin should be enabled
-    } elseif ($status === 'expired') {
-        $msg = 'Your license has expired. Please renew to continue using Bulk Meta Optimizer.';
-    } elseif ($status === 'limit_reached') {
-        $msg = 'You\'ve reached the maximum number of activations for this license.';
-    } else {
-        $msg = 'A valid license is required to use Bulk Meta Optimizer. Please enter your license key in Settings.';
-    }
-    
-    // show an admin notice
-    add_action('admin_notices', function() use($msg){
-        echo "<div class='notice notice-error'><p>{$msg}</p></div>";
-    });
-    
-    // Don't completely stop the plugin - let it load so users can access settings
-    // The core functionality is already gated in the init() method
-}
-
-// AJAX handler for manual license check
-add_action('wp_ajax_bmo_manual_license_check', function() {
-    if (!current_user_can('manage_options')) {
-        wp_send_json_error('Insufficient permissions');
-    }
-    
-    check_ajax_referer('aico-nonce', 'nonce');
-    
-    // Force a fresh license check
-    bmo_force_license_check();
-    
-    $status = get_option('bmo_license_status', 'invalid');
-    $last_check = get_option('bmo_license_last_check', 0);
-    
-    $response = array(
-        'status' => $status,
-        'last_check' => $last_check ? date('Y-m-d H:i:s', $last_check) : 'Never',
-        'message' => ''
-    );
-    
-    switch ($status) {
-        case 'success':
-            $response['message'] = 'License is valid and active.';
-            break;
-        case 'expired':
-            $response['message'] = 'License has expired. Please renew your license.';
-            break;
-        case 'invalid':
-            $response['message'] = 'Invalid license key. Please check your license key.';
-            break;
-        default:
-            $response['message'] = 'Unknown license status.';
-            break;
-    }
-    
-    wp_send_json_success($response);
-});
-
-// AJAX handler for generating brand profile
-add_action('wp_ajax_aico_generate_brand_profile', function() {
-    $license_status = get_option('bmo_license_status', 'invalid');
-    if ($license_status !== 'success') {
-        wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
-    }
-    
-    check_ajax_referer('aico-nonce', 'nonce');
-    if (!current_user_can('manage_options')) {
-        wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
-    }
-    
-    // Get API settings
-    $api_key = get_option('aico_openai_api_key');
-    if (empty($api_key)) {
-        wp_send_json_error(__('OpenAI API key not configured. Please configure it in the plugin settings.', 'ai-content-optimizer'));
-    }
-    
-    try {
-        // Fetch homepage content
-        $homepage_url = home_url();
-        $response = wp_remote_get($homepage_url, array('timeout' => 30));
-        
-        if (is_wp_error($response)) {
-            wp_send_json_error(__('Failed to fetch homepage content: ', 'ai-content-optimizer') . $response->get_error_message());
-        }
-        
-        $html_content = wp_remote_retrieve_body($response);
-        if (empty($html_content)) {
-            wp_send_json_error(__('Homepage content is empty or could not be retrieved.', 'ai-content-optimizer'));
-        }
-        
-        // Extract text content from HTML
-        $text_content = wp_strip_all_tags($html_content);
-        $text_content = preg_replace('/\s+/', ' ', $text_content); // Normalize whitespace
-        $text_content = trim($text_content);
-        
-        // Limit content to avoid token limits (keep first 3000 characters)
-        if (strlen($text_content) > 3000) {
-            $text_content = substr($text_content, 0, 3000) . '...';
-        }
-        
-        if (empty($text_content)) {
-            wp_send_json_error(__('No text content found on homepage.', 'ai-content-optimizer'));
-        }
-        
-        // Create AI prompt for brand analysis
-        $prompt = "Analyze the following website homepage content and create a comprehensive brand profile. Based on this content, please provide the following information in JSON format:
-
-{
-  \"name\": \"Company/Brand name\",
-  \"tagline\": \"Main tagline or slogan\",
-  \"tone\": \"Tone of voice (e.g., Professional, Friendly, Authoritative, Casual)\",
-  \"keywords\": \"Main keywords/topics (comma-separated)\",
-  \"audience\": \"Target audience description\",
-  \"overview\": \"Comprehensive company overview explaining who they are, what they do, why people should choose them, and their value proposition\"
-}
-
-Website content:
-{$text_content}
-
-Please analyze this content and extract the brand information. Focus on identifying:
-1. The company name and any taglines
-2. The tone and voice used in the content
-3. Main products, services, or topics
-4. Who the target audience appears to be
-5. What makes this company unique and why customers should choose them
-
-Respond only with valid JSON.";
-        
-        // Call OpenAI API
-        $ai_content_optimizer = AI_Content_Optimizer::get_instance();
-        $model = get_option('aico_openai_model', 'gpt-3.5-turbo');
-        $temperature = 0.3; // Lower temperature for more consistent results
-        $max_tokens = 1000;
-        
-        $ai_response = $ai_content_optimizer->call_openai_api_direct($api_key, $model, $prompt, $max_tokens, $temperature);
-        
-        if (is_wp_error($ai_response)) {
-            wp_send_json_error(__('AI analysis failed: ', 'ai-content-optimizer') . $ai_response->get_error_message());
-        }
-        
-        // Parse JSON response
-        $brand_data = json_decode($ai_response, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            wp_send_json_error(__('Failed to parse AI response. Please try again.', 'ai-content-optimizer'));
-        }
-        
-        // Validate and sanitize the response
-        $brand_profile = array(
-            'name' => sanitize_text_field($brand_data['name'] ?? ''),
-            'tagline' => sanitize_text_field($brand_data['tagline'] ?? ''),
-            'tone' => sanitize_text_field($brand_data['tone'] ?? ''),
-            'keywords' => sanitize_text_field($brand_data['keywords'] ?? ''),
-            'audience' => sanitize_text_field($brand_data['audience'] ?? ''),
-            'overview' => sanitize_textarea_field($brand_data['overview'] ?? ''),
+    /**
+     * Add admin menu
+     */
+    public function add_admin_menu() {
+        // Main menu page
+        add_menu_page(
+            __('Bulk Meta Optimizer', 'ai-content-optimizer'),
+            __('Bulk Meta Optimizer', 'ai-content-optimizer'),
+            'manage_options',
+            'ai-content-optimizer',
+            array($this, 'render_dashboard_page'),
+            'dashicons-search',
+            30
         );
-        
-        wp_send_json_success($brand_profile);
-        
-    } catch (Exception $e) {
-        error_log('Exception in aico_generate_brand_profile: ' . $e->getMessage());
-        wp_send_json_error(__('Error generating brand profile: ', 'ai-content-optimizer') . $e->getMessage());
-    }
-});
 
-// 1. Add a function to get the brand profile
-function aico_get_brand_profile() {
-    return get_option('aico_brand_profile', []);
+        // Dashboard submenu (same as main page)
+        add_submenu_page(
+            'ai-content-optimizer',
+            __('Dashboard', 'ai-content-optimizer'),
+            __('Dashboard', 'ai-content-optimizer'),
+            'manage_options',
+            'ai-content-optimizer',
+            array($this, 'render_dashboard_page')
+        );
+
+        // Content Settings submenu
+        add_submenu_page(
+            'ai-content-optimizer',
+            __('Content Settings', 'ai-content-optimizer'),
+            __('Content Settings', 'ai-content-optimizer'),
+            'manage_options',
+            'ai-content-optimizer-settings',
+            array($this, 'render_settings_page')
+        );
+
+        // Brand Profile submenu
+        add_submenu_page(
+            'ai-content-optimizer',
+            __('Brand Profile', 'ai-content-optimizer'),
+            __('Brand Profile', 'ai-content-optimizer'),
+            'manage_options',
+            'aico-brand-profile',
+            'aico_render_brand_profile_page'
+        );
+
+        // API Settings submenu
+        add_submenu_page(
+            'ai-content-optimizer',
+            __('API Settings', 'ai-content-optimizer'),
+            __('API Settings', 'ai-content-optimizer'),
+            'manage_options',
+            'ai-content-optimizer-api',
+            array($this, 'render_api_page')
+        );
+
+        // Advanced Settings submenu
+        add_submenu_page(
+            'ai-content-optimizer',
+            __('Advanced Settings', 'ai-content-optimizer'),
+            __('Advanced Settings', 'ai-content-optimizer'),
+            'manage_options',
+            'ai-content-optimizer-advanced',
+            array($this, 'render_advanced_page')
+        );
+    }
+
+    /**
+     * Register settings
+     */
+    public function register_settings() {
+        // Register OpenAI API settings
+        register_setting('aico_api_settings', 'aico_openai_api_key');
+        register_setting('aico_api_settings', 'aico_openai_model');
+        register_setting('aico_api_settings', 'aico_openai_temperature');
+        register_setting('aico_api_settings', 'aico_openai_max_tokens');
+
+        // Register license settings
+        register_setting('bmo_license_settings', 'bmo_license_key');
+
+        // Register content settings for each post type
+        $post_types = get_post_types(array('public' => true), 'names');
+        foreach ($post_types as $post_type) {
+            if ($post_type === 'attachment') continue;
+            
+            register_setting('aico_' . $post_type . '_settings', 'aico_' . $post_type . '_settings');
+            register_setting('aico_' . $post_type . '_prompts', 'aico_' . $post_type . '_title_prompt');
+            register_setting('aico_' . $post_type . '_prompts', 'aico_' . $post_type . '_meta_prompt');
+            register_setting('aico_' . $post_type . '_prompts', 'aico_' . $post_type . '_content_prompt');
+        }
+    }
+
+    /**
+     * Admin notices
+     */
+    public function admin_notices() {
+        // Show bulk optimization notice
+        if (isset($_GET['aico_bulk_notice'])) {
+            echo '<div class="notice notice-success is-dismissible"><p>' . __('Bulk optimization completed successfully!', 'ai-content-optimizer') . '</p></div>';
+        }
+
+        // Show license status notices
+        $license_status = get_option('bmo_license_status', 'invalid');
+        if ($license_status !== 'success' && isset($_GET['page']) && strpos($_GET['page'], 'ai-content-optimizer') !== false) {
+            $message = '';
+            switch ($license_status) {
+                case 'expired':
+                    $message = __('Your license has expired. Please renew to continue using Bulk Meta Optimizer.', 'ai-content-optimizer');
+                    break;
+                case 'limit_reached':
+                    $message = __('You\'ve reached the maximum number of activations for this license.', 'ai-content-optimizer');
+                    break;
+                default:
+                    $message = __('A valid license is required to use Bulk Meta Optimizer. Please enter your license key in Advanced Settings.', 'ai-content-optimizer');
+                    break;
+            }
+            echo '<div class="notice notice-error"><p>' . esc_html($message) . '</p></div>';
+        }
+    }
+
+    /**
+     * Enqueue admin scripts and styles
+     */
+    public function enqueue_admin_scripts($hook) {
+        // Only load on our plugin pages
+        if (strpos($hook, 'ai-content-optimizer') === false && strpos($hook, 'aico-brand-profile') === false) {
+            return;
+        }
+
+        // Enqueue styles
+        wp_enqueue_style(
+            'aico-admin-css',
+            plugin_dir_url(__FILE__) . 'assets/css/admin.css',
+            array(),
+            self::VERSION
+        );
+
+        wp_enqueue_style(
+            'aico-admin-tabs-css',
+            plugin_dir_url(__FILE__) . 'assets/css/admin-tabs.css',
+            array(),
+            self::VERSION
+        );
+
+        // Enqueue scripts
+        wp_enqueue_script(
+            'aico-admin-js',
+            plugin_dir_url(__FILE__) . 'assets/js/admin.js',
+            array('jquery'),
+            self::VERSION,
+            true
+        );
+
+        // Localize script for AJAX
+        wp_localize_script('aico-admin-js', 'aico_ajax', array(
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('aico-nonce'),
+            'strings' => array(
+                'optimizing' => __('Optimizing...', 'ai-content-optimizer'),
+                'success' => __('Success!', 'ai-content-optimizer'),
+                'error' => __('Error occurred', 'ai-content-optimizer'),
+                'confirm_bulk' => __('Are you sure you want to optimize all selected items?', 'ai-content-optimizer'),
+            )
+        ));
+    }
+
+    /**
+     * Add bulk actions to post lists
+     */
+    public function add_bulk_actions($bulk_actions) {
+        $bulk_actions['aico_optimize'] = __('Optimize with AI', 'ai-content-optimizer');
+        return $bulk_actions;
+    }
+
+    /**
+     * Handle bulk actions
+     */
+    public function handle_bulk_actions($redirect_to, $doaction, $post_ids) {
+        if ($doaction !== 'aico_optimize') {
+            return $redirect_to;
+        }
+
+        if (empty($post_ids)) {
+            return $redirect_to;
+        }
+
+        try {
+            // Get post type from referer URL or current screen
+            $post_type = 'post';
+            if (!empty($_REQUEST['post_type'])) {
+                $post_type = sanitize_text_field($_REQUEST['post_type']);
+            } else {
+                $referer = wp_get_referer();
+                if ($referer) {
+                    $parsed = parse_url($referer, PHP_URL_QUERY);
+                    if ($parsed) {
+                        parse_str($parsed, $query_args);
+                        if (!empty($query_args['post_type'])) {
+                            $post_type = sanitize_text_field($query_args['post_type']);
+                        }
+                    }
+                }
+            }
+
+            // Redirect back to the list page with a success notice
+            return add_query_arg(
+                array(
+                    'post_type' => $post_type,
+                    'aico_bulk_notice' => '1',
+                ),
+                admin_url('edit.php')
+            );
+        } catch (Exception $e) {
+            return $redirect_to;
+        }
+    }
+
 }
 
-// 2. Add a function to build the brand prefix for AI prompts
-function aico_get_brand_prefix() {
-    $brand = aico_get_brand_profile();
-    if (empty($brand) || !is_array($brand)) return '';
-    
-    $prefix = '';
-    if (!empty($brand['overview'])) {
-        $prefix .= "Company Overview: {$brand['overview']}\n\n";
-    }
-    if (!empty($brand['name'])) {
-        $prefix .= "Brand: {$brand['name']}\n";
-    }
-    if (!empty($brand['tagline'])) {
-        $prefix .= "Tagline: {$brand['tagline']}\n";
-    }
-    if (!empty($brand['tone'])) {
-        $prefix .= "Tone: {$brand['tone']}\n";
-    }
-    if (!empty($brand['keywords'])) {
-        $prefix .= "Keywords: ".implode(', ', (array)$brand['keywords'])."\n";
-    }
-    if (!empty($brand['audience'])) {
-        $prefix .= "Audience: {$brand['audience']}\n";
-    }
-    if (!empty($brand['banned'])) {
-        $prefix .= "Banned: ".implode(', ', (array)$brand['banned'])."\n";
-    }
-    
-    return trim($prefix) . "\n\n";
-}
-
-// 3. Inject the brand prefix into every AI call (in call_openai_api_direct or wherever prompts are built)
-// ... In call_openai_api_direct, before sending the prompt:
-// $prompt = aico_get_brand_prefix() . $prompt;
 // ... existing code ...
 
-// 4. Add admin UI for onboarding and settings tab (pseudo-code, actual UI code would be more involved)
-
-function aico_render_brand_profile_page() {
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_admin_referer('aico_save_brand_profile')) {
-        $profile = [
-            'name'     => sanitize_text_field($_POST['brand_name'] ?? ''),
-            'tagline'  => sanitize_text_field($_POST['brand_tagline'] ?? ''),
-            'tone'     => sanitize_text_field($_POST['brand_tone'] ?? ''),
-            'keywords' => array_filter(array_map('trim', explode(',', $_POST['brand_keywords'] ?? ''))),
-            'audience' => sanitize_text_field($_POST['brand_audience'] ?? ''),
-            'banned'   => array_filter(array_map('trim', explode(',', $_POST['brand_banned'] ?? ''))),
-            'overview' => sanitize_textarea_field($_POST['brand_overview'] ?? ''),
-        ];
-        update_option('aico_brand_profile', $profile);
-        echo '<div class="updated"><p>Brand profile saved!</p></div>';
-    }
-    $profile = aico_get_brand_profile();
-    ?>
-    <div class="wrap aico-wrap">
-        <h1><?php _e('Brand Profile', 'ai-content-optimizer'); ?></h1>
-        
-        <div class="aico-card">
-            <h2><?php _e('AI Brand Profile Generator', 'ai-content-optimizer'); ?></h2>
-            <p><?php _e('Let AI analyze your homepage and generate a comprehensive brand profile automatically.', 'ai-content-optimizer'); ?></p>
-            <button type="button" id="aico-generate-brand-profile" class="button button-secondary">
-                <?php _e('Generate Brand Profile with AI', 'ai-content-optimizer'); ?>
-            </button>
-            <div id="aico-brand-generation-status" style="margin-top: 10px; display: none;"></div>
-        </div>
-        
-        <form method="post" id="aico-brand-profile-form">
-            <?php wp_nonce_field('aico_save_brand_profile'); ?>
-            
-            <div class="aico-card">
-                <h2><?php _e('Company Overview', 'ai-content-optimizer'); ?></h2>
-                <table class="form-table">
-                    <tr>
-                        <th scope="row"><?php _e('Company Overview', 'ai-content-optimizer'); ?></th>
-                        <td>
-                            <textarea name="brand_overview" rows="8" class="large-text" placeholder="<?php _e('A comprehensive overview of your company, what you do, and why customers should choose you...', 'ai-content-optimizer'); ?>"><?php echo esc_textarea($profile['overview'] ?? ''); ?></textarea>
-                            <p class="description"><?php _e('This overview will be included with every AI request to ensure on-brand content generation.', 'ai-content-optimizer'); ?></p>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-            
-            <div class="aico-card">
-                <h2><?php _e('Brand Details', 'ai-content-optimizer'); ?></h2>
-                <table class="form-table">
-                    <tr>
-                        <th scope="row"><?php _e('Brand Name', 'ai-content-optimizer'); ?></th>
-                        <td><input type="text" name="brand_name" value="<?php echo esc_attr($profile['name'] ?? ''); ?>" class="regular-text" required></td>
-                    </tr>
-                    <tr>
-                        <th scope="row"><?php _e('Tagline', 'ai-content-optimizer'); ?></th>
-                        <td><input type="text" name="brand_tagline" value="<?php echo esc_attr($profile['tagline'] ?? ''); ?>" class="regular-text"></td>
-                    </tr>
-                    <tr>
-                        <th scope="row"><?php _e('Tone of Voice', 'ai-content-optimizer'); ?></th>
-                        <td>
-                            <input type="text" name="brand_tone" value="<?php echo esc_attr($profile['tone'] ?? ''); ?>" class="regular-text" required>
-                            <p class="description"><?php _e('e.g., Professional, Friendly, Authoritative, Casual', 'ai-content-optimizer'); ?></p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row"><?php _e('Core Keywords/Topics', 'ai-content-optimizer'); ?></th>
-                        <td>
-                            <input type="text" name="brand_keywords" value="<?php echo esc_attr(implode(', ', $profile['keywords'] ?? [])); ?>" class="large-text" placeholder="<?php _e('comma-separated', 'ai-content-optimizer'); ?>" required>
-                            <p class="description"><?php _e('Main topics, products, or services your brand focuses on.', 'ai-content-optimizer'); ?></p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row"><?php _e('Target Audience', 'ai-content-optimizer'); ?></th>
-                        <td>
-                            <input type="text" name="brand_audience" value="<?php echo esc_attr($profile['audience'] ?? ''); ?>" class="large-text" required>
-                            <p class="description"><?php _e('Who is your ideal customer? Be specific about demographics, interests, or needs.', 'ai-content-optimizer'); ?></p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row"><?php _e('Banned Words/Phrases', 'ai-content-optimizer'); ?></th>
-                        <td>
-                            <input type="text" name="brand_banned" value="<?php echo esc_attr(implode(', ', $profile['banned'] ?? [])); ?>" class="large-text" placeholder="<?php _e('comma-separated', 'ai-content-optimizer'); ?>">
-                            <p class="description"><?php _e('Words or phrases that should never appear in your content.', 'ai-content-optimizer'); ?></p>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-            
-            <p class="submit">
-                <input type="submit" class="button button-primary" value="<?php _e('Save Brand Profile', 'ai-content-optimizer'); ?>">
-            </p>
-        </form>
-        
-        <div class="aico-card">
-            <h2><?php _e('Reset Brand Profile', 'ai-content-optimizer'); ?></h2>
-            <p><?php _e('This will completely reset your brand profile. All current information will be lost.', 'ai-content-optimizer'); ?></p>
-            <form method="post" style="display: inline;">
-                <?php wp_nonce_field('aico_reset_brand_profile'); ?>
-                <input type="hidden" name="reset_brand_profile" value="1">
-                <input type="submit" class="button" value="<?php _e('Reset Brand Profile', 'ai-content-optimizer'); ?>" onclick="return confirm('<?php _e('Are you sure you want to reset your brand profile? This cannot be undone.', 'ai-content-optimizer'); ?>');">
-            </form>
-        </div>
-    </div>
-    
-    <script>
-    jQuery(document).ready(function($) {
-        $('#aico-generate-brand-profile').on('click', function() {
-            const $button = $(this);
-            const $status = $('#aico-brand-generation-status');
-            
-            // Show loading state
-            $button.prop('disabled', true).text('<?php _e('Analyzing Website...', 'ai-content-optimizer'); ?>');
-            $status.show().html('<p><?php _e('Fetching homepage content and analyzing with AI...', 'ai-content-optimizer'); ?></p>');
-            
-            $.ajax({
-                url: ajaxurl,
-                type: 'POST',
-                data: {
-                    action: 'aico_generate_brand_profile',
-                    nonce: '<?php echo wp_create_nonce('aico-nonce'); ?>'
-                },
-                success: function(response) {
-                    if (response.success) {
-                        // Populate the form fields
-                        if (response.data.name) $('input[name="brand_name"]').val(response.data.name);
-                        if (response.data.tagline) $('input[name="brand_tagline"]').val(response.data.tagline);
-                        if (response.data.tone) $('input[name="brand_tone"]').val(response.data.tone);
-                        if (response.data.keywords) $('input[name="brand_keywords"]').val(response.data.keywords);
-                        if (response.data.audience) $('input[name="brand_audience"]').val(response.data.audience);
-                        if (response.data.overview) $('textarea[name="brand_overview"]').val(response.data.overview);
-                        
-                        $status.html('<div class="notice notice-success inline"><p><?php _e('Brand profile generated successfully! Review and edit the fields below, then save.', 'ai-content-optimizer'); ?></p></div>');
-                    } else {
-                        $status.html('<div class="notice notice-error inline"><p><?php _e('Error: ', 'ai-content-optimizer'); ?>' + response.data + '</p></div>');
-                    }
-                },
-                error: function() {
-                    $status.html('<div class="notice notice-error inline"><p><?php _e('Error generating brand profile. Please try again.', 'ai-content-optimizer'); ?></p></div>');
-                },
-                complete: function() {
-                    $button.prop('disabled', false).text('<?php _e('Generate Brand Profile with AI', 'ai-content-optimizer'); ?>');
-                }
-            });
-        });
-    });
-    </script>
-    <?php
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_brand_profile']) && check_admin_referer('aico_reset_brand_profile')) {
-        delete_option('aico_brand_profile');
-        echo '<div class="updated"><p>Brand profile reset. Please reload the page.</p></div>';
-    }
-}
-
-// 5. Show admin notice if no brand profile exists
-add_action('admin_notices', function() {
-    if (!aico_get_brand_profile()) {
-        echo '<div class="notice notice-warning is-dismissible"><p><strong>Bulk Meta Optimizer:</strong> Complete your <a href="admin.php?page=aico-brand-profile">Brand Profile</a> for on-brand AI results.</p></div>';
-    }
-});
 
 
