@@ -650,7 +650,7 @@ PROMPT;
         }
         ?>
         <div class="wrap aico-wrap">
-            <div class="aico-debug-banner">AICO CSS DEBUG: If you see this, the plugin CSS is loaded!</div>
+            <div class="aico-debug-banner" style="background:#ff006e !important;color:#fff !important;font-size:20px !important;text-align:center !important;padding:16px !important;font-weight:bold !important;letter-spacing:2px;z-index:9999;">AICO CSS DEBUG: If you see this, the plugin CSS is loaded!</div>
             <h1><?php _e('Content Settings', 'ai-content-optimizer'); ?></h1>
             <div class="aico-settings-layout">
                 <div class="aico-sidebar">
