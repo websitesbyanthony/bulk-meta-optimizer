@@ -215,45 +215,12 @@ PROMPT;
         // Load text domain for translations
         load_plugin_textdomain('ai-content-optimizer', false, dirname(plugin_basename(__FILE__)) . '/languages');
 
-        // Admin hooks - always add menu and settings for license management
+        // Register admin hooks (menu, settings, notices, assets)
         if (is_admin()) {
-            // Add admin menu (always available for license management)
             add_action('admin_menu', array($this, 'add_admin_menu'));
-
-            // Register settings (always available for license management)
             add_action('admin_init', array($this, 'register_settings'));
-
-            try {
-            error_log('Starting bulk action handler');
-            // Get post type from referer URL or current screen
-            $post_type = 'post';
-            if (!empty($_REQUEST['post_type'])) {
-                $post_type = sanitize_text_field($_REQUEST['post_type']);
-            } else {
-                $referer = wp_get_referer();
-                if ($referer) {
-                    $parsed = parse_url($referer, PHP_URL_QUERY);
-                    if ($parsed) {
-                        parse_str($parsed, $query_args);
-                        if (!empty($query_args['post_type'])) {
-                            $post_type = sanitize_text_field($query_args['post_type']);
-                        }
-                    }
-                }
-            }
-            error_log('Bulk action post type: ' . $post_type);
-            error_log('Post IDs to process: ' . print_r($post_ids, true));
-            // Redirect back to the list page with a success notice (no process-controlling params)
-            return add_query_arg(
-                array(
-                    'post_type' => $post_type,
-                    'aico_bulk_notice' => '1',
-                ),
-                admin_url('edit.php')
-            );
-        } catch (Exception $e) {
-            error_log('Exception in handle_bulk_actions: ' . $e->getMessage());
-            return $redirect_to;
+            add_action('admin_notices', array($this, 'admin_notices'));
+            add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
         }
     }
 
