@@ -275,6 +275,9 @@ PROMPT;
             
             // Add bulk action error handler
             add_action('admin_notices', array($this, 'handle_bulk_action_errors'));
+
+            // Add bulk optimization redirect handler
+            add_action('admin_notices', array($this, 'handle_bulk_optimization_redirect'));
         }
     }
 
@@ -352,15 +355,6 @@ PROMPT;
             'manage_options',
             'ai-content-optimizer-brand-profile',
             array($this, 'render_brand_profile_page')
-        );
-
-        add_submenu_page(
-            'ai-content-optimizer',
-            __('Bulk Process', 'ai-content-optimizer'),
-            __('Bulk Process', 'ai-content-optimizer'),
-            'manage_options',
-            'ai-content-optimizer-bulk-process',
-            array($this, 'render_bulk_process_page')
         );
 
         add_submenu_page(
@@ -490,57 +484,44 @@ PROMPT;
         if ($doaction !== 'aico_bulk_optimize') {
             return $redirect_to;
         }
-        
-        // Check license status
-        $license_status = get_option('bmo_license_status', 'invalid');
-        if ($license_status !== 'success') {
-            return add_query_arg(
-                array(
-                    'aico_bulk_error' => 'license_required',
-                ),
-                $redirect_to
-            );
-        }
-
-        // Check permissions
-        if (!current_user_can('edit_posts')) {
-            return add_query_arg(
-                array(
-                    'aico_bulk_error' => 'permission_denied',
-                ),
-                $redirect_to
-            );
-        }
 
         try {
-            // Store the post IDs in a transient for processing
-            $process_id = uniqid('aico_bulk_');
-            set_transient('aico_bulk_process_' . $process_id, array(
-                'post_ids' => $post_ids,
-                'total' => count($post_ids),
-                'processed' => 0,
-                'success' => array(),
-                'errors' => array(),
-                'status' => 'pending'
-            ), HOUR_IN_SECONDS);
+            error_log('Starting bulk action handler');
+            
+            // Get post type from referer URL or current screen
+            $post_type = 'post';
+            if (!empty($_REQUEST['post_type'])) {
+                $post_type = sanitize_text_field($_REQUEST['post_type']);
+            } else {
+                $referer = wp_get_referer();
+                if ($referer) {
+                    $parsed = parse_url($referer, PHP_URL_QUERY);
+                    if ($parsed) {
+                        parse_str($parsed, $query_args);
+                        if (!empty($query_args['post_type'])) {
+                            $post_type = sanitize_text_field($query_args['post_type']);
+                        }
+                    }
+                }
+            }
 
-            // Redirect to a processing page
+            error_log('Bulk action post type: ' . $post_type);
+            error_log('Post IDs to process: ' . print_r($post_ids, true));
+
+            // Add post IDs and post type to redirect URL
             return add_query_arg(
                 array(
-                    'page' => 'ai-content-optimizer-bulk-process',
-                    'process_id' => $process_id,
-                    'post_type' => isset($_REQUEST['post_type']) ? sanitize_text_field($_REQUEST['post_type']) : 'post'
+                    'aico_bulk_optimize' => '1',
+                    'aico_post_ids' => implode(',', array_map('intval', $post_ids)),
+                    'post_type' => $post_type,
+                    'aico_nonce' => wp_create_nonce('aico-bulk-optimize')
                 ),
-                admin_url('admin.php')
+                admin_url('edit.php')
             );
+
         } catch (Exception $e) {
             error_log('Exception in handle_bulk_actions: ' . $e->getMessage());
-            return add_query_arg(
-                array(
-                    'aico_bulk_error' => 'processing_error',
-                ),
-                $redirect_to
-            );
+            return $redirect_to;
         }
     }
 
@@ -2343,256 +2324,6 @@ PROMPT;
     }
 
     /**
-     * Render bulk process page
-     */
-    public function render_bulk_process_page() {
-        // Check user capabilities
-        if (!current_user_can('manage_options')) {
-            wp_die(__('You do not have sufficient permissions to access this page.', 'ai-content-optimizer'));
-        }
-
-        $license_status = get_option('bmo_license_status', 'invalid');
-        if ($license_status !== 'success') {
-            echo '<div class="notice notice-error"><p>' . __('A valid license is required to use Bulk Meta Optimizer.', 'ai-content-optimizer') . '</p></div>';
-            return;
-        }
-
-        $process_id = isset($_GET['process_id']) ? sanitize_text_field($_GET['process_id']) : '';
-        $post_type = isset($_GET['post_type']) ? sanitize_text_field($_GET['post_type']) : 'post';
-
-        if (empty($process_id)) {
-            echo '<div class="notice notice-error"><p>' . __('No bulk process found.', 'ai-content-optimizer') . '</p></div>';
-            return;
-        }
-
-        $process_data = get_transient('aico_bulk_process_' . $process_id);
-        if (!$process_data) {
-            echo '<div class="notice notice-error"><p>' . __('Bulk process not found or expired.', 'ai-content-optimizer') . '</p></div>';
-            return;
-        }
-
-        $post_type_obj = get_post_type_object($post_type);
-        $post_type_label = $post_type_obj ? $post_type_obj->labels->name : ucfirst($post_type);
-        ?>
-        <div class="wrap aico-wrap">
-            <h1><?php printf(__('Bulk Optimize %s', 'ai-content-optimizer'), esc_html($post_type_label)); ?></h1>
-            
-            <div class="aico-card">
-                <h2><?php _e('Processing Progress', 'ai-content-optimizer'); ?></h2>
-                <p><?php printf(__('Optimizing %d %s items...', 'ai-content-optimizer'), $process_data['total'], strtolower($post_type_label)); ?></p>
-                
-                <div class="aico-bulk-progress-container">
-                    <div class="aico-progress-bar">
-                        <div class="aico-progress" id="aico-bulk-progress-bar" style="width: 0%"></div>
-                    </div>
-                    <div class="aico-progress-text" id="aico-bulk-progress-text">
-                        <?php _e('Starting...', 'ai-content-optimizer'); ?>
-                    </div>
-                    <div class="aico-progress-details" id="aico-bulk-progress-details">
-                        <span id="aico-processed-count">0</span> / <span id="aico-total-count"><?php echo esc_html($process_data['total']); ?></span>
-                    </div>
-                </div>
-                
-                <div class="aico-bulk-results" id="aico-bulk-results" style="display: none;">
-                    <h3><?php _e('Results', 'ai-content-optimizer'); ?></h3>
-                    <div class="aico-results-summary">
-                        <div class="aico-success-count">
-                            <span class="aico-count-label"><?php _e('Successfully Optimized:', 'ai-content-optimizer'); ?></span>
-                            <span class="aico-count-value" id="aico-success-count">0</span>
-                        </div>
-                        <div class="aico-error-count">
-                            <span class="aico-count-label"><?php _e('Errors:', 'ai-content-optimizer'); ?></span>
-                            <span class="aico-count-value" id="aico-error-count">0</span>
-                        </div>
-                    </div>
-                    <div class="aico-error-list" id="aico-error-list" style="display: none;">
-                        <h4><?php _e('Error Details:', 'ai-content-optimizer'); ?></h4>
-                        <ul id="aico-error-items"></ul>
-                    </div>
-                </div>
-                
-                <div class="aico-bulk-actions" id="aico-bulk-actions" style="display: none;">
-                    <a href="<?php echo esc_url(admin_url('edit.php?post_type=' . $post_type)); ?>" class="button button-primary">
-                        <?php printf(__('Back to %s', 'ai-content-optimizer'), esc_html($post_type_label)); ?>
-                    </a>
-                    <button type="button" id="aico-retry-failed" class="button button-secondary" style="display: none;">
-                        <?php _e('Retry Failed Items', 'ai-content-optimizer'); ?>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <script type="text/javascript">
-            jQuery(document).ready(function($) {
-                var processId = '<?php echo esc_js($process_id); ?>';
-                var postType = '<?php echo esc_js($post_type); ?>';
-                var totalItems = <?php echo intval($process_data['total']); ?>;
-                var processedItems = 0;
-                var successCount = 0;
-                var errorCount = 0;
-                var errors = [];
-                
-                function updateProgress(processed, total, message) {
-                    var percentage = total > 0 ? Math.round((processed / total) * 100) : 0;
-                    $('#aico-bulk-progress-bar').css('width', percentage + '%');
-                    $('#aico-bulk-progress-text').text(message);
-                    $('#aico-processed-count').text(processed);
-                }
-                
-                function processNextItem() {
-                    if (processedItems >= totalItems) {
-                        // All done
-                        updateProgress(totalItems, totalItems, '<?php _e('Completed!', 'ai-content-optimizer'); ?>');
-                        showResults();
-                        return;
-                    }
-                    
-                    var currentIndex = processedItems;
-                    processedItems++;
-                    
-                    updateProgress(processedItems, totalItems, '<?php _e('Processing item', 'ai-content-optimizer'); ?> ' + processedItems + '...');
-                    
-                    $.ajax({
-                        url: aicoData.ajaxUrl,
-                        type: 'POST',
-                        data: {
-                            action: 'aico_bulk_optimize_item',
-                            process_id: processId,
-                            current_index: currentIndex,
-                            nonce: aicoData.nonce
-                        },
-                        success: function(response) {
-                            if (response.success) {
-                                successCount++;
-                                if (response.data.error) {
-                                    errorCount++;
-                                    errors.push({
-                                        id: response.data.post_id,
-                                        message: response.data.error
-                                    });
-                                }
-                            } else {
-                                errorCount++;
-                                errors.push({
-                                    id: 'unknown',
-                                    message: response.data
-                                });
-                            }
-                            
-                            // Process next item after a short delay
-                            setTimeout(processNextItem, 500);
-                        },
-                        error: function(xhr, status, error) {
-                            errorCount++;
-                            errors.push({
-                                id: 'unknown',
-                                message: error
-                            });
-                            
-                            // Process next item after a short delay
-                            setTimeout(processNextItem, 500);
-                        }
-                    });
-                }
-                
-                function showResults() {
-                    $('#aico-bulk-results').show();
-                    $('#aico-bulk-actions').show();
-                    $('#aico-success-count').text(successCount);
-                    $('#aico-error-count').text(errorCount);
-                    
-                    if (errors.length > 0) {
-                        $('#aico-error-list').show();
-                        var errorHtml = '';
-                        errors.forEach(function(error) {
-                            errorHtml += '<li><strong>ID ' + error.id + ':</strong> ' + error.message + '</li>';
-                        });
-                        $('#aico-error-items').html(errorHtml);
-                        $('#aico-retry-failed').show();
-                    }
-                }
-                
-                // Start processing
-                processNextItem();
-                
-                // Retry failed items
-                $('#aico-retry-failed').on('click', function() {
-                    if (errors.length > 0) {
-                        // Reset counters
-                        processedItems = 0;
-                        successCount = 0;
-                        errorCount = 0;
-                        errors = [];
-                        
-                        // Hide results and show progress
-                        $('#aico-bulk-results').hide();
-                        $('#aico-bulk-actions').hide();
-                        
-                        // Start processing again
-                        processNextItem();
-                    }
-                });
-            });
-        </script>
-        <?php
-    }
-
-    /**
-     * AJAX bulk optimize item
-     */
-    public function ajax_bulk_optimize_item() {
-        $license_status = get_option('bmo_license_status', 'invalid');
-        if ($license_status !== 'success') {
-            wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
-            exit;
-        }
-        check_ajax_referer('aico-nonce', 'nonce');
-
-        if (!current_user_can('edit_posts')) {
-            wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
-        }
-
-        $process_id = isset($_POST['process_id']) ? sanitize_text_field($_POST['process_id']) : '';
-        $current_index = isset($_POST['current_index']) ? intval($_POST['current_index']) : 0;
-
-        if (empty($process_id)) {
-            wp_send_json_error(__('Invalid process ID.', 'ai-content-optimizer'));
-        }
-
-        $process_data = get_transient('aico_bulk_process_' . $process_id);
-        if (!$process_data) {
-            wp_send_json_error(__('Bulk process not found or expired.', 'ai-content-optimizer'));
-        }
-
-        if ($current_index >= count($process_data['post_ids'])) {
-            wp_send_json_error(__('Invalid index.', 'ai-content-optimizer'));
-        }
-
-        $post_id = $process_data['post_ids'][$current_index];
-        
-        try {
-            $result = $this->optimize_post($post_id);
-            
-            if (is_wp_error($result)) {
-                wp_send_json_success(array(
-                    'post_id' => $post_id,
-                    'error' => $result->get_error_message()
-                ));
-            } else {
-                wp_send_json_success(array(
-                    'post_id' => $post_id,
-                    'success' => true
-                ));
-            }
-        } catch (Exception $e) {
-            wp_send_json_success(array(
-                'post_id' => $post_id,
-                'error' => $e->getMessage()
-            ));
-        }
-    }
-
-    /**
      * Handle bulk action errors
      */
     public function handle_bulk_action_errors() {
@@ -2618,6 +2349,127 @@ PROMPT;
             if ($message) {
                 echo '<div class="notice notice-' . $type . ' is-dismissible"><p>' . esc_html($message) . '</p></div>';
             }
+        }
+    }
+
+    /**
+     * Handle bulk optimization redirect
+     */
+    public function handle_bulk_optimization_redirect() {
+        if (!empty($_GET['aico_bulk_optimize']) && !empty($_GET['aico_post_ids']) && !empty($_GET['aico_nonce'])) {
+            if (!wp_verify_nonce($_GET['aico_nonce'], 'aico-bulk-optimize')) {
+                wp_die(__('Security check failed.', 'ai-content-optimizer'));
+            }
+
+            $post_ids = array_map('intval', explode(',', sanitize_text_field($_GET['aico_post_ids'])));
+            $post_type = isset($_GET['post_type']) ? sanitize_text_field($_GET['post_type']) : 'post';
+            
+            // Get post type object for proper labeling
+            $post_type_obj = get_post_type_object($post_type);
+            $type_label = $post_type_obj ? $post_type_obj->labels->name : __('posts', 'ai-content-optimizer');
+            
+            ?>
+            <div class="notice notice-info is-dismissible">
+                <p>
+                    <?php
+                    printf(
+                        __('Optimizing %d %s... This may take a few moments.', 'ai-content-optimizer'),
+                        count($post_ids),
+                        strtolower($type_label)
+                    );
+                    ?>
+                </p>
+                <div id="aico-bulk-progress">
+                    <div class="aico-progress-bar">
+                        <div class="aico-progress" style="width: 0%"></div>
+                    </div>
+                    <p class="aico-progress-text">0 of <?php echo count($post_ids); ?> processed</p>
+                </div>
+            </div>
+            <style>
+            .aico-progress-bar {
+                width: 100%;
+                height: 20px;
+                background-color: #f0f0f0;
+                border-radius: 3px;
+                margin: 10px 0;
+            }
+            .aico-progress {
+                height: 100%;
+                background-color: #2271b1;
+                border-radius: 3px;
+                transition: width 0.3s ease;
+            }
+            </style>
+            <script type="text/javascript">
+            jQuery(document).ready(function($) {
+                var postIds = <?php echo json_encode($post_ids); ?>;
+                var processed = 0;
+                var total = postIds.length;
+                var success = 0;
+                var errors = 0;
+
+                function updateProgress() {
+                    var percentage = (processed / total) * 100;
+                    $('.aico-progress').css('width', percentage + '%');
+                    $('.aico-progress-text').html(
+                        processed + ' of ' + total + ' processed. ' +
+                        success + ' succeeded, ' +
+                        errors + ' failed.'
+                    );
+                }
+
+                function processNext() {
+                    if (postIds.length === 0) {
+                        return;
+                    }
+
+                    var postId = postIds.shift();
+                    $.ajax({
+                        url: ajaxurl,
+                        type: 'POST',
+                        data: {
+                            action: 'aico_generate_content',
+                            post_id: postId,
+                            nonce: '<?php echo wp_create_nonce("aico-nonce"); ?>'
+                        },
+                        success: function(response) {
+                            processed++;
+                            if (response.success) {
+                                success++;
+                            } else {
+                                errors++;
+                                console.error('Error processing post ' + postId + ':', response.data);
+                            }
+                            updateProgress();
+                            
+                            if (postIds.length > 0) {
+                                setTimeout(processNext, 1000); // Add 1 second delay between requests
+                            } else {
+                                $('.notice-info').removeClass('notice-info').addClass(
+                                    errors === 0 ? 'notice-success' : 'notice-warning'
+                                );
+                            }
+                        },
+                        error: function(jqXHR, textStatus, errorThrown) {
+                            processed++;
+                            errors++;
+                            console.error('AJAX error for post ' + postId + ':', textStatus, errorThrown);
+                            updateProgress();
+                            
+                            if (postIds.length > 0) {
+                                setTimeout(processNext, 1000); // Add 1 second delay between requests
+                            } else {
+                                $('.notice-info').removeClass('notice-info').addClass('notice-warning');
+                            }
+                        }
+                    });
+                }
+
+                processNext();
+            });
+            </script>
+            <?php
         }
     }
 }
