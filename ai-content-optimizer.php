@@ -2283,7 +2283,7 @@ PROMPT;
 
         try {
             // Get homepage content
-            $homepage = get_page_by_path('home') ?: get_page_by_path('front-page') ?: get_option('page_on_front') ? get_post(get_option('page_on_front')) : null;
+            $homepage = (get_page_by_path('home') ?: get_page_by_path('front-page')) ?: (get_option('page_on_front') ? get_post(get_option('page_on_front')) : null);
             
             if (!$homepage) {
                 // Try to get the first page or post
