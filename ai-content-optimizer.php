@@ -632,11 +632,7 @@ PROMPT;
         
         // Get all public post types including custom ones
         $post_types = get_post_types(array('public' => true), 'objects');
-        
-        // Remove attachment post type
         unset($post_types['attachment']);
-        
-        // Validate selected post type
         if (!array_key_exists($post_type, $post_types)) {
             $post_type = 'post';
         }
@@ -644,7 +640,6 @@ PROMPT;
         // Get settings for all post types
         $post_type_settings = array();
         $post_type_prompts = array();
-        
         foreach ($post_types as $pt) {
             $post_type_settings[$pt->name] = get_option('aico_' . $pt->name . '_settings', array());
             $post_type_prompts[$pt->name] = array(
@@ -653,202 +648,123 @@ PROMPT;
                 'content' => get_option('aico_' . $pt->name . '_content_prompt', ''),
             );
         }
-
         ?>
         <div class="wrap aico-wrap">
             <h1><?php _e('Content Settings', 'ai-content-optimizer'); ?></h1>
-
-            <div class="aico-tabs">
-                <div class="aico-tab-nav">
+            <div class="aico-settings-layout">
+                <div class="aico-sidebar">
                     <?php foreach ($post_types as $pt) : ?>
-                        <a href="#aico-tab-<?php echo esc_attr($pt->name); ?>" 
-                           class="aico-tab-link <?php echo $post_type === $pt->name ? 'active' : ''; ?>">
+                        <a href="<?php echo esc_url(add_query_arg('post_type', $pt->name)); ?>" class="aico-sidebar-item<?php echo $post_type === $pt->name ? ' active' : ''; ?>">
                             <?php echo esc_html($pt->labels->name); ?>
                         </a>
                     <?php endforeach; ?>
                 </div>
-
-                <?php foreach ($post_types as $pt) : ?>
-                    <div class="aico-tab-content <?php echo $post_type === $pt->name ? 'active' : ''; ?>" 
-                         id="aico-tab-<?php echo esc_attr($pt->name); ?>">
-                        <form method="post" action="<?php echo esc_url(admin_url('admin-ajax.php')); ?>" 
-                              class="aico-settings-form">
-                            <input type="hidden" name="action" value="aico_save_settings" />
-                            <input type="hidden" name="post_type" value="<?php echo esc_attr($pt->name); ?>" />
-                            <?php wp_nonce_field('aico-nonce', 'nonce'); ?>
-
-                            <?php $this->render_post_type_settings_fields(
-                                $pt->name,
-                                $post_type_settings[$pt->name],
-                                $post_type_prompts[$pt->name]['title'],
-                                $post_type_prompts[$pt->name]['meta'],
-                                $post_type_prompts[$pt->name]['content']
-                            ); ?>
-
-                            <p class="submit">
-                                <button type="submit" class="button button-primary">
-                                    <?php printf(__('Save %s Settings', 'ai-content-optimizer'), 
-                                        esc_html($pt->labels->singular_name)); ?>
-                                </button>
-                            </p>
-                        </form>
-                    </div>
-                <?php endforeach; ?>
+                <div class="aico-main-content">
+                    <form method="post" action="<?php echo esc_url(admin_url('admin-ajax.php')); ?>" class="aico-settings-form">
+                        <input type="hidden" name="action" value="aico_save_settings" />
+                        <input type="hidden" name="post_type" value="<?php echo esc_attr($post_type); ?>" />
+                        <?php wp_nonce_field('aico-nonce', 'nonce'); ?>
+                        <?php $this->render_post_type_settings_fields(
+                            $post_type,
+                            $post_type_settings[$post_type],
+                            $post_type_prompts[$post_type]['title'],
+                            $post_type_prompts[$post_type]['meta'],
+                            $post_type_prompts[$post_type]['content']
+                        ); ?>
+                        <p class="submit">
+                            <button type="submit" class="button button-primary">
+                                <?php printf(__('Save %s Settings', 'ai-content-optimizer'), esc_html($post_types[$post_type]->labels->singular_name)); ?>
+                            </button>
+                        </p>
+                    </form>
+                </div>
             </div>
         </div>
         <?php
     }
 
-    /**
-     * Render post type settings fields
-     */
     private function render_post_type_settings_fields($post_type, $settings, $title_prompt, $meta_prompt, $content_prompt) {
         $post_type_obj = get_post_type_object($post_type);
         $post_type_label = $post_type_obj ? $post_type_obj->labels->singular_name : ucfirst($post_type);
-
         $settings_key = 'aico_' . $post_type . '_settings';
         $settings = get_option($settings_key, array());
-
         ?>
-        <div class="aico-settings-grid">
-            <div class="aico-settings-column">
-                <div class="aico-card">
-                    <h2><?php _e('Optimization Toggles', 'ai-content-optimizer'); ?></h2>
-
-                    <table class="form-table">
-                        <tr>
-                            <th scope="row"><?php _e('Optimize Title', 'ai-content-optimizer'); ?></th>
-                            <td>
-                                <label>
-                                    <input type="checkbox" name="settings[optimize_title]" value="1" <?php checked(isset($settings['optimize_title']) ? $settings['optimize_title'] : true); ?> />
-                                    <?php printf(__('Generate optimized titles for %s', 'ai-content-optimizer'), esc_html($post_type_label)); ?>
-                                </label>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row"><?php _e('Title Separator', 'ai-content-optimizer'); ?></th>
-                            <td>
-                                <select name="settings[title_separator]">
-                                    <?php
-                                    $separators = array(
-                                        'dash' => __('Dash (-)', 'ai-content-optimizer'),
-                                        'pipe' => __('Pipe (|)', 'ai-content-optimizer'),
-                                        'colon' => __('Colon (:)', 'ai-content-optimizer'),
-                                        'bullet' => __('Bullet (•)', 'ai-content-optimizer'),
-                                        'arrow' => __('Arrow (»)', 'ai-content-optimizer'),
-                                        'dot' => __('Dot (·)', 'ai-content-optimizer'),
-                                        'tilde' => __('Tilde (~)', 'ai-content-optimizer'),
-                                    );
-
-                                    $selected_separator = isset($settings['title_separator']) ? $settings['title_separator'] : 'dash';
-
-                                    foreach ($separators as $value => $label) {
-                                        printf(
-                                            '<option value="%s" %s>%s</option>',
-                                            esc_attr($value),
-                                            selected($selected_separator, $value, false),
-                                            esc_html($label)
-                                        );
-                                    }
-                                    ?>
-                                </select>
-                                <p class="description"><?php _e('Select the separator to use between title parts', 'ai-content-optimizer'); ?></p>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row"><?php _e('Optimize Meta Description', 'ai-content-optimizer'); ?></th>
-                            <td>
-                                <label>
-                                    <input type="checkbox" name="settings[optimize_meta]" value="1" <?php checked(isset($settings['optimize_meta']) ? $settings['optimize_meta'] : true); ?> />
-                                    <?php printf(__('Generate optimized meta descriptions for %s', 'ai-content-optimizer'), esc_html($post_type_label)); ?>
-                                </label>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row"><?php _e('Optimize Content', 'ai-content-optimizer'); ?></th>
-                            <td>
-                                <label>
-                                    <input type="checkbox" name="settings[optimize_content]" value="1" <?php checked(isset($settings['optimize_content']) ? $settings['optimize_content'] : false); ?> />
-                                    <?php printf(__('Generate optimized content for %s', 'ai-content-optimizer'), esc_html($post_type_label)); ?>
-                                </label>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row"><?php _e('Optimize Permalink', 'ai-content-optimizer'); ?></th>
-                            <td>
-                                <label>
-                                    <input type="checkbox" name="settings[optimize_slug]" value="1" <?php checked(isset($settings['optimize_slug']) ? $settings['optimize_slug'] : false); ?> />
-                                    <?php printf(__('Generate optimized permalinks for %s', 'ai-content-optimizer'), esc_html($post_type_label)); ?>
-                                </label>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row"><?php _e('Preserve HTML', 'ai-content-optimizer'); ?></th>
-                            <td>
-                                <label>
-                                    <input type="checkbox" name="settings[preserve_html]" value="1" <?php checked(isset($settings['preserve_html']) ? $settings['preserve_html'] : true); ?> />
-                                    <?php _e('Preserve HTML tags and shortcodes in content', 'ai-content-optimizer'); ?>
-                                </label>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row"><?php _e('Excluded Words', 'ai-content-optimizer'); ?></th>
-                            <td>
-                                <textarea name="settings[excluded_words]" rows="3" class="large-text"><?php echo esc_textarea(isset($settings['excluded_words']) ? $settings['excluded_words'] : ''); ?></textarea>
-                                <p class="description"><?php _e('Enter words to exclude from generated content, one per line. These words will be removed from titles and descriptions.', 'ai-content-optimizer'); ?></p>
-                            </td>
-                        </tr>
-                    </table>
+        <div>
+            <div style="margin-bottom:32px;">
+                <label style="display:flex;align-items:center;gap:16px;font-size:18px;font-weight:600;">
+                    <span><?php _e('Optimize Title', 'ai-content-optimizer'); ?></span>
+                    <span class="aico-toggle">
+                        <input type="checkbox" name="settings[optimize_title]" value="1" id="aico-toggle-title" <?php checked(isset($settings['optimize_title']) ? $settings['optimize_title'] : true); ?> />
+                        <span class="aico-toggle-slider"></span>
+                    </span>
+                </label>
+                <div class="aico-prompt-box">
+                    <label for="aico-title-prompt" style="font-weight:500;display:block;margin-bottom:4px;">Title Prompt</label>
+                    <textarea id="aico-title-prompt" name="title_prompt" rows="3"><?php echo esc_textarea($title_prompt); ?></textarea>
                 </div>
-
-                <!-- Content Style Options removed - now using brand profile instead -->
-
             </div>
-
-            <div class="aico-settings-column">
-                <div class="aico-card">
-                    <h2><?php _e('AI Prompts', 'ai-content-optimizer'); ?></h2>
-                    <p class="description"><?php _e('Customize the prompts used to generate content. You can use variables like {brand_overview}, {target_audience}, etc.', 'ai-content-optimizer'); ?></p>
-
-                    <table class="form-table">
-                        <tr>
-                            <th scope="row"><?php _e('Title Prompt', 'ai-content-optimizer'); ?></th>
-                            <td>
-                                <textarea name="title_prompt" rows="3" class="large-text"><?php echo esc_textarea($title_prompt); ?></textarea>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row"><?php _e('Meta Description Prompt', 'ai-content-optimizer'); ?></th>
-                            <td>
-                                <textarea name="meta_prompt" rows="3" class="large-text"><?php echo esc_textarea($meta_prompt); ?></textarea>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row"><?php _e('Content Prompt', 'ai-content-optimizer'); ?></th>
-                            <td>
-                                <textarea name="content_prompt" rows="5" class="large-text"><?php echo esc_textarea($content_prompt); ?></textarea>
-                            </td>
-                        </tr>
-                    </table>
-
-                    <div class="aico-prompt-variables">
-                        <h3><?php _e('Available Variables', 'ai-content-optimizer'); ?></h3>
-                        <ul>
-                            <li><code>{brand_overview}</code> - <?php _e('Brand overview from brand profile', 'ai-content-optimizer'); ?></li>
-                            <li><code>{target_audience}</code> - <?php _e('Target audience from brand profile', 'ai-content-optimizer'); ?></li>
-                            <li><code>{brand_tone}</code> - <?php _e('Brand tone from brand profile', 'ai-content-optimizer'); ?></li>
-                            <li><code>{unique_selling_points}</code> - <?php _e('Unique selling points from brand profile', 'ai-content-optimizer'); ?></li>
-                            <li><code>{site_title}</code> - <?php _e('Website title from WordPress settings', 'ai-content-optimizer'); ?></li>
-                            <li><code>{site_tagline}</code> - <?php _e('Website tagline from WordPress settings', 'ai-content-optimizer'); ?></li>
-                        </ul>
-                    </div>
+            <div style="margin-bottom:32px;">
+                <label style="display:flex;align-items:center;gap:16px;font-size:18px;font-weight:600;">
+                    <span><?php _e('Optimize Meta Description', 'ai-content-optimizer'); ?></span>
+                    <span class="aico-toggle">
+                        <input type="checkbox" name="settings[optimize_meta]" value="1" id="aico-toggle-meta" <?php checked(isset($settings['optimize_meta']) ? $settings['optimize_meta'] : true); ?> />
+                        <span class="aico-toggle-slider"></span>
+                    </span>
+                </label>
+                <div class="aico-prompt-box">
+                    <label for="aico-meta-prompt" style="font-weight:500;display:block;margin-bottom:4px;">Meta Description Prompt</label>
+                    <textarea id="aico-meta-prompt" name="meta_prompt" rows="3"><?php echo esc_textarea($meta_prompt); ?></textarea>
                 </div>
-
-                <div class="aico-card">
-                    <h2><?php _e('Reset to Defaults', 'ai-content-optimizer'); ?></h2>
-                    <p><?php _e('Reset all settings and prompts for this post type to default values.', 'ai-content-optimizer'); ?></p>
-                    <button type="button" class="button aico-reset-defaults" data-post-type="<?php echo esc_attr($post_type); ?>"><?php _e('Reset to Defaults', 'ai-content-optimizer'); ?></button>
+            </div>
+            <div style="margin-bottom:32px;">
+                <label style="display:flex;align-items:center;gap:16px;font-size:18px;font-weight:600;">
+                    <span><?php _e('Optimize Content', 'ai-content-optimizer'); ?></span>
+                    <span class="aico-toggle">
+                        <input type="checkbox" name="settings[optimize_content]" value="1" id="aico-toggle-content" <?php checked(isset($settings['optimize_content']) ? $settings['optimize_content'] : false); ?> />
+                        <span class="aico-toggle-slider"></span>
+                    </span>
+                </label>
+                <div class="aico-prompt-box">
+                    <label for="aico-content-prompt" style="font-weight:500;display:block;margin-bottom:4px;">Content Prompt</label>
+                    <textarea id="aico-content-prompt" name="content_prompt" rows="5"><?php echo esc_textarea($content_prompt); ?></textarea>
                 </div>
+            </div>
+            <div style="margin-bottom:32px;">
+                <label style="display:flex;align-items:center;gap:16px;font-size:18px;font-weight:600;">
+                    <span><?php _e('Optimize Permalink', 'ai-content-optimizer'); ?></span>
+                    <span class="aico-toggle">
+                        <input type="checkbox" name="settings[optimize_slug]" value="1" id="aico-toggle-slug" <?php checked(isset($settings['optimize_slug']) ? $settings['optimize_slug'] : false); ?> />
+                        <span class="aico-toggle-slider"></span>
+                    </span>
+                </label>
+            </div>
+            <div style="margin-bottom:32px;">
+                <label style="display:flex;align-items:center;gap:16px;font-size:18px;font-weight:600;">
+                    <span><?php _e('Preserve HTML', 'ai-content-optimizer'); ?></span>
+                    <span class="aico-toggle">
+                        <input type="checkbox" name="settings[preserve_html]" value="1" id="aico-toggle-html" <?php checked(isset($settings['preserve_html']) ? $settings['preserve_html'] : true); ?> />
+                        <span class="aico-toggle-slider"></span>
+                    </span>
+                </label>
+            </div>
+            <div style="margin-bottom:32px;">
+                <label for="aico-excluded-words" style="font-weight:500;display:block;margin-bottom:4px;">Excluded Words</label>
+                <textarea id="aico-excluded-words" name="settings[excluded_words]" rows="3" class="large-text"><?php echo esc_textarea(isset($settings['excluded_words']) ? $settings['excluded_words'] : ''); ?></textarea>
+                <p class="description" style="margin-top:4px;">Enter words to exclude from generated content, one per line. These words will be removed from titles and descriptions.</p>
+            </div>
+            <div class="aico-prompt-variables" style="margin-bottom:32px;">
+                <h3><?php _e('Available Variables', 'ai-content-optimizer'); ?></h3>
+                <ul>
+                    <li><code>{brand_overview}</code> - <?php _e('Brand overview from brand profile', 'ai-content-optimizer'); ?></li>
+                    <li><code>{target_audience}</code> - <?php _e('Target audience from brand profile', 'ai-content-optimizer'); ?></li>
+                    <li><code>{brand_tone}</code> - <?php _e('Brand tone from brand profile', 'ai-content-optimizer'); ?></li>
+                    <li><code>{unique_selling_points}</code> - <?php _e('Unique selling points from brand profile', 'ai-content-optimizer'); ?></li>
+                    <li><code>{site_title}</code> - <?php _e('Website title from WordPress settings', 'ai-content-optimizer'); ?></li>
+                    <li><code>{site_tagline}</code> - <?php _e('Website tagline from WordPress settings', 'ai-content-optimizer'); ?></li>
+                </ul>
+            </div>
+            <div style="margin-bottom:32px;">
+                <button type="button" class="button aico-reset-defaults" data-post-type="<?php echo esc_attr($post_type); ?>"><?php _e('Reset to Defaults', 'ai-content-optimizer'); ?></button>
             </div>
         </div>
         <?php

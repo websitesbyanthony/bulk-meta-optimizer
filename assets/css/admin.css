@@ -474,3 +474,104 @@
 #adminmenu .wp-submenu a[href*="ai-content-optimizer-bulk-process"] {
     display: none;
 }
+
+/* --- Yoast-style Sidebar --- */
+.aico-settings-layout {
+  display: flex;
+  gap: 32px;
+}
+.aico-sidebar {
+  width: 240px;
+  background: #f7f8fa;
+  border-radius: 8px;
+  padding: 24px 0 24px 0;
+  min-height: 600px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.aico-sidebar-item {
+  padding: 12px 32px;
+  color: #333;
+  font-size: 16px;
+  border-left: 4px solid transparent;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+.aico-sidebar-item.active, .aico-sidebar-item:hover {
+  background: #fff;
+  border-left: 4px solid #a72886;
+  color: #a72886;
+  font-weight: 600;
+}
+
+.aico-main-content {
+  flex: 1;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+  padding: 32px;
+  min-width: 0;
+}
+
+/* --- Toggle Switch --- */
+.aico-toggle {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 28px;
+  vertical-align: middle;
+}
+.aico-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.aico-toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: #e4e4e4;
+  border-radius: 28px;
+  transition: background 0.2s;
+}
+.aico-toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 22px;
+  width: 22px;
+  left: 3px;
+  bottom: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+.aico-toggle input:checked + .aico-toggle-slider {
+  background: #a72886;
+}
+.aico-toggle input:checked + .aico-toggle-slider:before {
+  transform: translateX(20px);
+}
+
+/* --- Prompt Field --- */
+.aico-prompt-box {
+  margin-top: 8px;
+  margin-bottom: 24px;
+}
+.aico-prompt-box textarea {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid #ccd0d4;
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 15px;
+  background: #f7f8fa;
+  resize: vertical;
+  transition: border 0.2s;
+}
+.aico-prompt-box textarea:focus {
+  border-color: #a72886;
+  outline: none;
+}
