@@ -231,4 +231,121 @@
 #aico-test-result,
 #aico-test-result-page {
     margin-top: 10px;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+/* Brand Profile Styles */
+.aico-brand-profile-options {
+    margin: 20px 0;
+    text-align: center;
+}
+
+.aico-brand-profile-options .button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.aico-brand-profile-options .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+.aico-brand-profile-form {
+    max-width: 800px;
+}
+
+.aico-profile-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    border-left: 4px solid #2271b1;
+}
+
+.aico-profile-section h3 {
+    margin: 0 0 15px 0;
+    color: #2271b1;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.aico-profile-section textarea {
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    resize: vertical;
+    min-height: 80px;
+}
+
+.aico-profile-section textarea:focus {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+    outline: none;
+}
+
+.aico-profile-actions {
+    margin-top: 30px;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.aico-profile-actions .button {
+    margin: 0 10px;
+    padding: 10px 20px;
+    font-size: 14px;
+}
+
+.aico-result-area {
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 4px;
+    border-left: 4px solid;
+}
+
+.aico-result-area .aico-success {
+    background: #d4edda;
+    border-color: #28a745;
+    color: #155724;
+}
+
+.aico-result-area .aico-error {
+    background: #f8d7da;
+    border-color: #dc3545;
+    color: #721c24;
+}
+
+.aico-result-area .aico-loading {
+    background: #d1ecf1;
+    border-color: #17a2b8;
+    color: #0c5460;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.aico-result-area .aico-loading::before {
+    content: '';
+    width: 16px;
+    height: 16px;
+    border: 2px solid #17a2b8;
+    border-top: 2px solid transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }

@@ -396,5 +396,125 @@
             const $value = $range.next('.aico-range-value');
             $value.text($range.val());
         });
+        
+        // Brand Profile functionality
+        $('#aico-build-profile').on('click', function(e) {
+            e.preventDefault();
+            
+            const $button = $(this);
+            const $result = $('#aico-build-profile-result');
+            
+            // Show loading message
+            $button.prop('disabled', true);
+            $result.html('<div class="aico-loading">' + aicoData.strings.generating + '</div>');
+            
+            // Send AJAX request
+            $.ajax({
+                url: aicoData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'aico_build_brand_profile',
+                    nonce: aicoData.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $result.html('<div class="aico-success">' + response.data.message + '</div>');
+                        // Reload page to show the edit form
+                        setTimeout(function() {
+                            window.location.reload();
+                        }, 1500);
+                    } else {
+                        $result.html('<div class="aico-error">' + aicoData.strings.error + ' ' + response.data + '</div>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $result.html('<div class="aico-error">' + aicoData.strings.error + ' ' + error + '</div>');
+                },
+                complete: function() {
+                    $button.prop('disabled', false);
+                }
+            });
+        });
+        
+        // Save brand profile form
+        $('#aico-brand-profile-form').on('submit', function(e) {
+            e.preventDefault();
+            
+            const $form = $(this);
+            const $submitButton = $form.find('button[type="submit"]');
+            const $result = $('#aico-save-profile-result');
+            const originalButtonText = $submitButton.text();
+            
+            // Show loading message
+            $submitButton.prop('disabled', true).text(aicoData.strings.processing);
+            $result.html('<div class="aico-loading">' + aicoData.strings.processing + '</div>');
+            
+            // Send AJAX request
+            $.ajax({
+                url: aicoData.ajaxUrl,
+                type: 'POST',
+                data: $form.serialize() + '&action=aico_save_brand_profile',
+                success: function(response) {
+                    if (response.success) {
+                        $result.html('<div class="aico-success">' + response.data + '</div>');
+                        $submitButton.text('Saved!');
+                        setTimeout(function() {
+                            $submitButton.text(originalButtonText);
+                        }, 2000);
+                    } else {
+                        $result.html('<div class="aico-error">' + aicoData.strings.error + ' ' + response.data + '</div>');
+                        $submitButton.text(originalButtonText);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $result.html('<div class="aico-error">' + aicoData.strings.error + ' ' + error + '</div>');
+                    $submitButton.text(originalButtonText);
+                },
+                complete: function() {
+                    $submitButton.prop('disabled', false);
+                }
+            });
+        });
+        
+        // Rebuild brand profile
+        $('#aico-rebuild-profile').on('click', function(e) {
+            e.preventDefault();
+            
+            if (confirm('Are you sure you want to rebuild your brand profile? This will replace your current profile with a new AI-generated one.')) {
+                const $button = $(this);
+                const $result = $('#aico-save-profile-result');
+                
+                // Show loading message
+                $button.prop('disabled', true);
+                $result.html('<div class="aico-loading">' + aicoData.strings.generating + '</div>');
+                
+                // Send AJAX request
+                $.ajax({
+                    url: aicoData.ajaxUrl,
+                    type: 'POST',
+                    data: {
+                        action: 'aico_build_brand_profile',
+                        nonce: aicoData.nonce
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            $result.html('<div class="aico-success">' + response.data.message + '</div>');
+                            // Reload page to show updated profile
+                            setTimeout(function() {
+                                window.location.reload();
+                            }, 1500);
+                        } else {
+                            $result.html('<div class="aico-error">' + aicoData.strings.error + ' ' + response.data + '</div>');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        $result.html('<div class="aico-error">' + aicoData.strings.error + ' ' + error + '</div>');
+                    },
+                    complete: function() {
+                        $button.prop('disabled', false);
+                    }
+                });
+            }
+        });
     });
 })(jQuery);

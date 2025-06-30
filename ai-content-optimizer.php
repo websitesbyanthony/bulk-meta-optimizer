@@ -240,6 +240,8 @@ PROMPT;
             add_action('wp_ajax_aico_generate_content', array($this, 'ajax_generate_content'));
             add_action('wp_ajax_aico_bulk_optimize', array($this, 'ajax_bulk_optimize'));
             add_action('wp_ajax_aico_save_settings', array($this, 'ajax_save_settings'));
+            add_action('wp_ajax_aico_build_brand_profile', array($this, 'ajax_build_brand_profile'));
+            add_action('wp_ajax_aico_save_brand_profile', array($this, 'ajax_save_brand_profile'));
 
             // Add row actions
             add_filter('post_row_actions', array($this, 'add_row_actions'), 10, 2);
@@ -330,6 +332,15 @@ PROMPT;
             'manage_options',
             'ai-content-optimizer-settings',
             array($this, 'render_settings_page')
+        );
+
+        add_submenu_page(
+            'ai-content-optimizer',
+            __('Brand Profile', 'ai-content-optimizer'),
+            __('Brand Profile', 'ai-content-optimizer'),
+            'manage_options',
+            'ai-content-optimizer-brand-profile',
+            array($this, 'render_brand_profile_page')
         );
 
         add_submenu_page(
@@ -2132,6 +2143,268 @@ PROMPT;
             add_filter('bulk_actions-edit-' . $post_type->name, array($this, 'register_bulk_actions'));
             add_filter('handle_bulk_actions-edit-' . $post_type->name, array($this, 'handle_bulk_actions'), 10, 3);
         }
+    }
+
+    /**
+     * Render brand profile page
+     */
+    public function render_brand_profile_page() {
+        $license_status = get_option('bmo_license_status', 'invalid');
+        if ($license_status !== 'success') {
+            echo '<div class="notice notice-error"><p>' . __('A valid license is required to use Bulk Meta Optimizer. Please enter your license key in Advanced Settings.', 'ai-content-optimizer') . '</p></div>';
+            return;
+        }
+
+        // Get existing brand profile data
+        $brand_profile = get_option('aico_brand_profile', array());
+        $is_profile_generated = !empty($brand_profile);
+        ?>
+        <div class="wrap aico-wrap">
+            <h1><?php _e('Brand Profile', 'ai-content-optimizer'); ?></h1>
+            
+            <?php if (!$is_profile_generated) : ?>
+                <!-- Build Profile Section -->
+                <div class="aico-card">
+                    <h2><?php _e('Build My Profile', 'ai-content-optimizer'); ?></h2>
+                    <p><?php _e('Generate a brand profile by analyzing your website homepage content using AI. This will create a comprehensive brand profile that includes your overview, target audience, tone, and unique selling points.', 'ai-content-optimizer'); ?></p>
+                    
+                    <div class="aico-brand-profile-options">
+                        <button type="button" id="aico-build-profile" class="button button-primary button-large">
+                            <span class="dashicons dashicons-admin-generic"></span>
+                            <?php _e('Build My Profile', 'ai-content-optimizer'); ?>
+                        </button>
+                    </div>
+                    
+                    <div id="aico-build-profile-result" class="aico-result-area"></div>
+                </div>
+            <?php else : ?>
+                <!-- Edit Profile Section -->
+                <div class="aico-card">
+                    <h2><?php _e('Edit Brand Profile', 'ai-content-optimizer'); ?></h2>
+                    <p><?php _e('Review and edit your brand profile. You can modify any section to better reflect your brand.', 'ai-content-optimizer'); ?></p>
+                    
+                    <form id="aico-brand-profile-form" class="aico-brand-profile-form">
+                        <?php wp_nonce_field('aico_save_brand_profile', 'aico_brand_profile_nonce'); ?>
+                        
+                        <div class="aico-profile-section">
+                            <h3><?php _e('Brand Overview', 'ai-content-optimizer'); ?></h3>
+                            <textarea name="brand_overview" rows="4" class="large-text" placeholder="<?php _e('Enter your brand overview...', 'ai-content-optimizer'); ?>"><?php echo esc_textarea($brand_profile['overview'] ?? ''); ?></textarea>
+                        </div>
+                        
+                        <div class="aico-profile-section">
+                            <h3><?php _e('Target Audience', 'ai-content-optimizer'); ?></h3>
+                            <textarea name="target_audience" rows="3" class="large-text" placeholder="<?php _e('Describe your target audience...', 'ai-content-optimizer'); ?>"><?php echo esc_textarea($brand_profile['target_audience'] ?? ''); ?></textarea>
+                        </div>
+                        
+                        <div class="aico-profile-section">
+                            <h3><?php _e('Brand Tone', 'ai-content-optimizer'); ?></h3>
+                            <textarea name="brand_tone" rows="3" class="large-text" placeholder="<?php _e('Describe the tone you want to use in your content...', 'ai-content-optimizer'); ?>"><?php echo esc_textarea($brand_profile['tone'] ?? ''); ?></textarea>
+                        </div>
+                        
+                        <div class="aico-profile-section">
+                            <h3><?php _e('What Sets Us Apart', 'ai-content-optimizer'); ?></h3>
+                            <textarea name="unique_selling_points" rows="4" class="large-text" placeholder="<?php _e('Describe what makes your brand unique...', 'ai-content-optimizer'); ?>"><?php echo esc_textarea($brand_profile['unique_selling_points'] ?? ''); ?></textarea>
+                        </div>
+                        
+                        <div class="aico-profile-actions">
+                            <button type="submit" class="button button-primary">
+                                <?php _e('Save Profile', 'ai-content-optimizer'); ?>
+                            </button>
+                            <button type="button" id="aico-rebuild-profile" class="button button-secondary">
+                                <?php _e('Rebuild Profile', 'ai-content-optimizer'); ?>
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div id="aico-save-profile-result" class="aico-result-area"></div>
+                </div>
+            <?php endif; ?>
+        </div>
+        <?php
+    }
+
+    /**
+     * AJAX build brand profile
+     */
+    public function ajax_build_brand_profile() {
+        $license_status = get_option('bmo_license_status', 'invalid');
+        if ($license_status !== 'success') {
+            wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
+            exit;
+        }
+        check_ajax_referer('aico-nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
+        }
+
+        // Get API settings
+        $api_key = get_option('aico_openai_api_key');
+        $model = get_option('aico_openai_model', 'gpt-3.5-turbo');
+        $temperature = get_option('aico_openai_temperature', 0.7);
+        $max_tokens = get_option('aico_openai_max_tokens', 1000);
+
+        if (empty($api_key)) {
+            wp_send_json_error(__('OpenAI API key not configured.', 'ai-content-optimizer'));
+        }
+
+        try {
+            // Get homepage content
+            $homepage = get_page_by_path('home') ?: get_page_by_path('front-page') ?: get_option('page_on_front') ? get_post(get_option('page_on_front')) : null;
+            
+            if (!$homepage) {
+                // Try to get the first page or post
+                $homepage = get_posts(array('numberposts' => 1, 'post_type' => 'page', 'post_status' => 'publish'));
+                $homepage = !empty($homepage) ? $homepage[0] : null;
+            }
+
+            if (!$homepage) {
+                wp_send_json_error(__('Could not find homepage content to analyze.', 'ai-content-optimizer'));
+            }
+
+            // Extract content from homepage
+            $content = wp_strip_all_tags($homepage->post_content);
+            $title = $homepage->post_title;
+            
+            // Limit content length to avoid token limits
+            $content = mb_substr($content, 0, 2000);
+
+            // Create the prompt
+            $prompt = "Please review my website homepage and put together a brand profile. It must include a short overview, who our target audience is, the tone we should use for meta data to attract new customers, what sets us apart.\n\n";
+            $prompt .= "Website Title: {$title}\n";
+            $prompt .= "Website Content: {$content}\n\n";
+            $prompt .= "Please provide your response in the following JSON format:\n";
+            $prompt .= "{\n";
+            $prompt .= "  \"overview\": \"Brief brand overview\",\n";
+            $prompt .= "  \"target_audience\": \"Description of target audience\",\n";
+            $prompt .= "  \"tone\": \"Recommended tone for content\",\n";
+            $prompt .= "  \"unique_selling_points\": \"What sets the brand apart\"\n";
+            $prompt .= "}\n\n";
+            $prompt .= "Make sure the response is valid JSON format.";
+
+            // Call OpenAI API
+            $response = $this->call_openai_api_direct($api_key, $model, $prompt, $max_tokens, $temperature);
+            
+            if (is_wp_error($response)) {
+                wp_send_json_error($response->get_error_message());
+            }
+
+            // Try to parse JSON response
+            $json_start = strpos($response, '{');
+            $json_end = strrpos($response, '}');
+            
+            if ($json_start !== false && $json_end !== false) {
+                $json_string = substr($response, $json_start, $json_end - $json_start + 1);
+                $brand_profile = json_decode($json_string, true);
+                
+                if (json_last_error() === JSON_ERROR_NONE && is_array($brand_profile)) {
+                    // Save the brand profile
+                    update_option('aico_brand_profile', $brand_profile);
+                    wp_send_json_success(array(
+                        'message' => __('Brand profile generated successfully!', 'ai-content-optimizer'),
+                        'profile' => $brand_profile
+                    ));
+                }
+            }
+
+            // If JSON parsing failed, try to extract sections manually
+            $brand_profile = $this->extract_brand_profile_sections($response);
+            if ($brand_profile) {
+                update_option('aico_brand_profile', $brand_profile);
+                wp_send_json_success(array(
+                    'message' => __('Brand profile generated successfully!', 'ai-content-optimizer'),
+                    'profile' => $brand_profile
+                ));
+            }
+
+            wp_send_json_error(__('Could not parse the AI response into a valid brand profile.', 'ai-content-optimizer'));
+
+        } catch (Exception $e) {
+            wp_send_json_error(__('Error generating brand profile: ', 'ai-content-optimizer') . $e->getMessage());
+        }
+    }
+
+    /**
+     * AJAX save brand profile
+     */
+    public function ajax_save_brand_profile() {
+        $license_status = get_option('bmo_license_status', 'invalid');
+        if ($license_status !== 'success') {
+            wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
+            exit;
+        }
+        check_ajax_referer('aico_save_brand_profile', 'aico_brand_profile_nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
+        }
+
+        try {
+            $brand_profile = array(
+                'overview' => sanitize_textarea_field($_POST['brand_overview'] ?? ''),
+                'target_audience' => sanitize_textarea_field($_POST['target_audience'] ?? ''),
+                'tone' => sanitize_textarea_field($_POST['brand_tone'] ?? ''),
+                'unique_selling_points' => sanitize_textarea_field($_POST['unique_selling_points'] ?? '')
+            );
+
+            update_option('aico_brand_profile', $brand_profile);
+            wp_send_json_success(__('Brand profile saved successfully!', 'ai-content-optimizer'));
+
+        } catch (Exception $e) {
+            wp_send_json_error(__('Error saving brand profile: ', 'ai-content-optimizer') . $e->getMessage());
+        }
+    }
+
+    /**
+     * Extract brand profile sections from AI response
+     */
+    private function extract_brand_profile_sections($response) {
+        $sections = array(
+            'overview' => '',
+            'target_audience' => '',
+            'tone' => '',
+            'unique_selling_points' => ''
+        );
+
+        // Try to extract sections based on common patterns
+        $patterns = array(
+            'overview' => array(
+                '/overview[:\s]*([^.\n]+)/i',
+                '/brand overview[:\s]*([^.\n]+)/i',
+                '/about[:\s]*([^.\n]+)/i'
+            ),
+            'target_audience' => array(
+                '/target audience[:\s]*([^.\n]+)/i',
+                '/audience[:\s]*([^.\n]+)/i',
+                '/who we serve[:\s]*([^.\n]+)/i'
+            ),
+            'tone' => array(
+                '/tone[:\s]*([^.\n]+)/i',
+                '/voice[:\s]*([^.\n]+)/i',
+                '/style[:\s]*([^.\n]+)/i'
+            ),
+            'unique_selling_points' => array(
+                '/sets us apart[:\s]*([^.\n]+)/i',
+                '/unique[:\s]*([^.\n]+)/i',
+                '/differentiators[:\s]*([^.\n]+)/i'
+            )
+        );
+
+        foreach ($patterns as $key => $pattern_list) {
+            foreach ($pattern_list as $pattern) {
+                if (preg_match($pattern, $response, $matches)) {
+                    $sections[$key] = trim($matches[1]);
+                    break;
+                }
+            }
+        }
+
+        // If we found at least one section, return the profile
+        if (!empty(array_filter($sections))) {
+            return $sections;
+        }
+
+        return false;
     }
 }
 
