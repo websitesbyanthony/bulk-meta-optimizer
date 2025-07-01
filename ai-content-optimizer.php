@@ -654,7 +654,7 @@ PROMPT;
             <div class="aico-settings-layout">
                 <div class="aico-sidebar">
                     <?php foreach ($post_types as $pt) : ?>
-                        <a href="<?php echo esc_url(add_query_arg('post_type', $pt->name)); ?>" class="aico-sidebar-item<?php echo $post_type === $pt->name ? ' active' : ''; ?>">
+                        <a href="<?php echo esc_url(admin_url('admin.php?page=ai-content-optimizer-settings&post_type=' . $pt->name)); ?>" class="aico-sidebar-item<?php echo $post_type === $pt->name ? ' active' : ''; ?>">
                             <?php echo esc_html($pt->labels->name); ?>
                         </a>
                     <?php endforeach; ?>
