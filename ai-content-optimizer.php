@@ -716,7 +716,7 @@ PROMPT;
                 <label style="display:flex;align-items:center;gap:16px;font-size:18px;font-weight:600;">
                     <span><?php _e('Optimize Title', 'ai-content-optimizer'); ?></span>
                     <span class="aico-toggle" style="position:relative;display:inline-block;width:48px;height:28px;vertical-align:middle;">
-                        <input type="checkbox" name="settings[optimize_title]" value="1" id="aico-toggle-title" <?php checked(isset($settings['optimize_title']) ? $settings['optimize_title'] : true); ?> style="opacity:0;width:0;height:0;position:absolute;left:0;top:0;margin:0;z-index:1;appearance:none;-webkit-appearance:none;-moz-appearance:none;outline:none;box-shadow:none;" />
+                        <input type="checkbox" name="settings[optimize_title]" value="1" id="aico-toggle-title" <?php checked(isset($settings['optimize_title']) ? $settings['optimize_title'] : true); ?> />
                         <span class="aico-toggle-slider"></span>
                     </span>
                 </label>
@@ -729,7 +729,7 @@ PROMPT;
                 <label style="display:flex;align-items:center;gap:16px;font-size:18px;font-weight:600;">
                     <span><?php _e('Optimize Meta Description', 'ai-content-optimizer'); ?></span>
                     <span class="aico-toggle" style="position:relative;display:inline-block;width:48px;height:28px;vertical-align:middle;">
-                        <input type="checkbox" name="settings[optimize_meta]" value="1" id="aico-toggle-meta" <?php checked(isset($settings['optimize_meta']) ? $settings['optimize_meta'] : true); ?> style="opacity:0;width:0;height:0;position:absolute;left:0;top:0;margin:0;z-index:1;appearance:none;-webkit-appearance:none;-moz-appearance:none;outline:none;box-shadow:none;" />
+                        <input type="checkbox" name="settings[optimize_meta]" value="1" id="aico-toggle-meta" <?php checked(isset($settings['optimize_meta']) ? $settings['optimize_meta'] : true); ?> />
                         <span class="aico-toggle-slider"></span>
                     </span>
                 </label>
@@ -742,7 +742,7 @@ PROMPT;
                 <label style="display:flex;align-items:center;gap:16px;font-size:18px;font-weight:600;">
                     <span><?php _e('Optimize Content', 'ai-content-optimizer'); ?></span>
                     <span class="aico-toggle" style="position:relative;display:inline-block;width:48px;height:28px;vertical-align:middle;">
-                        <input type="checkbox" name="settings[optimize_content]" value="1" id="aico-toggle-content" <?php checked(isset($settings['optimize_content']) ? $settings['optimize_content'] : false); ?> style="opacity:0;width:0;height:0;position:absolute;left:0;top:0;margin:0;z-index:1;appearance:none;-webkit-appearance:none;-moz-appearance:none;outline:none;box-shadow:none;" />
+                        <input type="checkbox" name="settings[optimize_content]" value="1" id="aico-toggle-content" <?php checked(isset($settings['optimize_content']) ? $settings['optimize_content'] : false); ?> />
                         <span class="aico-toggle-slider"></span>
                     </span>
                 </label>
@@ -755,7 +755,7 @@ PROMPT;
                 <label style="display:flex;align-items:center;gap:16px;font-size:18px;font-weight:600;">
                     <span><?php _e('Optimize Permalink', 'ai-content-optimizer'); ?></span>
                     <span class="aico-toggle" style="position:relative;display:inline-block;width:48px;height:28px;vertical-align:middle;">
-                        <input type="checkbox" name="settings[optimize_slug]" value="1" id="aico-toggle-slug" <?php checked(isset($settings['optimize_slug']) ? $settings['optimize_slug'] : false); ?> style="opacity:0;width:0;height:0;position:absolute;left:0;top:0;margin:0;z-index:1;appearance:none;-webkit-appearance:none;-moz-appearance:none;outline:none;box-shadow:none;" />
+                        <input type="checkbox" name="settings[optimize_slug]" value="1" id="aico-toggle-slug" <?php checked(isset($settings['optimize_slug']) ? $settings['optimize_slug'] : false); ?> />
                         <span class="aico-toggle-slider"></span>
                     </span>
                 </label>
@@ -764,7 +764,7 @@ PROMPT;
                 <label style="display:flex;align-items:center;gap:16px;font-size:18px;font-weight:600;">
                     <span><?php _e('Preserve HTML', 'ai-content-optimizer'); ?></span>
                     <span class="aico-toggle" style="position:relative;display:inline-block;width:48px;height:28px;vertical-align:middle;">
-                        <input type="checkbox" name="settings[preserve_html]" value="1" id="aico-toggle-html" <?php checked(isset($settings['preserve_html']) ? $settings['preserve_html'] : true); ?> style="opacity:0;width:0;height:0;position:absolute;left:0;top:0;margin:0;z-index:1;appearance:none;-webkit-appearance:none;-moz-appearance:none;outline:none;box-shadow:none;" />
+                        <input type="checkbox" name="settings[preserve_html]" value="1" id="aico-toggle-html" <?php checked(isset($settings['preserve_html']) ? $settings['preserve_html'] : true); ?> />
                         <span class="aico-toggle-slider"></span>
                     </span>
                 </label>
