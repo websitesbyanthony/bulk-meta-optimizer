@@ -320,10 +320,13 @@ PROMPT;
      * Add admin menu
      */
     public function add_admin_menu() {
+        // Determine the appropriate capability based on user role
+        $capability = $this->get_required_capability();
+        
         add_menu_page(
             __('Bulk Meta Optimizer', 'ai-content-optimizer'),
             __('Bulk Meta Optimizer', 'ai-content-optimizer'),
-            'manage_options',
+            $capability,
             'ai-content-optimizer',
             array($this, 'render_dashboard_page'),
             'dashicons-chart-area',
@@ -334,7 +337,7 @@ PROMPT;
             'ai-content-optimizer',
             __('Dashboard', 'ai-content-optimizer'),
             __('Dashboard', 'ai-content-optimizer'),
-            'manage_options',
+            $capability,
             'ai-content-optimizer',
             array($this, 'render_dashboard_page')
         );
@@ -343,7 +346,7 @@ PROMPT;
             'ai-content-optimizer',
             __('Content Settings', 'ai-content-optimizer'),
             __('Content Settings', 'ai-content-optimizer'),
-            'manage_options',
+            $capability,
             'ai-content-optimizer-settings',
             array($this, 'render_settings_page')
         );
@@ -352,7 +355,7 @@ PROMPT;
             'ai-content-optimizer',
             __('Brand Profile', 'ai-content-optimizer'),
             __('Brand Profile', 'ai-content-optimizer'),
-            'manage_options',
+            $capability,
             'ai-content-optimizer-brand-profile',
             array($this, 'render_brand_profile_page')
         );
@@ -361,10 +364,64 @@ PROMPT;
             'ai-content-optimizer',
             __('Settings', 'ai-content-optimizer'),
             __('Settings', 'ai-content-optimizer'),
-            'manage_options',
+            $capability,
             'ai-content-optimizer-advanced',
             array($this, 'render_advanced_page')
         );
+    }
+
+    /**
+     * Get the required capability for accessing the plugin
+     */
+    private function get_required_capability() {
+        // Debug: Log current user capabilities for troubleshooting
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            $user = wp_get_current_user();
+            $user_roles = $user->roles;
+            $user_caps = $user->allcaps;
+            error_log('AI Content Optimizer - User ID: ' . $user->ID . ', Roles: ' . implode(', ', $user_roles));
+            error_log('AI Content Optimizer - User capabilities: ' . print_r($user_caps, true));
+        }
+        // Check if user has manage_options (administrator)
+        if (current_user_can('manage_options')) {
+            return 'manage_options';
+        }
+        
+        // Check if user can edit posts
+        if (current_user_can('edit_posts')) {
+            return 'edit_posts';
+        }
+        
+        // Check if user can edit pages
+        if (current_user_can('edit_pages')) {
+            return 'edit_pages';
+        }
+        
+        // Check for custom post type capabilities
+        $post_types = get_post_types(array('public' => true), 'objects');
+        foreach ($post_types as $post_type) {
+            // Handle custom post types with different capability types
+            $capability_type = $post_type->capability_type;
+            if (is_array($capability_type)) {
+                $capability_type = $capability_type[0]; // Use the first capability type
+            }
+            
+            $edit_capability = 'edit_' . $capability_type . 's';
+            if (current_user_can($edit_capability)) {
+                return $edit_capability;
+            }
+        }
+        
+        // Default fallback - try common capabilities
+        $common_capabilities = array('edit_posts', 'edit_pages', 'edit_products', 'edit_others_posts');
+        foreach ($common_capabilities as $cap) {
+            if (current_user_can($cap)) {
+                return $cap;
+            }
+        }
+        
+        // Final fallback
+        return 'edit_posts';
     }
 
     /**
@@ -530,7 +587,8 @@ PROMPT;
      */
     public function render_dashboard_page() {
         // Check user capabilities
-        if (!current_user_can('manage_options')) {
+        $capability = $this->get_required_capability();
+        if (!current_user_can($capability)) {
             wp_die(__('You do not have sufficient permissions to access this page.', 'ai-content-optimizer'));
         }
 
@@ -619,7 +677,8 @@ PROMPT;
      */
     public function render_settings_page() {
         // Check user capabilities
-        if (!current_user_can('manage_options')) {
+        $capability = $this->get_required_capability();
+        if (!current_user_can($capability)) {
             wp_die(__('You do not have sufficient permissions to access this page.', 'ai-content-optimizer'));
         }
 
@@ -628,13 +687,48 @@ PROMPT;
             echo '<div class="notice notice-error"><p>' . __('A valid license is required to use Bulk Meta Optimizer. Please enter your license key in Advanced Settings.', 'ai-content-optimizer') . '</p></div>';
             return;
         }
+        
+        // Debug: Log post type access for troubleshooting
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('AI Content Optimizer - Settings page accessed with post_type: ' . $post_type);
+            error_log('AI Content Optimizer - Available post types: ' . print_r(array_keys($post_types), true));
+        }
         $post_type = isset($_GET['post_type']) ? sanitize_text_field($_GET['post_type']) : 'post';
         
         // Get all public post types including custom ones
         $post_types = get_post_types(array('public' => true), 'objects');
         unset($post_types['attachment']);
+        
+        // Validate post type exists and user has access
         if (!array_key_exists($post_type, $post_types)) {
             $post_type = 'post';
+        } else {
+            // Check if user has permission to edit this post type
+            $post_type_obj = $post_types[$post_type];
+            $capability_type = $post_type_obj->capability_type;
+            if (is_array($capability_type)) {
+                $capability_type = $capability_type[0];
+            }
+            $edit_capability = 'edit_' . $capability_type . 's';
+            
+            if (!current_user_can($edit_capability)) {
+                // User doesn't have permission for this post type, fall back to a post type they can edit
+                foreach ($post_types as $pt) {
+                    $pt_capability_type = $pt->capability_type;
+                    if (is_array($pt_capability_type)) {
+                        $pt_capability_type = $pt_capability_type[0];
+                    }
+                    $pt_edit_capability = 'edit_' . $pt_capability_type . 's';
+                    if (current_user_can($pt_edit_capability)) {
+                        $post_type = $pt->name;
+                        break;
+                    }
+                }
+                // If still no valid post type, default to post
+                if (!array_key_exists($post_type, $post_types)) {
+                    $post_type = 'post';
+                }
+            }
         }
 
         // Get settings for all post types
@@ -775,7 +869,8 @@ PROMPT;
      */
     public function render_api_page() {
         // Check user capabilities
-        if (!current_user_can('manage_options')) {
+        $capability = $this->get_required_capability();
+        if (!current_user_can($capability)) {
             wp_die(__('You do not have sufficient permissions to access this page.', 'ai-content-optimizer'));
         }
 
@@ -867,7 +962,8 @@ PROMPT;
      */
     public function render_advanced_page() {
         // Check user capabilities
-        if (!current_user_can('manage_options')) {
+        $capability = $this->get_required_capability();
+        if (!current_user_can($capability)) {
             wp_die(__('You do not have sufficient permissions to access this page.', 'ai-content-optimizer'));
         }
 
@@ -1059,7 +1155,8 @@ PROMPT;
             exit;
         }
         check_ajax_referer('aico-nonce', 'nonce');
-        if (!current_user_can('manage_options')) {
+        $capability = $this->get_required_capability();
+        if (!current_user_can($capability)) {
             wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
         }
 
@@ -1219,7 +1316,8 @@ PROMPT;
             exit;
         }
         check_ajax_referer('aico-nonce', 'nonce');
-        if (!current_user_can('manage_options')) {
+        $capability = $this->get_required_capability();
+        if (!current_user_can($capability)) {
             wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
         }
         $api_key = get_option('aico_openai_api_key');
@@ -1913,7 +2011,8 @@ PROMPT;
      */
     public function render_brand_profile_page() {
         // Check user capabilities
-        if (!current_user_can('manage_options')) {
+        $capability = $this->get_required_capability();
+        if (!current_user_can($capability)) {
             wp_die(__('You do not have sufficient permissions to access this page.', 'ai-content-optimizer'));
         }
 
@@ -2002,7 +2101,8 @@ PROMPT;
         }
         check_ajax_referer('aico-nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        $capability = $this->get_required_capability();
+        if (!current_user_can($capability)) {
             wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
         }
 
@@ -2167,7 +2267,8 @@ PROMPT;
         }
         check_ajax_referer('aico_save_brand_profile', 'aico_brand_profile_nonce');
 
-        if (!current_user_can('manage_options')) {
+        $capability = $this->get_required_capability();
+        if (!current_user_can($capability)) {
             wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
         }
 
