@@ -651,6 +651,27 @@ PROMPT;
         ?>
         <div class="wrap aico-wrap">
             <div class="aico-debug-banner" style="background:#ff006e !important;color:#fff !important;font-size:20px !important;text-align:center !important;padding:16px !important;font-weight:bold !important;letter-spacing:2px;z-index:9999;">AICO CSS DEBUG: If you see this, the plugin CSS is loaded!</div>
+            <style>
+            /* Super-specific checked state for toggles */
+            .aico-toggle input[type="checkbox"]:checked + .aico-toggle-slider {
+                background: #a72886 !important;
+            }
+            .aico-toggle input[type="checkbox"]:checked + .aico-toggle-slider:before {
+                transform: translateX(20px) !important;
+            }
+            .aico-toggle-slider:before {
+                position: absolute !important;
+                content: "" !important;
+                height: 22px !important;
+                width: 22px !important;
+                left: 3px !important;
+                bottom: 3px !important;
+                background: #fff !important;
+                border-radius: 50% !important;
+                transition: transform 0.2s !important;
+                box-shadow: 0 1px 2px rgba(0,0,0,0.08) !important;
+            }
+            </style>
             <h1><?php _e('Content Settings', 'ai-content-optimizer'); ?></h1>
             <div class="aico-settings-layout">
                 <div class="aico-sidebar">
@@ -696,7 +717,7 @@ PROMPT;
                     <span><?php _e('Optimize Title', 'ai-content-optimizer'); ?></span>
                     <span class="aico-toggle" style="position:relative;display:inline-block;width:48px;height:28px;vertical-align:middle;">
                         <input type="checkbox" name="settings[optimize_title]" value="1" id="aico-toggle-title" <?php checked(isset($settings['optimize_title']) ? $settings['optimize_title'] : true); ?> style="opacity:0;width:0;height:0;position:absolute;left:0;top:0;margin:0;z-index:1;appearance:none;-webkit-appearance:none;-moz-appearance:none;outline:none;box-shadow:none;" />
-                        <span class="aico-toggle-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#e4e4e4;border-radius:28px;transition:background 0.2s;"></span>
+                        <span class="aico-toggle-slider"></span>
                     </span>
                 </label>
                 <div class="aico-prompt-box">
@@ -709,7 +730,7 @@ PROMPT;
                     <span><?php _e('Optimize Meta Description', 'ai-content-optimizer'); ?></span>
                     <span class="aico-toggle" style="position:relative;display:inline-block;width:48px;height:28px;vertical-align:middle;">
                         <input type="checkbox" name="settings[optimize_meta]" value="1" id="aico-toggle-meta" <?php checked(isset($settings['optimize_meta']) ? $settings['optimize_meta'] : true); ?> style="opacity:0;width:0;height:0;position:absolute;left:0;top:0;margin:0;z-index:1;appearance:none;-webkit-appearance:none;-moz-appearance:none;outline:none;box-shadow:none;" />
-                        <span class="aico-toggle-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#e4e4e4;border-radius:28px;transition:background 0.2s;"></span>
+                        <span class="aico-toggle-slider"></span>
                     </span>
                 </label>
                 <div class="aico-prompt-box">
@@ -722,7 +743,7 @@ PROMPT;
                     <span><?php _e('Optimize Content', 'ai-content-optimizer'); ?></span>
                     <span class="aico-toggle" style="position:relative;display:inline-block;width:48px;height:28px;vertical-align:middle;">
                         <input type="checkbox" name="settings[optimize_content]" value="1" id="aico-toggle-content" <?php checked(isset($settings['optimize_content']) ? $settings['optimize_content'] : false); ?> style="opacity:0;width:0;height:0;position:absolute;left:0;top:0;margin:0;z-index:1;appearance:none;-webkit-appearance:none;-moz-appearance:none;outline:none;box-shadow:none;" />
-                        <span class="aico-toggle-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#e4e4e4;border-radius:28px;transition:background 0.2s;"></span>
+                        <span class="aico-toggle-slider"></span>
                     </span>
                 </label>
                 <div class="aico-prompt-box">
@@ -735,7 +756,7 @@ PROMPT;
                     <span><?php _e('Optimize Permalink', 'ai-content-optimizer'); ?></span>
                     <span class="aico-toggle" style="position:relative;display:inline-block;width:48px;height:28px;vertical-align:middle;">
                         <input type="checkbox" name="settings[optimize_slug]" value="1" id="aico-toggle-slug" <?php checked(isset($settings['optimize_slug']) ? $settings['optimize_slug'] : false); ?> style="opacity:0;width:0;height:0;position:absolute;left:0;top:0;margin:0;z-index:1;appearance:none;-webkit-appearance:none;-moz-appearance:none;outline:none;box-shadow:none;" />
-                        <span class="aico-toggle-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#e4e4e4;border-radius:28px;transition:background 0.2s;"></span>
+                        <span class="aico-toggle-slider"></span>
                     </span>
                 </label>
             </div>
@@ -744,7 +765,7 @@ PROMPT;
                     <span><?php _e('Preserve HTML', 'ai-content-optimizer'); ?></span>
                     <span class="aico-toggle" style="position:relative;display:inline-block;width:48px;height:28px;vertical-align:middle;">
                         <input type="checkbox" name="settings[preserve_html]" value="1" id="aico-toggle-html" <?php checked(isset($settings['preserve_html']) ? $settings['preserve_html'] : true); ?> style="opacity:0;width:0;height:0;position:absolute;left:0;top:0;margin:0;z-index:1;appearance:none;-webkit-appearance:none;-moz-appearance:none;outline:none;box-shadow:none;" />
-                        <span class="aico-toggle-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#e4e4e4;border-radius:28px;transition:background 0.2s;"></span>
+                        <span class="aico-toggle-slider"></span>
                     </span>
                 </label>
             </div>
