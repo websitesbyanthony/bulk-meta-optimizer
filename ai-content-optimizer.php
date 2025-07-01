@@ -320,13 +320,10 @@ PROMPT;
      * Add admin menu
      */
     public function add_admin_menu() {
-        // Determine the appropriate capability based on user role
-        $capability = $this->get_required_capability();
-        
         add_menu_page(
             __('Bulk Meta Optimizer', 'ai-content-optimizer'),
             __('Bulk Meta Optimizer', 'ai-content-optimizer'),
-            $capability,
+            'edit_posts',
             'ai-content-optimizer',
             array($this, 'render_dashboard_page'),
             'dashicons-chart-area',
@@ -337,7 +334,7 @@ PROMPT;
             'ai-content-optimizer',
             __('Dashboard', 'ai-content-optimizer'),
             __('Dashboard', 'ai-content-optimizer'),
-            $capability,
+            'edit_posts',
             'ai-content-optimizer',
             array($this, 'render_dashboard_page')
         );
@@ -346,7 +343,7 @@ PROMPT;
             'ai-content-optimizer',
             __('Content Settings', 'ai-content-optimizer'),
             __('Content Settings', 'ai-content-optimizer'),
-            $capability,
+            'edit_posts',
             'ai-content-optimizer-settings',
             array($this, 'render_settings_page')
         );
@@ -355,7 +352,7 @@ PROMPT;
             'ai-content-optimizer',
             __('Brand Profile', 'ai-content-optimizer'),
             __('Brand Profile', 'ai-content-optimizer'),
-            $capability,
+            'edit_posts',
             'ai-content-optimizer-brand-profile',
             array($this, 'render_brand_profile_page')
         );
@@ -364,7 +361,7 @@ PROMPT;
             'ai-content-optimizer',
             __('Settings', 'ai-content-optimizer'),
             __('Settings', 'ai-content-optimizer'),
-            $capability,
+            'edit_posts',
             'ai-content-optimizer-advanced',
             array($this, 'render_advanced_page')
         );
