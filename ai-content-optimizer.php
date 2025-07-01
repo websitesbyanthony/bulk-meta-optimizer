@@ -324,46 +324,10 @@ PROMPT;
             __('Bulk Meta Optimizer', 'ai-content-optimizer'),
             __('Bulk Meta Optimizer', 'ai-content-optimizer'),
             'edit_posts',
-            'ai-content-optimizer',
-            array($this, 'render_dashboard_page'),
+            'ai-content-optimizer-settings',
+            array($this, 'render_settings_page'),
             'dashicons-chart-area',
             30
-        );
-
-        add_submenu_page(
-            'ai-content-optimizer',
-            __('Dashboard', 'ai-content-optimizer'),
-            __('Dashboard', 'ai-content-optimizer'),
-            'edit_posts',
-            'ai-content-optimizer',
-            array($this, 'render_dashboard_page')
-        );
-
-        add_submenu_page(
-            'ai-content-optimizer',
-            __('Content Settings', 'ai-content-optimizer'),
-            __('Content Settings', 'ai-content-optimizer'),
-            'edit_posts',
-            'ai-content-optimizer-settings',
-            array($this, 'render_settings_page')
-        );
-
-        add_submenu_page(
-            'ai-content-optimizer',
-            __('Brand Profile', 'ai-content-optimizer'),
-            __('Brand Profile', 'ai-content-optimizer'),
-            'edit_posts',
-            'ai-content-optimizer-brand-profile',
-            array($this, 'render_brand_profile_page')
-        );
-
-        add_submenu_page(
-            'ai-content-optimizer',
-            __('Settings', 'ai-content-optimizer'),
-            __('Settings', 'ai-content-optimizer'),
-            'edit_posts',
-            'ai-content-optimizer-advanced',
-            array($this, 'render_advanced_page')
         );
     }
 
