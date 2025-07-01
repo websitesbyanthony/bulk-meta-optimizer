@@ -481,33 +481,35 @@
 /* --- Yoast-style Sidebar --- */
 .aico-settings-layout {
   display: flex !important;
-  gap: 32px !important;
+  gap: 40px !important;
   align-items: flex-start;
 }
 .aico-sidebar {
-  width: 240px !important;
-  background: #fff !important;
-  border-radius: 10px !important;
-  padding: 24px 0 24px 0 !important;
+  width: 260px !important;
+  background: #f7f8fa !important;
+  border-radius: 12px !important;
+  padding: 32px 0 32px 0 !important;
   min-height: 600px !important;
   box-shadow: 0 2px 12px rgba(0,0,0,0.07) !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: stretch !important;
+  border: 1px solid #e0e0e0 !important;
 }
 .aico-sidebar-item {
-  padding: 14px 36px !important;
+  padding: 16px 40px !important;
   color: #333 !important;
-  font-size: 17px !important;
+  font-size: 18px !important;
   border-left: 4px solid transparent !important;
   cursor: pointer !important;
   background: none !important;
   transition: background 0.2s, border-color 0.2s !important;
   text-decoration: none !important;
   font-weight: 500 !important;
+  border-radius: 0 20px 20px 0 !important;
 }
 .aico-sidebar-item.active, .aico-sidebar-item:hover {
-  background: #f7e9f5 !important;
+  background: #fff !important;
   border-left: 4px solid #a72886 !important;
   color: #a72886 !important;
   font-weight: 700 !important;
@@ -516,11 +518,12 @@
 .aico-main-content {
   flex: 1 !important;
   background: #fff !important;
-  border-radius: 10px !important;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.07) !important;
-  padding: 40px 48px !important;
+  border-radius: 14px !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08) !important;
+  padding: 48px 56px !important;
   min-width: 0 !important;
   max-width: 900px;
+  margin-top: 32px;
 }
 
 /* --- Toggle Switch --- */
@@ -530,6 +533,7 @@
   width: 48px !important;
   height: 28px !important;
   vertical-align: middle !important;
+  margin-left: 8px !important;
 }
 .aico-toggle input[type="checkbox"] {
   opacity: 0 !important;
@@ -578,16 +582,16 @@
 
 /* --- Prompt Field --- */
 .aico-prompt-box {
-  margin-top: 8px !important;
-  margin-bottom: 24px !important;
+  margin-top: 10px !important;
+  margin-bottom: 32px !important;
 }
 .aico-prompt-box textarea {
   width: 100% !important;
-  min-height: 48px !important;
-  border: 1px solid #ccd0d4 !important;
-  border-radius: 6px !important;
-  padding: 12px !important;
-  font-size: 15px !important;
+  min-height: 56px !important;
+  border: 1.5px solid #ccd0d4 !important;
+  border-radius: 8px !important;
+  padding: 14px !important;
+  font-size: 16px !important;
   background: #f7f8fa !important;
   resize: vertical !important;
   transition: border 0.2s !important;
@@ -602,23 +606,31 @@
   color: #222 !important;
 }
 .aico-main-content label {
-  font-size: 16px !important;
+  font-size: 17px !important;
   font-weight: 500 !important;
 }
 .aico-main-content h2 {
-  font-size: 22px !important;
+  font-size: 26px !important;
   font-weight: 700 !important;
-  margin-bottom: 24px !important;
+  margin-bottom: 28px !important;
+}
+.aico-main-content .aico-prompt-box label {
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  color: #555 !important;
 }
 
-/* DEBUG BANNER - REMOVE AFTER TESTING */
-.aico-debug-banner {
-  background: #ff006e !important;
-  color: #fff !important;
-  font-size: 20px !important;
-  text-align: center !important;
-  padding: 16px !important;
-  font-weight: bold !important;
-  letter-spacing: 2px;
-  z-index: 9999;
+/* Section spacing */
+.aico-main-content > div {
+  margin-bottom: 40px !important;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .aico-main-content {
+    padding: 24px 8px !important;
+  }
+  .aico-sidebar {
+    padding: 16px 0 !important;
+  }
 }

@@ -650,28 +650,6 @@ PROMPT;
         }
         ?>
         <div class="wrap aico-wrap">
-            <div class="aico-debug-banner" style="background:#ff006e !important;color:#fff !important;font-size:20px !important;text-align:center !important;padding:16px !important;font-weight:bold !important;letter-spacing:2px;z-index:9999;">AICO CSS DEBUG: If you see this, the plugin CSS is loaded!</div>
-            <style>
-            /* Super-specific checked state for toggles */
-            .aico-toggle input[type="checkbox"]:checked + .aico-toggle-slider {
-                background: #a72886 !important;
-            }
-            .aico-toggle input[type="checkbox"]:checked + .aico-toggle-slider:before {
-                transform: translateX(20px) !important;
-            }
-            .aico-toggle-slider:before {
-                position: absolute !important;
-                content: "" !important;
-                height: 22px !important;
-                width: 22px !important;
-                left: 3px !important;
-                bottom: 3px !important;
-                background: #fff !important;
-                border-radius: 50% !important;
-                transition: transform 0.2s !important;
-                box-shadow: 0 1px 2px rgba(0,0,0,0.08) !important;
-            }
-            </style>
             <h1><?php _e('Content Settings', 'ai-content-optimizer'); ?></h1>
             <div class="aico-settings-layout">
                 <div class="aico-sidebar">
