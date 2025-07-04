@@ -320,6 +320,7 @@ PROMPT;
      * Add admin menu
      */
     public function add_admin_menu() {
+        // Main menu page
         add_menu_page(
             __('Bulk Meta Optimizer', 'ai-content-optimizer'),
             __('Bulk Meta Optimizer', 'ai-content-optimizer'),
@@ -328,6 +329,43 @@ PROMPT;
             array($this, 'render_settings_page'),
             'dashicons-chart-area',
             30
+        );
+
+        // Add submenu pages
+        add_submenu_page(
+            'ai-content-optimizer-settings',
+            __('Content Settings', 'ai-content-optimizer'),
+            __('Content Settings', 'ai-content-optimizer'),
+            'edit_posts',
+            'ai-content-optimizer-settings',
+            array($this, 'render_settings_page')
+        );
+
+        add_submenu_page(
+            'ai-content-optimizer-settings',
+            __('Brand Profile', 'ai-content-optimizer'),
+            __('Brand Profile', 'ai-content-optimizer'),
+            'edit_posts',
+            'ai-content-optimizer-brand-profile',
+            array($this, 'render_brand_profile_page')
+        );
+
+        add_submenu_page(
+            'ai-content-optimizer-settings',
+            __('API Settings', 'ai-content-optimizer'),
+            __('API Settings', 'ai-content-optimizer'),
+            'edit_posts',
+            'ai-content-optimizer-api',
+            array($this, 'render_api_page')
+        );
+
+        add_submenu_page(
+            'ai-content-optimizer-settings',
+            __('Settings', 'ai-content-optimizer'),
+            __('Settings', 'ai-content-optimizer'),
+            'edit_posts',
+            'ai-content-optimizer-advanced',
+            array($this, 'render_advanced_page')
         );
     }
 
