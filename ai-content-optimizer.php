@@ -972,6 +972,16 @@ PROMPT;
         <div class="wrap aico-wrap">
             <h1><?php _e('Settings', 'ai-content-optimizer'); ?></h1>
 
+            <!-- Getting Started Link -->
+            <div class="aico-card" style="margin-bottom: 20px; background: #f0f8ff; border-left: 4px solid #2271b1;">
+                <h2 style="margin-top: 0; color: #2271b1;"><?php _e('Getting Started', 'ai-content-optimizer'); ?></h2>
+                <p style="margin-bottom: 15px;"><?php _e('Need help setting up and using Bulk Meta Optimizer?', 'ai-content-optimizer'); ?></p>
+                <a href="http://bulkmetaoptimizer.com/getting-started/" target="_blank" class="button button-primary">
+                    <span class="dashicons dashicons-external" style="margin-right: 5px;"></span>
+                    <?php _e('View Installation & Usage Guide', 'ai-content-optimizer'); ?>
+                </a>
+            </div>
+
             <!-- License Key Card -->
             <div class="aico-card">
                 <h2><?php _e('License Key', 'ai-content-optimizer'); ?></h2>
