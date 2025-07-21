@@ -52,9 +52,7 @@ function aico_handle_reset_defaults() {
     $default_toggles = array(
         'optimize_title'   => true,
         'optimize_meta'    => true,
-        'optimize_content' => false,
         'optimize_slug'    => false,
-        'preserve_html'    => true,
     );
     $combined_defaults = array_merge( $default_content_settings, $default_toggles );
 

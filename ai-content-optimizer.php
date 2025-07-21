@@ -145,9 +145,7 @@ class AI_Content_Optimizer {
         $default_toggles = array(
             'optimize_title' => true,
             'optimize_meta' => true,
-            'optimize_content' => false, // Default off
             'optimize_slug' => false,
-            'preserve_html' => true,
         );
 
         // Set defaults for each post type
@@ -811,31 +809,9 @@ PROMPT;
             </div>
             <div style="margin-bottom:32px;">
                 <label style="display:flex;align-items:center;gap:16px;font-size:18px;font-weight:600;">
-                    <span><?php _e('Optimize Content', 'ai-content-optimizer'); ?></span>
-                    <span class="aico-toggle" style="position:relative;display:inline-block;width:48px;height:28px;vertical-align:middle;">
-                        <input type="checkbox" name="settings[optimize_content]" value="1" id="aico-toggle-content" <?php checked(isset($settings['optimize_content']) ? $settings['optimize_content'] : false); ?> />
-                        <span class="aico-toggle-slider"></span>
-                    </span>
-                </label>
-                <div class="aico-prompt-box">
-                    <label for="aico-content-prompt" style="font-weight:500;display:block;margin-bottom:4px;">Content Prompt</label>
-                    <textarea id="aico-content-prompt" name="content_prompt" rows="5"><?php echo esc_textarea($content_prompt); ?></textarea>
-                </div>
-            </div>
-            <div style="margin-bottom:32px;">
-                <label style="display:flex;align-items:center;gap:16px;font-size:18px;font-weight:600;">
                     <span><?php _e('Optimize Permalink', 'ai-content-optimizer'); ?></span>
                     <span class="aico-toggle" style="position:relative;display:inline-block;width:48px;height:28px;vertical-align:middle;">
                         <input type="checkbox" name="settings[optimize_slug]" value="1" id="aico-toggle-slug" <?php checked(isset($settings['optimize_slug']) ? $settings['optimize_slug'] : false); ?> />
-                        <span class="aico-toggle-slider"></span>
-                    </span>
-                </label>
-            </div>
-            <div style="margin-bottom:32px;">
-                <label style="display:flex;align-items:center;gap:16px;font-size:18px;font-weight:600;">
-                    <span><?php _e('Preserve HTML', 'ai-content-optimizer'); ?></span>
-                    <span class="aico-toggle" style="position:relative;display:inline-block;width:48px;height:28px;vertical-align:middle;">
-                        <input type="checkbox" name="settings[preserve_html]" value="1" id="aico-toggle-html" <?php checked(isset($settings['preserve_html']) ? $settings['preserve_html'] : true); ?> />
                         <span class="aico-toggle-slider"></span>
                     </span>
                 </label>
@@ -1173,9 +1149,7 @@ PROMPT;
         $sanitized_settings = array();
         $sanitized_settings['optimize_title'] = isset($settings['optimize_title']) ? 1 : 0;
         $sanitized_settings['optimize_meta'] = isset($settings['optimize_meta']) ? 1 : 0;
-        $sanitized_settings['optimize_content'] = isset($settings['optimize_content']) ? 1 : 0;
         $sanitized_settings['optimize_slug'] = isset($settings['optimize_slug']) ? 1 : 0;
-        $sanitized_settings['preserve_html'] = isset($settings['preserve_html']) ? 1 : 0;
         $sanitized_settings['title_separator'] = sanitize_text_field($settings['title_separator'] ?? 'dash');
         $sanitized_settings['excluded_words'] = sanitize_textarea_field($settings['excluded_words'] ?? '');
         $sanitized_settings['content_tone'] = sanitize_text_field($settings['content_tone'] ?? 'professional');
@@ -1627,9 +1601,7 @@ PROMPT;
 
             $optimize_title = isset($settings['optimize_title']) ? (bool)$settings['optimize_title'] : true;
             $optimize_meta = isset($settings['optimize_meta']) ? (bool)$settings['optimize_meta'] : true;
-            $optimize_content = isset($settings['optimize_content']) ? (bool)$settings['optimize_content'] : false;
             $optimize_slug = isset($settings['optimize_slug']) ? (bool)$settings['optimize_slug'] : false;
-            $preserve_html = isset($settings['preserve_html']) ? (bool)$settings['preserve_html'] : true;
             $excluded_words = isset($settings['excluded_words']) ? $settings['excluded_words'] : '';
             $excluded_words_array = array();
             if (!empty($excluded_words)) {
@@ -1961,9 +1933,7 @@ PROMPT;
                 $default_toggles = array(
                     'optimize_title' => true,
                     'optimize_meta' => true,
-                    'optimize_content' => false,
                     'optimize_slug' => false,
-                    'preserve_html' => true,
                 );
 
                 update_option($settings_key, array_merge($default_content_settings, $default_toggles));
