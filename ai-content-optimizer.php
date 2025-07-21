@@ -982,6 +982,16 @@ PROMPT;
                 </a>
             </div>
 
+            <!-- Purchase License Link -->
+            <div class="aico-card" style="margin-bottom: 20px; background: #fff3cd; border-left: 4px solid #ffc107;">
+                <h2 style="margin-top: 0; color: #856404;"><?php _e('Purchase License', 'ai-content-optimizer'); ?></h2>
+                <p style="margin-bottom: 15px;"><?php _e('Get unlimited optimizations and full access to all features.', 'ai-content-optimizer'); ?></p>
+                <a href="https://bulkmetaoptimizer.com/" target="_blank" class="button button-secondary">
+                    <span class="dashicons dashicons-cart" style="margin-right: 5px;"></span>
+                    <?php _e('Purchase License - $29', 'ai-content-optimizer'); ?>
+                </a>
+            </div>
+
             <!-- License Key Card -->
             <div class="aico-card">
                 <h2><?php _e('License Key', 'ai-content-optimizer'); ?></h2>
@@ -1307,9 +1317,56 @@ PROMPT;
     }
 
     /**
+     * Check usage limits for unlicensed users
+     */
+    private function check_usage_limit() {
+        $license_status = get_option('bmo_license_status', 'invalid');
+        
+        // If license is valid, no limits
+        if ($license_status === 'success') {
+            return true;
+        }
+        
+        // For unlicensed users, check if they've exceeded 10 runs
+        $usage_count = get_option('aico_unlicensed_usage_count', 0);
+        
+        if ($usage_count >= 10) {
+            return new WP_Error(
+                'usage_limit_exceeded', 
+                sprintf(
+                    __('You have reached the limit of 10 free optimizations. %s to continue using Bulk Meta Optimizer.', 'ai-content-optimizer'),
+                    '<a href="https://bulkmetaoptimizer.com/" target="_blank">Purchase a license</a>'
+                )
+            );
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Increment usage count for unlicensed users
+     */
+    private function increment_usage_count() {
+        $license_status = get_option('bmo_license_status', 'invalid');
+        
+        // Only track usage for unlicensed users
+        if ($license_status !== 'success') {
+            $current_count = get_option('aico_unlicensed_usage_count', 0);
+            update_option('aico_unlicensed_usage_count', $current_count + 1);
+        }
+    }
+
+    /**
      * AJAX generate content
      */
     public function ajax_generate_content() {
+        // Check usage limits first
+        $limit_check = $this->check_usage_limit();
+        if (is_wp_error($limit_check)) {
+            wp_send_json_error($limit_check->get_error_message());
+            exit;
+        }
+        
         $license_status = get_option('bmo_license_status', 'invalid');
         if ($license_status !== 'success') {
             wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
@@ -1403,6 +1460,9 @@ PROMPT;
                 wp_send_json_error($result->get_error_message());
                 return;
             }
+
+            // Increment usage count for unlicensed users
+            $this->increment_usage_count();
 
             // Verify post was actually updated
             $updated_post = get_post($post_id);
@@ -1536,6 +1596,13 @@ PROMPT;
      * AJAX bulk optimize
      */
     public function ajax_bulk_optimize() {
+        // Check usage limits first
+        $limit_check = $this->check_usage_limit();
+        if (is_wp_error($limit_check)) {
+            wp_send_json_error($limit_check->get_error_message());
+            exit;
+        }
+        
         $license_status = get_option('bmo_license_status', 'invalid');
         if ($license_status !== 'success') {
             wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
@@ -1552,6 +1619,14 @@ PROMPT;
             wp_send_json_error(__('No posts selected.', 'ai-content-optimizer'));
         }
 
+        // For unlicensed users, limit bulk operations to prevent abuse
+        if ($license_status !== 'success' && count($post_ids) > 5) {
+            wp_send_json_error(sprintf(
+                __('Bulk optimization is limited to 5 posts for unlicensed users. %s for unlimited bulk optimization.', 'ai-content-optimizer'),
+                '<a href="https://bulkmetaoptimizer.com/" target="_blank">Purchase a license</a>'
+            ));
+        }
+
         $results = array(
             'success' => array(),
             'error' => array()
@@ -1566,6 +1641,8 @@ PROMPT;
                 );
             } else {
                 $results['success'][] = $post_id;
+                // Increment usage count for each successful optimization
+                $this->increment_usage_count();
             }
         }
 
