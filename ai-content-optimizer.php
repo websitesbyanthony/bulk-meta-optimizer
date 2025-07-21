@@ -350,15 +350,6 @@ PROMPT;
 
         add_submenu_page(
             'ai-content-optimizer-settings',
-            __('API Settings', 'ai-content-optimizer'),
-            __('API Settings', 'ai-content-optimizer'),
-            'edit_posts',
-            'ai-content-optimizer-api',
-            array($this, 'render_api_page')
-        );
-
-        add_submenu_page(
-            'ai-content-optimizer-settings',
             __('Settings', 'ai-content-optimizer'),
             __('Settings', 'ai-content-optimizer'),
             'edit_posts',
