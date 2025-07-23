@@ -1066,11 +1066,6 @@ PROMPT;
      * AJAX save settings
      */
     public function ajax_save_settings() {
-        $license_status = get_option('bmo_license_status', 'invalid');
-        if ($license_status !== 'success') {
-            wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
-            exit;
-        }
         check_ajax_referer('aico-nonce', 'nonce');
         $capability = $this->get_required_capability();
         if (!current_user_can($capability)) {
@@ -1225,11 +1220,6 @@ PROMPT;
      * AJAX test API
      */
     public function ajax_test_api() {
-        $license_status = get_option('bmo_license_status', 'invalid');
-        if ($license_status !== 'success') {
-            wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
-            exit;
-        }
         check_ajax_referer('aico-nonce', 'nonce');
         $capability = $this->get_required_capability();
         if (!current_user_can($capability)) {
@@ -1298,11 +1288,6 @@ PROMPT;
             exit;
         }
         
-        $license_status = get_option('bmo_license_status', 'invalid');
-        if ($license_status !== 'success') {
-            wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
-            exit;
-        }
         try {
             // Enable error reporting for debugging
             error_reporting(E_ALL);
@@ -1534,11 +1519,6 @@ PROMPT;
             exit;
         }
         
-        $license_status = get_option('bmo_license_status', 'invalid');
-        if ($license_status !== 'success') {
-            wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
-            exit;
-        }
         check_ajax_referer('aico-nonce', 'nonce');
 
         if (!current_user_can('edit_posts')) {
@@ -1551,6 +1531,7 @@ PROMPT;
         }
 
         // For unlicensed users, limit bulk operations to prevent abuse
+        $license_status = get_option('bmo_license_status', 'invalid');
         if ($license_status !== 'success' && count($post_ids) > 5) {
             wp_send_json_error(sprintf(
                 __('Bulk optimization is limited to 5 posts for unlicensed users. %s for unlimited bulk optimization.', 'ai-content-optimizer'),
@@ -2059,11 +2040,6 @@ PROMPT;
      * AJAX build brand profile
      */
     public function ajax_build_brand_profile() {
-        $license_status = get_option('bmo_license_status', 'invalid');
-        if ($license_status !== 'success') {
-            wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
-            exit;
-        }
         check_ajax_referer('aico-nonce', 'nonce');
 
         $capability = $this->get_required_capability();
@@ -2100,84 +2076,62 @@ PROMPT;
             
             // Method 3: Check for a page with front-page template
             if (!$homepage) {
-                $homepage_posts = get_posts(array(
-                    'post_type' => 'page',
-                    'post_status' => 'publish',
-                    'numberposts' => 10,
-                    'meta_query' => array(
-                        'relation' => 'OR',
-                        array(
-                            'key' => '_wp_page_template',
-                            'value' => 'front-page.php',
-                            'compare' => 'LIKE'
-                        )
-                    )
+                $pages = get_pages(array(
+                    'meta_key' => '_wp_page_template',
+                    'meta_value' => 'front-page.php',
+                    'number' => 1
                 ));
-                
-                if (!empty($homepage_posts)) {
-                    $homepage = $homepage_posts[0];
+                if (!empty($pages)) {
+                    $homepage = $pages[0];
                 }
             }
             
-            // Method 4: Get the first published page as fallback
+            // Method 4: Fallback to most recent page
             if (!$homepage) {
-                $homepage_posts = get_posts(array(
-                    'post_type' => 'page',
-                    'post_status' => 'publish',
-                    'numberposts' => 1,
-                    'orderby' => 'menu_order',
-                    'order' => 'ASC'
-                ));
-                $homepage = !empty($homepage_posts) ? $homepage_posts[0] : null;
+                $pages = get_pages(array('number' => 1, 'sort_column' => 'post_date', 'sort_order' => 'DESC'));
+                if (!empty($pages)) {
+                    $homepage = $pages[0];
+                }
             }
-
-            if (!$homepage) {
-                wp_send_json_error(__('Could not find homepage content to analyze. Please ensure you have at least one published page.', 'ai-content-optimizer'));
-            }
-
-            // Get website title and tagline from WordPress settings
-            $site_title = get_bloginfo('name');
-            $site_tagline = get_bloginfo('description');
             
-            // Extract full content from homepage
+            // Method 5: Fallback to most recent post
+            if (!$homepage) {
+                $posts = get_posts(array('numberposts' => 1, 'post_status' => 'publish'));
+                if (!empty($posts)) {
+                    $homepage = $posts[0];
+                }
+            }
+
+            if (!$homepage) {
+                wp_send_json_error(__('No content found to analyze. Please create at least one page or post.', 'ai-content-optimizer'));
+            }
+
+            // Extract content from the homepage
             $content = $homepage->post_content;
             $title = $homepage->post_title;
             
-            // Clean the content but preserve structure
-            $content = wp_strip_all_tags($content);
+            // Get site information
+            $site_title = get_bloginfo('name');
+            $site_tagline = get_bloginfo('description');
             
-            // Remove extra whitespace and normalize
-            $content = preg_replace('/\s+/', ' ', $content);
-            $content = trim($content);
-            
-            // If content is still very long, we'll need to handle it in chunks
-            // For now, let's increase the limit significantly but still be reasonable
-            $max_content_length = 8000; // Increased from 2000 to 8000 characters
-            
-            if (mb_strlen($content) > $max_content_length) {
-                // Take the first part and add a note
-                $content = mb_substr($content, 0, $max_content_length) . '... [Content truncated for analysis]';
-            }
+            // Clean and prepare content
+            $clean_content = wp_strip_all_tags($content);
+            $clean_content = substr($clean_content, 0, 3000); // Limit content length
 
-            // Create the prompt with full content, website title, and tagline
-            $prompt = "Please review my website homepage and put together a comprehensive brand profile. Analyze the full content provided along with the website title and tagline to understand our business, services, and brand identity.\n\n";
-            $prompt .= "Website Title: {$site_title}\n";
-            $prompt .= "Website Tagline: {$site_tagline}\n";
-            $prompt .= "Homepage Title: {$title}\n";
-            $prompt .= "Full Homepage Content: {$content}\n\n";
-            $prompt .= "Based on this content, website title, and tagline, please create a detailed brand profile that includes:\n";
-            $prompt .= "1. A comprehensive brand overview that captures our business essence\n";
-            $prompt .= "2. A detailed description of our target audience based on the content\n";
-            $prompt .= "3. The appropriate tone and voice we should use in our content and meta data\n";
-            $prompt .= "4. What sets us apart from competitors based on the content analysis\n\n";
-            $prompt .= "Please provide your response in the following JSON format:\n";
+            // Build the prompt for brand profile generation
+            $prompt = "Based on the following website content, generate a comprehensive brand profile in JSON format with the following structure:\n\n";
             $prompt .= "{\n";
-            $prompt .= "  \"overview\": \"Comprehensive brand overview based on the full content, title, and tagline\",\n";
-            $prompt .= "  \"target_audience\": \"Detailed description of target audience\",\n";
-            $prompt .= "  \"tone\": \"Recommended tone and voice for content\",\n";
-            $prompt .= "  \"unique_selling_points\": \"What sets the brand apart based on content analysis\"\n";
+            $prompt .= "  \"overview\": \"A 2-3 sentence overview of what this brand/company does, their mission, and main value proposition\",\n";
+            $prompt .= "  \"target_audience\": \"A 2-3 sentence description of the ideal customer or target audience\",\n";
+            $prompt .= "  \"tone\": \"A 2-3 sentence description of the brand voice and tone they should use in content\",\n";
+            $prompt .= "  \"unique_selling_points\": \"A 2-3 sentence description of what makes this brand unique and their key differentiators\"\n";
             $prompt .= "}\n\n";
-            $prompt .= "Make sure the response is valid JSON format and provides detailed, actionable insights based on the full content, website title, and tagline provided.";
+            $prompt .= "Website Information:\n";
+            $prompt .= "Site Title: {$site_title}\n";
+            $prompt .= "Site Tagline: {$site_tagline}\n";
+            $prompt .= "Page Title: {$title}\n";
+            $prompt .= "Page Content: {$clean_content}\n\n";
+            $prompt .= "Please analyze this content and provide a brand profile that would help generate consistent, on-brand content for this website. Return only valid JSON.";
 
             // Call OpenAI API
             $response = $this->call_openai_api_direct($api_key, $model, $prompt, $max_tokens, $temperature);
@@ -2225,11 +2179,6 @@ PROMPT;
      * AJAX save brand profile
      */
     public function ajax_save_brand_profile() {
-        $license_status = get_option('bmo_license_status', 'invalid');
-        if ($license_status !== 'success') {
-            wp_send_json_error(__('A valid license is required to use this feature.', 'ai-content-optimizer'));
-            exit;
-        }
         check_ajax_referer('aico_save_brand_profile', 'aico_brand_profile_nonce');
 
         $capability = $this->get_required_capability();
