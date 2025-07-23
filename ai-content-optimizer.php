@@ -865,32 +865,6 @@ PROMPT;
         }
 
         $license_status = get_option('bmo_license_status', 'invalid');
-        if ($license_status !== 'success') {
-            // Show only the license key card (reuse existing code for license key form)
-            ?>
-            <div class="wrap aico-wrap">
-                <h1><?php _e('Settings', 'ai-content-optimizer'); ?></h1>
-                <div class="aico-card">
-                    <h2><?php _e('License Key', 'ai-content-optimizer'); ?></h2>
-                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-                        <input type="hidden" name="action" value="bmo_save_license_key" />
-                        <?php wp_nonce_field('bmo_save_license_key', 'bmo_license_nonce'); ?>
-                        <table class="form-table">
-                            <tr valign="top">
-                                <th scope="row"><label for="bmo_license_key"><?php _e('License Key', 'ai-content-optimizer'); ?></label></th>
-                                <td>
-                                    <input type="text" id="bmo_license_key" name="bmo_license_key" value="<?php echo esc_attr(get_option('bmo_license_key', '')); ?>" class="regular-text" />
-                                    <p class="description"><?php _e('Paste your license key here.', 'ai-content-optimizer'); ?></p>
-                                </td>
-                            </tr>
-                        </table>
-                        <?php submit_button(__('Save License Key', 'ai-content-optimizer')); ?>
-                    </form>
-                </div>
-            </div>
-            <?php
-            return;
-        }
         $custom_css = get_option('aico_custom_css', '');
         $debug_mode = get_option('aico_debug_mode', false);
         $license_key = get_option('bmo_license_key', '');
