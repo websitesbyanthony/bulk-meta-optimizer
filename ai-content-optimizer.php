@@ -169,16 +169,38 @@ class AI_Content_Optimizer {
      */
     private function set_default_prompts() {
         // Default prompts for post type
-        $post_title_prompt = "You are an SEO expert. Write an SEO-friendly post title (60 chars max). Use a {brand_tone} tone for a {target_audience} audience. Consider our brand overview: {brand_overview}. No exclamation marks or quotation marks.";
-        $post_meta_prompt = "You are an SEO expert. Write a meta description (160 chars max) for this post. Use a {brand_tone} tone for a {target_audience} audience. Consider our brand overview: {brand_overview}. Keep it concise, no exclamation marks or quotation marks.";
+        $post_title_prompt = "You are an SEO expert. Write an SEO-friendly post title (60 chars max). 
+
+IMPORTANT PRIORITY ORDER:
+1. PRIMARY FOCUS: The page title should be your main focus and guide the optimization
+2. SECONDARY FOCUS: Use the page content to support and expand on the title
+3. ADDITIONAL CONTEXT: Use brand profile information as supplementary context only
+
+Use a {brand_tone} tone for a {target_audience} audience. Consider our brand overview: {brand_overview}. No exclamation marks or quotation marks.";
+        
+        $post_meta_prompt = "You are an SEO expert. Write a meta description (160 chars max) for this post. 
+
+IMPORTANT PRIORITY ORDER:
+1. PRIMARY FOCUS: The page title should be your main focus and guide the optimization
+2. SECONDARY FOCUS: Use the page content to support and expand on the title
+3. ADDITIONAL CONTEXT: Use brand profile information as supplementary context only
+
+Use a {brand_tone} tone for a {target_audience} audience. Consider our brand overview: {brand_overview}. Keep it concise, no exclamation marks or quotation marks.";
 
         // Preserve HTML prompt
         $preserve_prompt = <<<'PROMPT'
-Generate HTML output based on the structure provided below, but only update the text content to focus on {PAGE TITLE}. It is crucial to:{
+Generate HTML output based on the structure provided below, but only update the text content to focus on {PAGE TITLE}. 
+
+IMPORTANT PRIORITY ORDER:
+1. PRIMARY FOCUS: The page title should be your main focus and guide the optimization
+2. SECONDARY FOCUS: Use the page content to support and expand on the title
+3. ADDITIONAL CONTEXT: Use brand profile information as supplementary context only
+
+It is crucial to:
 Preserve all shortcodes, CSS, HTML classes, IDs, and structure exactly as they are. This includes all Visual Composer elements, styling, and embedded HTML tags. Do not alter or remove any CSS, HTML classes, or structural elements within the template.
 Update only the text content (e.g., headers, body text, and calls to action) to focus clarity, using SEO keywords, service descriptions, and location-based phrases related to {existing content}.
 
-Brand Context:
+Brand Context (Additional Information Only):
 Our brand overview: {brand_overview}
 Our target audience: {target_audience}
 Our brand tone: {brand_tone}
@@ -1255,6 +1277,16 @@ PROMPT;
      * AJAX generate content
      */
     public function ajax_generate_content() {
+        // Prevent any output before JSON response
+        if (headers_sent()) {
+            error_log('Headers already sent in ajax_generate_content');
+        }
+        
+        // Ensure clean output
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+        
         // Check usage limits first
         $limit_check = $this->check_usage_limit();
         if (is_wp_error($limit_check)) {
@@ -1263,10 +1295,6 @@ PROMPT;
         }
         
         try {
-            // Enable error reporting for debugging
-            error_reporting(E_ALL);
-            ini_set('display_errors', 1);
-            
             // Enable error logging
             error_log('Starting ajax_generate_content');
 
@@ -1363,6 +1391,12 @@ PROMPT;
             }
 
             error_log('Post optimization successful');
+            
+            // Ensure clean output before sending success
+            if (ob_get_level()) {
+                ob_end_clean();
+            }
+            
             wp_send_json_success(array(
                 'message' => 'Content optimized successfully!',
                 'post_id' => $post_id,
@@ -1372,6 +1406,11 @@ PROMPT;
         } catch (Exception $e) {
             error_log('Exception in ajax_generate_content: ' . $e->getMessage());
             error_log('Exception trace: ' . $e->getTraceAsString());
+            
+            // Ensure clean output before sending error
+            if (ob_get_level()) {
+                ob_end_clean();
+            }
             wp_send_json_error('Error optimizing content: ' . $e->getMessage());
         }
     }
@@ -1661,7 +1700,7 @@ PROMPT;
             // Generate title
             if ($optimize_title) {
                 error_log('Optimizing title');
-                $title_full_prompt = $title_prompt . "\n\nCurrent title: {$current_title}\n\nCurrent content excerpt: {$trimmed_content}\n\nPlease provide your response as plain text without any formatting.";
+                $title_full_prompt = $title_prompt . "\n\nPRIORITY FOCUS: The page title is your primary focus.\n\nCurrent title: {$current_title}\n\nCurrent content excerpt: {$trimmed_content}\n\nPlease provide your response as plain text without any formatting.";
                 $title_response = $this->call_openai_api_direct($api_key, $model, $title_full_prompt, 60, 0.4);
                 if (is_wp_error($title_response)) {
                     error_log('Title optimization failed: ' . $title_response->get_error_message());
@@ -1675,7 +1714,7 @@ PROMPT;
             // Generate meta description
             if ($optimize_meta) {
                 error_log('Optimizing meta');
-                $meta_full_prompt = $meta_prompt . "\n\nTitle: " . ($results['title'] ? $results['title'] : $current_title) . "\n\nContent excerpt: {$trimmed_content}\n\nPlease provide your response as plain text without any formatting.";
+                $meta_full_prompt = $meta_prompt . "\n\nPRIORITY FOCUS: The page title is your primary focus.\n\nTitle: " . ($results['title'] ? $results['title'] : $current_title) . "\n\nContent excerpt: {$trimmed_content}\n\nPlease provide your response as plain text without any formatting.";
                 $meta_response = $this->call_openai_api_direct($api_key, $model, $meta_full_prompt, 160, 0.4);
                 if (is_wp_error($meta_response)) {
                     error_log('Meta optimization failed: ' . $meta_response->get_error_message());
@@ -1745,7 +1784,7 @@ PROMPT;
                 } else {
                     // Non-preserve path
                     $content_for_ai = mb_substr(wp_strip_all_tags($current_content), 0, 3000);
-                    $plain_prompt = $content_prompt . "\n\nTitle: " . ($results['title'] ? $results['title'] : $current_title) . "\n\nCurrent content: {$content_for_ai}\n\nPlease provide your response in raw HTML format.";
+                    $plain_prompt = $content_prompt . "\n\nPRIORITY FOCUS: The page title is your primary focus.\n\nTitle: " . ($results['title'] ? $results['title'] : $current_title) . "\n\nCurrent content: {$content_for_ai}\n\nPlease provide your response in raw HTML format.";
                     $content_response = $this->call_openai_api_direct($api_key, $model, $plain_prompt, $max_tokens, $temperature);
                     if (is_wp_error($content_response)) {
                         error_log('Content optimization failed: ' . $content_response->get_error_message());
