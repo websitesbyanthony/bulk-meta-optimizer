@@ -228,15 +228,7 @@ PROMPT;
             // Register settings (always available for license management)
             add_action('admin_init', array($this, 'register_settings'));
 
-            // Check license status before enabling core functionality
-            $license_status = get_option('bmo_license_status', 'invalid');
-            if ($license_status !== 'success') {
-                // If license is not valid, prevent core functionality from loading
-                // Admin notices are handled by bmo_maybe_disable_plugin
-                return;
-            }
-
-            // Core functionality - only if license is valid
+            // Core functionality - always load, but usage limits will be checked during operations
             // Enqueue admin scripts and styles
             add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
 
@@ -580,11 +572,6 @@ PROMPT;
             wp_die(__('You do not have sufficient permissions to access this page.', 'ai-content-optimizer'));
         }
 
-        $license_status = get_option('bmo_license_status', 'invalid');
-        if ($license_status !== 'success') {
-            echo '<div class="notice notice-error"><p>' . __('A valid license is required to use Bulk Meta Optimizer. Please enter your license key in Advanced Settings.', 'ai-content-optimizer') . '</p></div>';
-            return;
-        }
         // Get content statistics
         $stats = $this->get_content_statistics();
 
@@ -610,33 +597,10 @@ PROMPT;
                         ?>
                             <div class="aico-stat-item">
                                 <h3><?php echo esc_html($label); ?></h3>
-                                <div class="aico-stat-numbers">
-                                    <span class="aico-stat-total"><?php echo esc_html($count); ?></span>
-                                    <span class="aico-stat-optimized"><?php echo esc_html($optimized); ?></span>
-                                    <span class="aico-stat-percentage"><?php echo esc_html($percentage); ?>%</span>
-                                </div>
-                                <div class="aico-progress-bar">
-                                    <div class="aico-progress" style="width: <?php echo esc_attr($percentage); ?>%"></div>
-                                </div>
+                                <p><?php printf(__('Total: %d', 'ai-content-optimizer'), $count); ?></p>
+                                <p><?php printf(__('Optimized: %d (%d%%)', 'ai-content-optimizer'), $optimized, $percentage); ?></p>
                             </div>
                         <?php endforeach; ?>
-                    </div>
-
-                    <div class="aico-actions">
-                        <h2><?php _e('Quick Actions', 'ai-content-optimizer'); ?></h2>
-                        <div class="aico-actions-grid">
-                            <?php foreach ($stats as $post_type => $data) :
-                                if (!post_type_exists($post_type)) continue;
-
-                                $post_type_obj = get_post_type_object($post_type);
-                                $label = $post_type_obj->labels->name;
-                            ?>
-                                <div class="aico-action-item">
-                                    <h3><?php printf(__('Optimize %s', 'ai-content-optimizer'), esc_html($label)); ?></h3>
-                                    <a href="<?php echo esc_url(admin_url('edit.php?post_type=' . ($post_type === 'post' ? 'post' : $post_type))); ?>" class="button button-secondary"><?php printf(__('View %s', 'ai-content-optimizer'), esc_html($label)); ?></a>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
                     </div>
                 </div>
 
@@ -669,12 +633,6 @@ PROMPT;
         if (!current_user_can($capability)) {
             wp_die(__('You do not have sufficient permissions to access this page.', 'ai-content-optimizer'));
         }
-
-        $license_status = get_option('bmo_license_status', 'invalid');
-        if ($license_status !== 'success') {
-            echo '<div class="notice notice-error"><p>' . __('A valid license is required to use Bulk Meta Optimizer. Please enter your license key in Advanced Settings.', 'ai-content-optimizer') . '</p></div>';
-            return;
-        }
         
         // Debug: Log post type access for troubleshooting
         if (defined('WP_DEBUG') && WP_DEBUG) {
@@ -690,33 +648,6 @@ PROMPT;
         // Validate post type exists and user has access
         if (!array_key_exists($post_type, $post_types)) {
             $post_type = 'post';
-        } else {
-            // Check if user has permission to edit this post type
-            $post_type_obj = $post_types[$post_type];
-            $capability_type = $post_type_obj->capability_type;
-            if (is_array($capability_type)) {
-                $capability_type = $capability_type[0];
-            }
-            $edit_capability = 'edit_' . $capability_type . 's';
-            
-            if (!current_user_can($edit_capability)) {
-                // User doesn't have permission for this post type, fall back to a post type they can edit
-                foreach ($post_types as $pt) {
-                    $pt_capability_type = $pt->capability_type;
-                    if (is_array($pt_capability_type)) {
-                        $pt_capability_type = $pt_capability_type[0];
-                    }
-                    $pt_edit_capability = 'edit_' . $pt_capability_type . 's';
-                    if (current_user_can($pt_edit_capability)) {
-                        $post_type = $pt->name;
-                        break;
-                    }
-                }
-                // If still no valid post type, default to post
-                if (!array_key_exists($post_type, $post_types)) {
-                    $post_type = 'post';
-                }
-            }
         }
 
         // Get settings for all post types
@@ -1960,13 +1891,6 @@ PROMPT;
      * Add support for custom post types
      */
     public function add_custom_post_type_support() {
-        // Check license status before enabling functionality
-        $license_status = get_option('bmo_license_status', 'invalid');
-        if ($license_status !== 'success') {
-            // If license is not valid, prevent custom post type support from loading
-            return;
-        }
-
         // Get all public custom post types
         $custom_post_types = get_post_types(array(
             'public'   => true,
@@ -2063,12 +1987,6 @@ PROMPT;
             wp_die(__('You do not have sufficient permissions to access this page.', 'ai-content-optimizer'));
         }
 
-        $license_status = get_option('bmo_license_status', 'invalid');
-        if ($license_status !== 'success') {
-            echo '<div class="notice notice-error"><p>' . __('A valid license is required to use Bulk Meta Optimizer. Please enter your license key in Advanced Settings.', 'ai-content-optimizer') . '</p></div>';
-            return;
-        }
-
         // Get existing brand profile data
         $brand_profile = get_option('aico_brand_profile', array());
         $is_profile_generated = !empty($brand_profile);
@@ -2095,24 +2013,24 @@ PROMPT;
                 <!-- Edit Profile Section -->
                 <div class="aico-card">
                     <h2><?php _e('Edit Brand Profile', 'ai-content-optimizer'); ?></h2>
-                    <p><?php _e('Review and edit your brand profile. You can modify any section to better reflect your brand.', 'ai-content-optimizer'); ?></p>
+                    <p><?php _e('Edit your brand profile to customize how AI generates content for your website.', 'ai-content-optimizer'); ?></p>
                     
                     <form id="aico-brand-profile-form" class="aico-brand-profile-form">
                         <?php wp_nonce_field('aico_save_brand_profile', 'aico_brand_profile_nonce'); ?>
                         
                         <div class="aico-profile-section">
                             <h3><?php _e('Brand Overview', 'ai-content-optimizer'); ?></h3>
-                            <textarea name="brand_overview" rows="4" class="large-text" placeholder="<?php _e('Enter your brand overview...', 'ai-content-optimizer'); ?>"><?php echo esc_textarea($brand_profile['overview'] ?? ''); ?></textarea>
+                            <textarea name="brand_overview" rows="4" class="large-text" placeholder="<?php _e('Describe your brand, what you do, and your mission...', 'ai-content-optimizer'); ?>"><?php echo esc_textarea($brand_profile['overview'] ?? ''); ?></textarea>
                         </div>
                         
                         <div class="aico-profile-section">
                             <h3><?php _e('Target Audience', 'ai-content-optimizer'); ?></h3>
-                            <textarea name="target_audience" rows="3" class="large-text" placeholder="<?php _e('Describe your target audience...', 'ai-content-optimizer'); ?>"><?php echo esc_textarea($brand_profile['target_audience'] ?? ''); ?></textarea>
+                            <textarea name="target_audience" rows="3" class="large-text" placeholder="<?php _e('Describe your ideal customer or target audience...', 'ai-content-optimizer'); ?>"><?php echo esc_textarea($brand_profile['target_audience'] ?? ''); ?></textarea>
                         </div>
                         
                         <div class="aico-profile-section">
                             <h3><?php _e('Brand Tone', 'ai-content-optimizer'); ?></h3>
-                            <textarea name="brand_tone" rows="3" class="large-text" placeholder="<?php _e('Describe the tone you want to use in your content...', 'ai-content-optimizer'); ?>"><?php echo esc_textarea($brand_profile['tone'] ?? ''); ?></textarea>
+                            <textarea name="brand_tone" rows="3" class="large-text" placeholder="<?php _e('Describe the tone and voice you want to use in your content...', 'ai-content-optimizer'); ?>"><?php echo esc_textarea($brand_profile['tone'] ?? ''); ?></textarea>
                         </div>
                         
                         <div class="aico-profile-section">
