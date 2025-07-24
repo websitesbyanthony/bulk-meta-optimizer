@@ -169,7 +169,9 @@ class AI_Content_Optimizer {
      */
     private function set_default_prompts() {
         // Default prompts for post type
-        $post_title_prompt = "You are an SEO expert. Write an SEO-friendly post title (60 chars max). 
+        $post_title_prompt = "You are an SEO expert. Write an SEO-friendly post title.
+
+CRITICAL CHARACTER LIMIT: Your response MUST be exactly 60 characters or less. Count carefully and ensure you do not exceed this limit.
 
 IMPORTANT PRIORITY ORDER:
 1. PRIMARY FOCUS: The page title should be your main focus and guide the optimization
@@ -178,7 +180,9 @@ IMPORTANT PRIORITY ORDER:
 
 Use a {brand_tone} tone for a {target_audience} audience. Consider our brand overview: {brand_overview}. No exclamation marks or quotation marks.";
         
-        $post_meta_prompt = "You are an SEO expert. Write a meta description (160 chars max) for this post. 
+        $post_meta_prompt = "You are an SEO expert. Write a meta description for this post.
+
+CRITICAL CHARACTER LIMIT: Your response MUST be exactly 160 characters or less. Count carefully and ensure you do not exceed this limit.
 
 IMPORTANT PRIORITY ORDER:
 1. PRIMARY FOCUS: The page title should be your main focus and guide the optimization
@@ -195,6 +199,12 @@ IMPORTANT PRIORITY ORDER:
 1. PRIMARY FOCUS: The page title should be your main focus and guide the optimization
 2. SECONDARY FOCUS: Use the page content to support and expand on the title
 3. ADDITIONAL CONTEXT: Use brand profile information as supplementary context only
+
+CHARACTER LIMIT GUIDELINES:
+- Keep content concise and focused
+- Avoid unnecessary repetition
+- Prioritize quality over quantity
+- Ensure all text serves the main purpose
 
 It is crucial to:
 Preserve all shortcodes, CSS, HTML classes, IDs, and structure exactly as they are. This includes all Visual Composer elements, styling, and embedded HTML tags. Do not alter or remove any CSS, HTML classes, or structural elements within the template.
@@ -1251,8 +1261,8 @@ PROMPT;
             return new WP_Error(
                 'usage_limit_exceeded', 
                 sprintf(
-                    __('You have reached the limit of 10 free optimizations. %s to continue using Bulk Meta Optimizer.', 'ai-content-optimizer'),
-                    '<a href="https://bulkmetaoptimizer.com/" target="_blank">Purchase a license</a>'
+                    __('Limit reached: 10 free optimizations used. %s for unlimited access.', 'ai-content-optimizer'),
+                    '<a href="https://bulkmetaoptimizer.com/" target="_blank" style="color: #0073aa; text-decoration: underline;">Purchase License</a>'
                 )
             );
         }
@@ -1522,6 +1532,61 @@ PROMPT;
     }
 
     /**
+     * Strictly enforce character limits
+     */
+    private function enforce_character_limit($text, $max_chars, $type = 'text') {
+        if (empty($text)) {
+            return '';
+        }
+
+        // Get current character count
+        $current_chars = mb_strlen($text, 'UTF-8');
+        
+        if ($current_chars <= $max_chars) {
+            return $text;
+        }
+
+        // Log the truncation for debugging
+        error_log("Character limit exceeded for {$type}: {$current_chars} chars (limit: {$max_chars})");
+        
+        // Truncate to exact limit
+        $truncated = mb_substr($text, 0, $max_chars, 'UTF-8');
+        
+        // Try to truncate at a word boundary if possible
+        $last_space = mb_strrpos($truncated, ' ', 0, 'UTF-8');
+        if ($last_space !== false && $last_space > ($max_chars * 0.8)) {
+            $truncated = mb_substr($truncated, 0, $last_space, 'UTF-8');
+        }
+        
+        // Remove trailing punctuation if it looks incomplete
+        $truncated = rtrim($truncated, '.,;:!?');
+        
+        error_log("Truncated {$type} to: " . mb_strlen($truncated, 'UTF-8') . " chars");
+        
+        return $truncated;
+    }
+
+    /**
+     * Log character count for debugging
+     */
+    private function log_character_count($text, $type, $expected_limit = null) {
+        if (empty($text)) {
+            error_log("Character count for {$type}: 0 chars");
+            return;
+        }
+
+        $count = mb_strlen($text, 'UTF-8');
+        $log_message = "Character count for {$type}: {$count} chars";
+        
+        if ($expected_limit !== null) {
+            $status = $count <= $expected_limit ? 'OK' : 'EXCEEDED';
+            $log_message .= " (limit: {$expected_limit}) - {$status}";
+        }
+        
+        error_log($log_message);
+    }
+
+    /**
      * AJAX bulk optimize
      */
     public function ajax_bulk_optimize() {
@@ -1700,13 +1765,15 @@ PROMPT;
             // Generate title
             if ($optimize_title) {
                 error_log('Optimizing title');
-                $title_full_prompt = $title_prompt . "\n\nPRIORITY FOCUS: The page title is your primary focus.\n\nCurrent title: {$current_title}\n\nCurrent content excerpt: {$trimmed_content}\n\nPlease provide your response as plain text without any formatting.";
+                $title_full_prompt = $title_prompt . "\n\nPRIORITY FOCUS: The page title is your primary focus.\n\nCurrent title: {$current_title}\n\nCurrent content excerpt: {$trimmed_content}\n\nCRITICAL: Your response MUST be exactly 60 characters or less. Count carefully and ensure you do not exceed this limit.\n\nPlease provide your response as plain text without any formatting.";
                 $title_response = $this->call_openai_api_direct($api_key, $model, $title_full_prompt, 60, 0.4);
                 if (is_wp_error($title_response)) {
                     error_log('Title optimization failed: ' . $title_response->get_error_message());
                     return $title_response;
                 }
-                $results['title'] = $this->process_generated_text($title_response, $excluded_words_array);
+                $processed_title = $this->process_generated_text($title_response, $excluded_words_array);
+                $results['title'] = $this->enforce_character_limit($processed_title, 60, 'title');
+                $this->log_character_count($results['title'], 'title', 60);
                 update_post_meta($post_id, '_aico_title_optimized', true);
                 $updated = true;
             }
@@ -1714,13 +1781,15 @@ PROMPT;
             // Generate meta description
             if ($optimize_meta) {
                 error_log('Optimizing meta');
-                $meta_full_prompt = $meta_prompt . "\n\nPRIORITY FOCUS: The page title is your primary focus.\n\nTitle: " . ($results['title'] ? $results['title'] : $current_title) . "\n\nContent excerpt: {$trimmed_content}\n\nPlease provide your response as plain text without any formatting.";
+                $meta_full_prompt = $meta_prompt . "\n\nPRIORITY FOCUS: The page title is your primary focus.\n\nTitle: " . ($results['title'] ? $results['title'] : $current_title) . "\n\nContent excerpt: {$trimmed_content}\n\nCRITICAL: Your response MUST be exactly 160 characters or less. Count carefully and ensure you do not exceed this limit.\n\nPlease provide your response as plain text without any formatting.";
                 $meta_response = $this->call_openai_api_direct($api_key, $model, $meta_full_prompt, 160, 0.4);
                 if (is_wp_error($meta_response)) {
                     error_log('Meta optimization failed: ' . $meta_response->get_error_message());
                     return $meta_response;
                 }
-                $results['meta'] = $this->process_generated_text($meta_response, $excluded_words_array);
+                $processed_meta = $this->process_generated_text($meta_response, $excluded_words_array);
+                $results['meta'] = $this->enforce_character_limit($processed_meta, 160, 'meta');
+                $this->log_character_count($results['meta'], 'meta', 160);
                 update_post_meta($post_id, '_aico_meta_optimized', true);
                 $updated = true;
             }
@@ -1784,7 +1853,7 @@ PROMPT;
                 } else {
                     // Non-preserve path
                     $content_for_ai = mb_substr(wp_strip_all_tags($current_content), 0, 3000);
-                    $plain_prompt = $content_prompt . "\n\nPRIORITY FOCUS: The page title is your primary focus.\n\nTitle: " . ($results['title'] ? $results['title'] : $current_title) . "\n\nCurrent content: {$content_for_ai}\n\nPlease provide your response in raw HTML format.";
+                    $plain_prompt = $content_prompt . "\n\nPRIORITY FOCUS: The page title is your primary focus.\n\nTitle: " . ($results['title'] ? $results['title'] : $current_title) . "\n\nCurrent content: {$content_for_ai}\n\nCHARACTER LIMIT: Keep content concise and focused. Avoid unnecessary repetition.\n\nPlease provide your response in raw HTML format.";
                     $content_response = $this->call_openai_api_direct($api_key, $model, $plain_prompt, $max_tokens, $temperature);
                     if (is_wp_error($content_response)) {
                         error_log('Content optimization failed: ' . $content_response->get_error_message());

@@ -634,3 +634,46 @@
     padding: 16px 0 !important;
   }
 }
+
+/* Error message styling for row actions */
+.aico-optimize {
+  color: #0073aa !important;
+  text-decoration: none !important;
+}
+
+.aico-optimize:hover {
+  color: #005a87 !important;
+  text-decoration: underline !important;
+}
+
+/* Style error messages in row actions */
+.row-actions .aico-optimize {
+  display: inline-block !important;
+  margin-right: 10px !important;
+  padding: 2px 6px !important;
+  border-radius: 3px !important;
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+}
+
+/* Error state styling */
+.row-actions .aico-optimize.aico-error-state {
+  background: #f8d7da !important;
+  color: #721c24 !important;
+  border: 1px solid #f5c6cb !important;
+  padding: 4px 8px !important;
+  border-radius: 4px !important;
+  font-size: 11px !important;
+  max-width: 300px !important;
+  word-wrap: break-word !important;
+}
+
+.row-actions .aico-optimize.aico-error-state a {
+  color: #0073aa !important;
+  text-decoration: underline !important;
+  font-weight: 500 !important;
+}
+
+.row-actions .aico-optimize.aico-error-state a:hover {
+  color: #005a87 !important;
+}

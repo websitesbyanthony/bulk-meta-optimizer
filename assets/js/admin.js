@@ -66,22 +66,22 @@
                 },
                 success: function(response) {
                     if (response.success) {
-                        $link.text(aicoData.strings.success);
+                        $link.removeClass('aico-error-state').text(aicoData.strings.success);
                         setTimeout(function() {
                             $link.text(aicoData.strings.optimize);
                         }, 2000);
                     } else {
-                        $link.text(aicoData.strings.error + ' ' + response.data);
+                        $link.addClass('aico-error-state').html(aicoData.strings.error + ' ' + response.data);
                         setTimeout(function() {
-                            $link.text(aicoData.strings.optimize);
-                        }, 3000);
+                            $link.removeClass('aico-error-state').text(aicoData.strings.optimize);
+                        }, 5000);
                     }
                 },
                 error: function(xhr, status, error) {
-                    $link.text(aicoData.strings.error + ' ' + error);
+                    $link.addClass('aico-error-state').html(aicoData.strings.error + ' ' + error);
                     setTimeout(function() {
-                        $link.text(aicoData.strings.optimize);
-                    }, 3000);
+                        $link.removeClass('aico-error-state').text(aicoData.strings.optimize);
+                    }, 5000);
                 }
             });
         });
