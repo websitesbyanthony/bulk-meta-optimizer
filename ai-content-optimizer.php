@@ -272,6 +272,7 @@ PROMPT;
             add_action('wp_ajax_aico_build_brand_profile', array($this, 'ajax_build_brand_profile'));
             add_action('wp_ajax_aico_save_brand_profile', array($this, 'ajax_save_brand_profile'));
             add_action('wp_ajax_aico_bulk_optimize_item', array($this, 'ajax_bulk_optimize_item'));
+            add_action('wp_ajax_aico_manual_license_check', array($this, 'ajax_manual_license_check'));
 
             // Add row actions
             add_filter('post_row_actions', array($this, 'add_row_actions'), 10, 2);
@@ -953,6 +954,21 @@ PROMPT;
                     </table>
                     <?php submit_button(__('Save License Key', 'ai-content-optimizer')); ?>
                 </form>
+                
+                <!-- Manual License Check -->
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
+                    <h3><?php _e('Manual License Check', 'ai-content-optimizer'); ?></h3>
+                    <p><?php _e('If your license is showing as invalid, click the button below to manually check the license status.', 'ai-content-optimizer'); ?></p>
+                    <button type="button" id="bmo-manual-license-check" class="button button-secondary"><?php _e('Check License Status', 'ai-content-optimizer'); ?></button>
+                    <div id="bmo-license-check-result"></div>
+                </div>
+                
+                <!-- Debug License (Temporary) -->
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
+                    <h3><?php _e('Debug License (Temporary)', 'ai-content-optimizer'); ?></h3>
+                    <p><?php _e('Click the button below to see detailed license validation information for debugging.', 'ai-content-optimizer'); ?></p>
+                    <a href="<?php echo esc_url(admin_url('admin-post.php?action=bmo_debug_license')); ?>" class="button button-secondary" target="_blank"><?php _e('Debug License', 'ai-content-optimizer'); ?></a>
+                </div>
             </div>
 
             <!-- API Settings Card -->
@@ -1241,6 +1257,75 @@ PROMPT;
             wp_send_json_error($test_response->get_error_message());
         }
         wp_send_json_success(__('API connection successful!', 'ai-content-optimizer'));
+    }
+
+    /**
+     * AJAX manual license check
+     */
+    public function ajax_manual_license_check() {
+        check_ajax_referer('aico-nonce', 'nonce');
+        $capability = $this->get_required_capability();
+        if (!current_user_can($capability)) {
+            wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
+        }
+
+        $key = get_option('bmo_license_key', '');
+        if (empty($key)) {
+            wp_send_json_error(__('No license key found. Please enter your license key first.', 'ai-content-optimizer'));
+        }
+
+        $parsed = parse_url(home_url());
+        $full_url = $parsed['scheme'] . '://' . $parsed['host'];
+        $host_only = $parsed['host'];
+
+        $body = [
+            'slm_action'        => 'slm_check',
+            'secret_key'        => BMO_SLM_SECRET_VERIFY,
+            'license_key'       => $key,
+            'item_reference'    => BMO_SLM_ITEM,
+            'url'               => $full_url,
+            'domain_name'       => $host_only,
+            'registered_domain' => $full_url,
+        ];
+
+        $response = wp_remote_post(BMO_SLM_SERVER, [
+            'body' => $body,
+            'timeout' => 15,
+            'sslverify' => true,
+        ]);
+
+        if (is_wp_error($response)) {
+            wp_send_json_error(__('Connection error: ', 'ai-content-optimizer') . $response->get_error_message());
+        }
+
+        $response_code = wp_remote_retrieve_response_code($response);
+        $response_body = wp_remote_retrieve_body($response);
+        
+        $data = json_decode($response_body, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            wp_send_json_error(__('Invalid response from license server. Response: ', 'ai-content-optimizer') . $response_body);
+        }
+
+        if (!empty($data['result'])) {
+            update_option('bmo_license_status', $data['result']);
+            
+            $status_messages = [
+                'success' => __('✅ License is valid!', 'ai-content-optimizer'),
+                'expired' => __('⚠️ License has expired.', 'ai-content-optimizer'),
+                'invalid' => __('❌ License is invalid.', 'ai-content-optimizer'),
+                'error' => __('❌ License check failed.', 'ai-content-optimizer')
+            ];
+            
+            $message = isset($status_messages[$data['result']]) ? $status_messages[$data['result']] : __('Unknown status: ', 'ai-content-optimizer') . $data['result'];
+            
+            if (!empty($data['message'])) {
+                $message .= ' (' . $data['message'] . ')';
+            }
+            
+            wp_send_json_success($message);
+        } else {
+            wp_send_json_error(__('No result received from license server. Response: ', 'ai-content-optimizer') . $response_body);
+        }
     }
 
     /**
@@ -2511,17 +2596,33 @@ add_action('admin_post_bmo_save_license_key', function() {
         'registered_domain' => $full_url,
     ];
 
-    // Removed error_log for SLM payload
+    // Add debugging
+    error_log('BMO License Activation - Request payload: ' . print_r($body, true));
+
     $response = wp_remote_post(BMO_SLM_SERVER, [
         'body' => $body,
         'timeout' => 15,
         'sslverify' => true,
     ]);
 
-    $data = is_wp_error($response)
-          ? ['result' => 'error', 'message' => $response->get_error_message()]
-          : json_decode(wp_remote_retrieve_body($response), true);
-    // Removed error_log for SLM response
+    // Add debugging for response
+    if (is_wp_error($response)) {
+        error_log('BMO License Activation - WP Error: ' . $response->get_error_message());
+        $data = ['result' => 'error', 'message' => $response->get_error_message()];
+    } else {
+        $response_code = wp_remote_retrieve_response_code($response);
+        $response_body = wp_remote_retrieve_body($response);
+        error_log('BMO License Activation - Response code: ' . $response_code);
+        error_log('BMO License Activation - Response body: ' . $response_body);
+        
+        $data = json_decode($response_body, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            error_log('BMO License Activation - JSON decode error: ' . json_last_error_msg());
+            $data = ['result' => 'error', 'message' => 'Invalid JSON response from server'];
+        }
+    }
+
+    error_log('BMO License Activation - Parsed data: ' . print_r($data, true));
 
     if (!empty($data['result']) && $data['result'] === 'error') {
         if (stripos($data['message'], 'maximum allowable domains') !== false) {
@@ -2539,11 +2640,81 @@ add_action('admin_post_bmo_save_license_key', function() {
         $status = 'invalid';
     }
 
+    error_log('BMO License Activation - Final status: ' . $status);
+
     wp_redirect(add_query_arg(
         'bmo_license_status',
         $status,
         admin_url('admin.php?page=ai-content-optimizer-advanced')
     ));
+    exit;
+});
+
+// Temporary debugging function - remove this after fixing the issue
+add_action('admin_post_bmo_debug_license', function() {
+    if ( ! current_user_can('manage_options') ) {
+        wp_die(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
+    }
+    
+    $key = get_option('bmo_license_key', '');
+    if (empty($key)) {
+        wp_die('No license key found');
+    }
+    
+    $parsed = parse_url(home_url());
+    $full_url = $parsed['scheme'] . '://' . $parsed['host'];
+    $host_only = $parsed['host'];
+    
+    echo '<h2>License Debug Information</h2>';
+    echo '<p><strong>License Key:</strong> ' . esc_html($key) . '</p>';
+    echo '<p><strong>Site URL:</strong> ' . esc_html($full_url) . '</p>';
+    echo '<p><strong>Host:</strong> ' . esc_html($host_only) . '</p>';
+    echo '<p><strong>SLM Server:</strong> ' . esc_html(BMO_SLM_SERVER) . '</p>';
+    echo '<p><strong>SLM Item:</strong> ' . esc_html(BMO_SLM_ITEM) . '</p>';
+    
+    $body = [
+        'slm_action'        => 'slm_check',
+        'secret_key'        => BMO_SLM_SECRET_VERIFY,
+        'license_key'       => $key,
+        'item_reference'    => BMO_SLM_ITEM,
+        'url'               => $full_url,
+        'domain_name'       => $host_only,
+        'registered_domain' => $full_url,
+    ];
+    
+    echo '<h3>Request Payload:</h3>';
+    echo '<pre>' . esc_html(print_r($body, true)) . '</pre>';
+    
+    $response = wp_remote_post(BMO_SLM_SERVER, [
+        'body' => $body,
+        'timeout' => 15,
+        'sslverify' => true,
+    ]);
+    
+    echo '<h3>Response:</h3>';
+    if (is_wp_error($response)) {
+        echo '<p><strong>Error:</strong> ' . esc_html($response->get_error_message()) . '</p>';
+    } else {
+        $response_code = wp_remote_retrieve_response_code($response);
+        $response_body = wp_remote_retrieve_body($response);
+        $response_headers = wp_remote_retrieve_headers($response);
+        
+        echo '<p><strong>Response Code:</strong> ' . esc_html($response_code) . '</p>';
+        echo '<p><strong>Response Headers:</strong></p>';
+        echo '<pre>' . esc_html(print_r($response_headers, true)) . '</pre>';
+        echo '<p><strong>Response Body:</strong></p>';
+        echo '<pre>' . esc_html($response_body) . '</pre>';
+        
+        $data = json_decode($response_body, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            echo '<p><strong>JSON Error:</strong> ' . esc_html(json_last_error_msg()) . '</p>';
+        } else {
+            echo '<p><strong>Parsed Data:</strong></p>';
+            echo '<pre>' . esc_html(print_r($data, true)) . '</pre>';
+        }
+    }
+    
+    echo '<p><a href="' . admin_url('admin.php?page=ai-content-optimizer-advanced') . '">Back to Settings</a></p>';
     exit;
 });
 
@@ -2576,15 +2747,39 @@ function bmo_check_license_status() {
         'registered_domain' => $full_url,
     ];
 
+    // Add debugging
+    error_log('BMO License Check - Request payload: ' . print_r($body, true));
+
     $response = wp_remote_post(BMO_SLM_SERVER, [
         'body' => $body,
         'timeout' => 10,
         'sslverify' => true,
     ]);
 
-    $data = json_decode(wp_remote_retrieve_body($response), true);
+    // Add debugging for response
+    if (is_wp_error($response)) {
+        error_log('BMO License Check - WP Error: ' . $response->get_error_message());
+        $data = ['result' => 'error', 'message' => $response->get_error_message()];
+    } else {
+        $response_code = wp_remote_retrieve_response_code($response);
+        $response_body = wp_remote_retrieve_body($response);
+        error_log('BMO License Check - Response code: ' . $response_code);
+        error_log('BMO License Check - Response body: ' . $response_body);
+        
+        $data = json_decode($response_body, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            error_log('BMO License Check - JSON decode error: ' . json_last_error_msg());
+            $data = ['result' => 'error', 'message' => 'Invalid JSON response from server'];
+        }
+    }
+
+    error_log('BMO License Check - Parsed data: ' . print_r($data, true));
+
     if (!empty($data['result'])) {
         update_option('bmo_license_status', $data['result']);
+        error_log('BMO License Check - Updated status to: ' . $data['result']);
+    } else {
+        error_log('BMO License Check - No result in response, keeping current status');
     }
     
     // Set the last check time
