@@ -94,9 +94,9 @@ The following old variables are no longer available:
 3. Customize prompts in Content Settings if needed, using the new brand profile variables
 
 ## Requirements
-- Valid Bulk Meta Optimizer license
 - OpenAI API key configured in plugin settings
 - Homepage content available for analysis
+- For unlimited features: Freemius license (free version has usage limits)
 
 ## Technical Details
 - Uses OpenAI GPT models for content analysis
@@ -108,6 +108,24 @@ The following old variables are no longer available:
 - Progress tracking with individual item processing
 - Brand profile data automatically integrated into all AI prompts
 - Simplified settings interface without content style options
+- **NEW**: Freemius integration for licensing and payments
+
+## Licensing & Usage Limits
+
+### Free Version
+- 10 total content optimizations
+- Bulk optimization limited to 5 posts per operation
+- Full access to brand profile features
+- All core functionality available
+
+### Premium Version
+- Unlimited content optimizations
+- Unlimited bulk operations
+- Priority support
+- Automatic updates
+
+## Migration from SLM to Freemius
+This version has migrated from a custom Software License Manager (SLM) system to Freemius. See `FREEMIUS_SETUP_GUIDE.md` for complete setup instructions.
 
 ## File Structure
 ```

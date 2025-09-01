@@ -450,43 +450,6 @@
             }
         });
         
-        // Manual license check
-        $('#bmo-manual-license-check').on('click', function(e) {
-            e.preventDefault();
-            
-            const $button = $(this);
-            const $result = $('#bmo-license-check-result');
-            
-            // Show loading message
-            $button.prop('disabled', true);
-            $result.html('<div class="aico-loading">Checking license status...</div>');
-            
-            // Send AJAX request
-            $.ajax({
-                url: aicoData.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'aico_manual_license_check',
-                    nonce: aicoData.nonce
-                },
-                success: function(response) {
-                    if (response.success) {
-                        $result.html('<div class="aico-success">' + response.data + '</div>');
-                        // Reload page after 2 seconds to show updated status
-                        setTimeout(function() {
-                            window.location.reload();
-                        }, 2000);
-                    } else {
-                        $result.html('<div class="aico-error">' + response.data + '</div>');
-                    }
-                },
-                error: function(xhr, status, error) {
-                    $result.html('<div class="aico-error">Connection error: ' + error + '</div>');
-                },
-                complete: function() {
-                    $button.prop('disabled', false);
-                }
-            });
-        });
+        // License check JavaScript removed - Freemius handles licensing automatically
     });
 })(jQuery);

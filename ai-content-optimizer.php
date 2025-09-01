@@ -9,39 +9,13 @@
 
 /**
  * ────────────────────────────────────────────────────────────────────────────
- * SLM License Verification & Domain Registration
+ * Freemius Integration
  * ────────────────────────────────────────────────────────────────────────────
  *
- * This plugin uses Software License Manager (SLM) endpoints on bulkmetaoptimizer.com
- * to activate, check, and deactivate licenses tied to the site's domain.
+ * This plugin uses Freemius for licensing, payments, and analytics.
+ * Freemius handles license validation, user management, and automatic updates.
  *
- * 1. Endpoints & Constants
- *    • BMO_SLM_SERVER          = 'https://bulkmetaoptimizer.com'
- *    • BMO_SLM_ITEM            = 'Bulk Meta Optimizer Plugin'
- *    • BMO_SLM_SECRET_VERIFY   = '685361e739ae33.52122910'
- *
- * 2. POST Parameters (all requests)
- *    • slm_action     : 'slm_activate' | 'slm_check' | 'slm_deactivate'
- *    • secret_key     : BMO_SLM_SECRET_VERIFY
- *    • license_key    : (user-entered license string)
- *    • item_reference : BMO_SLM_ITEM
- *    • url            : full site URL (scheme + host), e.g. https://example.com
- *    • domain_name    : host only, e.g. example.com
- *
- * 3. Expected Response
- *    • JSON payload: { "result": "success"|"expired"|"error", "message": "…optional details…" }
- *    • On activate/check, stored in WP option 'bmo_license_status'
- *
- * 4. Gating Logic
- *    • If bmo_license_status !== 'success', plugin hooks and AJAX are disabled
- *    • Admin notice shows "Invalid" or "Expired" messages
- *
- * 5. Hooks & Scheduling
- *    • Activation hook  → slm_activate
- *    • Deactivation hook→ slm_deactivate
- *    • admin_init       → slm_check   (and daily via wp_schedule_event)
- *
- * @see https://bulkmetaoptimizer.com/docs/slm
+ * @see https://freemius.com/
  * ────────────────────────────────────────────────────────────────────────────
  */
 
@@ -50,17 +24,39 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-// ───── SLM License Verification ─────
-if ( ! defined( 'BMO_SLM_SERVER' ) ) {
-    define( 'BMO_SLM_SERVER', 'https://bulkmetaoptimizer.com' );
+// Create a helper function to access the SDK.
+function bmo_fs() {
+    global $bmo_fs;
+
+    if ( ! isset( $bmo_fs ) ) {
+        // Include Freemius SDK.
+        require_once dirname(__FILE__) . '/freemius/start.php';
+
+        $bmo_fs = fs_dynamic_init( array(
+            'id'                  => '15999',  // TODO: Replace with your actual plugin ID from Freemius
+            'slug'                => 'bulk-meta-optimizer',
+            'type'                => 'plugin',
+            'public_key'          => 'pk_YOUR_PUBLIC_KEY_HERE', // TODO: Replace with your actual public key
+            'is_premium'          => false, // Set to true if this is a premium plugin
+            'is_premium_only'     => false, // Set to true if you don't offer a free version
+            'has_addons'          => false,
+            'has_paid_plans'      => true,
+            'menu'                => array(
+                'slug'           => 'ai-content-optimizer',
+                'override_exact' => true,
+                'first-path'     => 'admin.php?page=ai-content-optimizer',
+                'support'        => false,
+            ),
+        ) );
+    }
+
+    return $bmo_fs;
 }
-if ( ! defined( 'BMO_SLM_ITEM' ) ) {
-    define( 'BMO_SLM_ITEM', 'Bulk Meta Optimizer Plugin' );
-}
-if ( ! defined( 'BMO_SLM_SECRET_VERIFY' ) ) {
-    define( 'BMO_SLM_SECRET_VERIFY', '685361e739ae33.52122910' );
-}
-// ───────────────────────────────────
+
+// Init Freemius.
+bmo_fs();
+// Signal that SDK was initiated.
+do_action( 'bmo_fs_loaded' );
 
 require_once __DIR__ . '/restore-defaults.php';
 
@@ -272,7 +268,7 @@ PROMPT;
             add_action('wp_ajax_aico_build_brand_profile', array($this, 'ajax_build_brand_profile'));
             add_action('wp_ajax_aico_save_brand_profile', array($this, 'ajax_save_brand_profile'));
             add_action('wp_ajax_aico_bulk_optimize_item', array($this, 'ajax_bulk_optimize_item'));
-            add_action('wp_ajax_aico_manual_license_check', array($this, 'ajax_manual_license_check'));
+            // Freemius will handle licensing automatically
 
             // Add row actions
             add_filter('post_row_actions', array($this, 'add_row_actions'), 10, 2);
@@ -804,11 +800,7 @@ PROMPT;
             wp_die(__('You do not have sufficient permissions to access this page.', 'ai-content-optimizer'));
         }
 
-        $license_status = get_option('bmo_license_status', 'invalid');
-        if ($license_status !== 'success') {
-            echo '<div class="notice notice-error"><p>' . __('A valid license is required to use Bulk Meta Optimizer. Please enter your license key in Advanced Settings.', 'ai-content-optimizer') . '</p></div>';
-            return;
-        }
+        // Freemius will handle license validation
         $api_key = get_option('aico_openai_api_key', '');
         $model = get_option('aico_openai_model', 'gpt-3.5-turbo');
         $temperature = get_option('aico_openai_temperature', 0.7);
@@ -897,11 +889,8 @@ PROMPT;
             wp_die(__('You do not have sufficient permissions to access this page.', 'ai-content-optimizer'));
         }
 
-        $license_status = get_option('bmo_license_status', 'invalid');
         $custom_css = get_option('aico_custom_css', '');
         $debug_mode = get_option('aico_debug_mode', false);
-        $license_key = get_option('bmo_license_key', '');
-        $license_saved = isset($_GET['bmo_license_saved']) ? sanitize_text_field($_GET['bmo_license_saved']) : '';
         $api_key = get_option('aico_openai_api_key', '');
         $model = get_option('aico_openai_model', 'gpt-3.5-turbo');
         $temperature = get_option('aico_openai_temperature', 0.7);
@@ -920,56 +909,7 @@ PROMPT;
                 </a>
             </div>
 
-            <!-- Purchase License Link -->
-            <div class="aico-card" style="margin-bottom: 20px; background: #fff3cd; border-left: 4px solid #ffc107;">
-                <h2 style="margin-top: 0; color: #856404;"><?php _e('Purchase License', 'ai-content-optimizer'); ?></h2>
-                <p style="margin-bottom: 15px;"><?php _e('Get unlimited optimizations and full access to all features.', 'ai-content-optimizer'); ?></p>
-                <a href="https://bulkmetaoptimizer.com/" target="_blank" class="button button-secondary">
-                    <span class="dashicons dashicons-cart" style="margin-right: 5px;"></span>
-                    <?php _e('Purchase License - $29', 'ai-content-optimizer'); ?>
-                </a>
-            </div>
-
-            <!-- License Key Card -->
-            <div class="aico-card">
-                <h2><?php _e('License Key', 'ai-content-optimizer'); ?></h2>
-                <?php if ($license_status === 'success') : ?>
-                    <div class="notice notice-success inline"><p><?php _e('✔️ License is valid!', 'ai-content-optimizer'); ?></p></div>
-                <?php elseif ($license_status === 'expired') : ?>
-                    <div class="notice notice-warning inline"><p><?php _e('⚠️ License expired.', 'ai-content-optimizer'); ?></p></div>
-                <?php elseif ($license_status === 'invalid') : ?>
-                    <div class="notice notice-error inline"><p><?php _e('❌ Invalid license key.', 'ai-content-optimizer'); ?></p></div>
-                <?php endif; ?>
-                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-                    <input type="hidden" name="action" value="bmo_save_license_key" />
-                    <?php wp_nonce_field('bmo_save_license_key', 'bmo_license_nonce'); ?>
-                    <table class="form-table">
-                        <tr valign="top">
-                            <th scope="row"><label for="bmo_license_key"><?php _e('License Key', 'ai-content-optimizer'); ?></label></th>
-                            <td>
-                                <input type="text" id="bmo_license_key" name="bmo_license_key" value="<?php echo esc_attr($license_key); ?>" class="regular-text" />
-                                <p class="description"><?php _e('Paste your license key here.', 'ai-content-optimizer'); ?></p>
-                            </td>
-                        </tr>
-                    </table>
-                    <?php submit_button(__('Save License Key', 'ai-content-optimizer')); ?>
-                </form>
-                
-                <!-- Manual License Check -->
-                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
-                    <h3><?php _e('Manual License Check', 'ai-content-optimizer'); ?></h3>
-                    <p><?php _e('If your license is showing as invalid, click the button below to manually check the license status.', 'ai-content-optimizer'); ?></p>
-                    <button type="button" id="bmo-manual-license-check" class="button button-secondary"><?php _e('Check License Status', 'ai-content-optimizer'); ?></button>
-                    <div id="bmo-license-check-result"></div>
-                </div>
-                
-                <!-- Debug License (Temporary) -->
-                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
-                    <h3><?php _e('Debug License (Temporary)', 'ai-content-optimizer'); ?></h3>
-                    <p><?php _e('Click the button below to see detailed license validation information for debugging.', 'ai-content-optimizer'); ?></p>
-                    <a href="<?php echo esc_url(admin_url('admin-post.php?action=bmo_debug_license')); ?>" class="button button-secondary" target="_blank"><?php _e('Debug License', 'ai-content-optimizer'); ?></a>
-                </div>
-            </div>
+            <!-- Freemius will handle licensing automatically -->
 
             <!-- API Settings Card -->
             <form method="post" action="options.php">
@@ -1259,95 +1199,26 @@ PROMPT;
         wp_send_json_success(__('API connection successful!', 'ai-content-optimizer'));
     }
 
-    /**
-     * AJAX manual license check
-     */
-    public function ajax_manual_license_check() {
-        check_ajax_referer('aico-nonce', 'nonce');
-        $capability = $this->get_required_capability();
-        if (!current_user_can($capability)) {
-            wp_send_json_error(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
-        }
-
-        $key = get_option('bmo_license_key', '');
-        if (empty($key)) {
-            wp_send_json_error(__('No license key found. Please enter your license key first.', 'ai-content-optimizer'));
-        }
-
-        $parsed = parse_url(home_url());
-        $full_url = $parsed['scheme'] . '://' . $parsed['host'];
-        $host_only = $parsed['host'];
-
-        $body = [
-            'slm_action'        => 'slm_check',
-            'secret_key'        => BMO_SLM_SECRET_VERIFY,
-            'license_key'       => $key,
-            'item_reference'    => BMO_SLM_ITEM,
-            'url'               => $full_url,
-            'domain_name'       => $host_only,
-            'registered_domain' => $full_url,
-        ];
-
-        $response = wp_remote_post(BMO_SLM_SERVER, [
-            'body' => $body,
-            'timeout' => 15,
-            'sslverify' => true,
-        ]);
-
-        if (is_wp_error($response)) {
-            wp_send_json_error(__('Connection error: ', 'ai-content-optimizer') . $response->get_error_message());
-        }
-
-        $response_code = wp_remote_retrieve_response_code($response);
-        $response_body = wp_remote_retrieve_body($response);
-        
-        $data = json_decode($response_body, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            wp_send_json_error(__('Invalid response from license server. Response: ', 'ai-content-optimizer') . $response_body);
-        }
-
-        if (!empty($data['result'])) {
-            update_option('bmo_license_status', $data['result']);
-            
-            $status_messages = [
-                'success' => __('✅ License is valid!', 'ai-content-optimizer'),
-                'expired' => __('⚠️ License has expired.', 'ai-content-optimizer'),
-                'invalid' => __('❌ License is invalid.', 'ai-content-optimizer'),
-                'error' => __('❌ License check failed.', 'ai-content-optimizer')
-            ];
-            
-            $message = isset($status_messages[$data['result']]) ? $status_messages[$data['result']] : __('Unknown status: ', 'ai-content-optimizer') . $data['result'];
-            
-            if (!empty($data['message'])) {
-                $message .= ' (' . $data['message'] . ')';
-            }
-            
-            wp_send_json_success($message);
-        } else {
-            wp_send_json_error(__('No result received from license server. Response: ', 'ai-content-optimizer') . $response_body);
-        }
-    }
+    // License functions removed - Freemius handles licensing automatically
 
     /**
-     * Check usage limits for unlicensed users
+     * Check usage limits using Freemius
      */
     private function check_usage_limit() {
-        $license_status = get_option('bmo_license_status', 'invalid');
-        
-        // If license is valid, no limits
-        if ($license_status === 'success') {
-            return true;
+        // Check if user has a valid license through Freemius
+        if ( bmo_fs()->is_paying() ) {
+            return true; // Paying users have unlimited access
         }
         
-        // For unlicensed users, check if they've exceeded 10 runs
-        $usage_count = get_option('aico_unlicensed_usage_count', 0);
+        // For free users, check if they've exceeded the limit
+        $usage_count = get_option('aico_free_usage_count', 0);
         
         if ($usage_count >= 10) {
             return new WP_Error(
                 'usage_limit_exceeded', 
                 sprintf(
                     __('Limit reached: 10 free optimizations used. %s for unlimited access.', 'ai-content-optimizer'),
-                    '<a href="https://bulkmetaoptimizer.com/" target="_blank" style="color: #0073aa; text-decoration: underline;">Purchase License</a>'
+                    '<a href="' . bmo_fs()->get_upgrade_url() . '" style="color: #0073aa; text-decoration: underline;">Upgrade Now</a>'
                 )
             );
         }
@@ -1356,15 +1227,13 @@ PROMPT;
     }
     
     /**
-     * Increment usage count for unlicensed users
+     * Increment usage count for free users
      */
     private function increment_usage_count() {
-        $license_status = get_option('bmo_license_status', 'invalid');
-        
-        // Only track usage for unlicensed users
-        if ($license_status !== 'success') {
-            $current_count = get_option('aico_unlicensed_usage_count', 0);
-            update_option('aico_unlicensed_usage_count', $current_count + 1);
+        // Only track usage for free users
+        if ( ! bmo_fs()->is_paying() ) {
+            $current_count = get_option('aico_free_usage_count', 0);
+            update_option('aico_free_usage_count', $current_count + 1);
         }
     }
 
@@ -1693,12 +1562,11 @@ PROMPT;
             wp_send_json_error(__('No posts selected.', 'ai-content-optimizer'));
         }
 
-        // For unlicensed users, limit bulk operations to prevent abuse
-        $license_status = get_option('bmo_license_status', 'invalid');
-        if ($license_status !== 'success' && count($post_ids) > 5) {
+        // Check if user can perform bulk operations
+        if ( ! bmo_fs()->is_paying() && count($post_ids) > 5 ) {
             wp_send_json_error(sprintf(
-                __('Bulk optimization is limited to 5 posts for unlicensed users. %s for unlimited bulk optimization.', 'ai-content-optimizer'),
-                '<a href="https://bulkmetaoptimizer.com/" target="_blank">Purchase a license</a>'
+                __('Bulk optimization is limited to 5 posts for free users. %s for unlimited bulk optimization.', 'ai-content-optimizer'),
+                '<a href="' . bmo_fs()->get_upgrade_url() . '" target="_blank">Upgrade Now</a>'
             ));
         }
 
@@ -2572,276 +2440,4 @@ PROMPT;
     }
 }
 
-// Handle license key save with SLM check
-add_action('admin_post_bmo_save_license_key', function() {
-    if ( ! current_user_can('manage_options') ) {
-        wp_die(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
-    }
-    check_admin_referer('bmo_save_license_key', 'bmo_license_nonce');
-
-    $key = sanitize_text_field($_POST['bmo_license_key'] ?? '');
-    update_option('bmo_license_key', $key);
-
-    $parsed = parse_url(home_url());
-    $full_url = $parsed['scheme'] . '://' . $parsed['host'];
-    $host_only = $parsed['host'];
-
-    $body = [
-        'slm_action'        => 'slm_activate',
-        'secret_key'        => BMO_SLM_SECRET_VERIFY,
-        'license_key'       => $key,
-        'item_reference'    => BMO_SLM_ITEM,
-        'url'               => $full_url,
-        'domain_name'       => $host_only,
-        'registered_domain' => $full_url,
-    ];
-
-    // Add debugging
-    error_log('BMO License Activation - Request payload: ' . print_r($body, true));
-
-    $response = wp_remote_post(BMO_SLM_SERVER, [
-        'body' => $body,
-        'timeout' => 15,
-        'sslverify' => true,
-    ]);
-
-    // Add debugging for response
-    if (is_wp_error($response)) {
-        error_log('BMO License Activation - WP Error: ' . $response->get_error_message());
-        $data = ['result' => 'error', 'message' => $response->get_error_message()];
-    } else {
-        $response_code = wp_remote_retrieve_response_code($response);
-        $response_body = wp_remote_retrieve_body($response);
-        error_log('BMO License Activation - Response code: ' . $response_code);
-        error_log('BMO License Activation - Response body: ' . $response_body);
-        
-        $data = json_decode($response_body, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            error_log('BMO License Activation - JSON decode error: ' . json_last_error_msg());
-            $data = ['result' => 'error', 'message' => 'Invalid JSON response from server'];
-        }
-    }
-
-    error_log('BMO License Activation - Parsed data: ' . print_r($data, true));
-
-    if (!empty($data['result']) && $data['result'] === 'error') {
-        if (stripos($data['message'], 'maximum allowable domains') !== false) {
-            // a license‐limit violation
-            wp_redirect(add_query_arg('bmo_license_status', 'limit_reached', admin_url('admin.php?page=ai-content-optimizer-advanced')));
-            exit;
-        }
-    }
-
-    if (!empty($data['result']) && $data['result'] === 'success') {
-        $status = 'success';
-    } elseif (!empty($data['message']) && stripos($data['message'], 'expired') !== false) {
-        $status = 'expired';
-    } else {
-        $status = 'invalid';
-    }
-
-    error_log('BMO License Activation - Final status: ' . $status);
-
-    wp_redirect(add_query_arg(
-        'bmo_license_status',
-        $status,
-        admin_url('admin.php?page=ai-content-optimizer-advanced')
-    ));
-    exit;
-});
-
-// Temporary debugging function - remove this after fixing the issue
-add_action('admin_post_bmo_debug_license', function() {
-    if ( ! current_user_can('manage_options') ) {
-        wp_die(__('You do not have permission to perform this action.', 'ai-content-optimizer'));
-    }
-    
-    $key = get_option('bmo_license_key', '');
-    if (empty($key)) {
-        wp_die('No license key found');
-    }
-    
-    $parsed = parse_url(home_url());
-    $full_url = $parsed['scheme'] . '://' . $parsed['host'];
-    $host_only = $parsed['host'];
-    
-    echo '<h2>License Debug Information</h2>';
-    echo '<p><strong>License Key:</strong> ' . esc_html($key) . '</p>';
-    echo '<p><strong>Site URL:</strong> ' . esc_html($full_url) . '</p>';
-    echo '<p><strong>Host:</strong> ' . esc_html($host_only) . '</p>';
-    echo '<p><strong>SLM Server:</strong> ' . esc_html(BMO_SLM_SERVER) . '</p>';
-    echo '<p><strong>SLM Item:</strong> ' . esc_html(BMO_SLM_ITEM) . '</p>';
-    
-    $body = [
-        'slm_action'        => 'slm_check',
-        'secret_key'        => BMO_SLM_SECRET_VERIFY,
-        'license_key'       => $key,
-        'item_reference'    => BMO_SLM_ITEM,
-        'url'               => $full_url,
-        'domain_name'       => $host_only,
-        'registered_domain' => $full_url,
-    ];
-    
-    echo '<h3>Request Payload:</h3>';
-    echo '<pre>' . esc_html(print_r($body, true)) . '</pre>';
-    
-    $response = wp_remote_post(BMO_SLM_SERVER, [
-        'body' => $body,
-        'timeout' => 15,
-        'sslverify' => true,
-    ]);
-    
-    echo '<h3>Response:</h3>';
-    if (is_wp_error($response)) {
-        echo '<p><strong>Error:</strong> ' . esc_html($response->get_error_message()) . '</p>';
-    } else {
-        $response_code = wp_remote_retrieve_response_code($response);
-        $response_body = wp_remote_retrieve_body($response);
-        $response_headers = wp_remote_retrieve_headers($response);
-        
-        echo '<p><strong>Response Code:</strong> ' . esc_html($response_code) . '</p>';
-        echo '<p><strong>Response Headers:</strong></p>';
-        echo '<pre>' . esc_html(print_r($response_headers, true)) . '</pre>';
-        echo '<p><strong>Response Body:</strong></p>';
-        echo '<pre>' . esc_html($response_body) . '</pre>';
-        
-        $data = json_decode($response_body, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            echo '<p><strong>JSON Error:</strong> ' . esc_html(json_last_error_msg()) . '</p>';
-        } else {
-            echo '<p><strong>Parsed Data:</strong></p>';
-            echo '<pre>' . esc_html(print_r($data, true)) . '</pre>';
-        }
-    }
-    
-    echo '<p><a href="' . admin_url('admin.php?page=ai-content-optimizer-advanced') . '">Back to Settings</a></p>';
-    exit;
-});
-
-// License status check function
-function bmo_check_license_status() {
-    // Check if we already checked today
-    $last_check = get_transient('bmo_license_last_check');
-    if ($last_check && (time() - $last_check) < DAY_IN_SECONDS) {
-        return; // Already checked today
-    }
-
-    $key = get_option('bmo_license_key', '');
-    if (empty($key)) {
-        update_option('bmo_license_status', 'invalid');
-        set_transient('bmo_license_last_check', time(), DAY_IN_SECONDS);
-        return;
-    }
-
-    $parsed = parse_url(home_url());
-    $full_url = $parsed['scheme'] . '://' . $parsed['host'];
-    $host_only = $parsed['host'];
-
-    $body = [
-        'slm_action'        => 'slm_check',
-        'secret_key'        => BMO_SLM_SECRET_VERIFY,
-        'license_key'       => $key,
-        'item_reference'    => BMO_SLM_ITEM,
-        'url'               => $full_url,
-        'domain_name'       => $host_only,
-        'registered_domain' => $full_url,
-    ];
-
-    // Add debugging
-    error_log('BMO License Check - Request payload: ' . print_r($body, true));
-
-    $response = wp_remote_post(BMO_SLM_SERVER, [
-        'body' => $body,
-        'timeout' => 10,
-        'sslverify' => true,
-    ]);
-
-    // Add debugging for response
-    if (is_wp_error($response)) {
-        error_log('BMO License Check - WP Error: ' . $response->get_error_message());
-        $data = ['result' => 'error', 'message' => $response->get_error_message()];
-    } else {
-        $response_code = wp_remote_retrieve_response_code($response);
-        $response_body = wp_remote_retrieve_body($response);
-        error_log('BMO License Check - Response code: ' . $response_code);
-        error_log('BMO License Check - Response body: ' . $response_body);
-        
-        $data = json_decode($response_body, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            error_log('BMO License Check - JSON decode error: ' . json_last_error_msg());
-            $data = ['result' => 'error', 'message' => 'Invalid JSON response from server'];
-        }
-    }
-
-    error_log('BMO License Check - Parsed data: ' . print_r($data, true));
-
-    if (!empty($data['result'])) {
-        update_option('bmo_license_status', $data['result']);
-        error_log('BMO License Check - Updated status to: ' . $data['result']);
-    } else {
-        error_log('BMO License Check - No result in response, keeping current status');
-    }
-    
-    // Set the last check time
-    set_transient('bmo_license_last_check', time(), DAY_IN_SECONDS);
-}
-add_action('admin_init','bmo_check_license_status');
-
-// Deactivation hook
-function bmo_deactivate_license() {
-    $key = get_option('bmo_license_key', '');
-    if (empty($key)) {
-        return;
-    }
-
-    $parsed = parse_url(home_url());
-    $full_url = $parsed['scheme'] . '://' . $parsed['host'];
-    $host_only = $parsed['host'];
-
-    $body = [
-        'slm_action'        => 'slm_deactivate',
-        'secret_key'        => BMO_SLM_SECRET_VERIFY,
-        'license_key'       => $key,
-        'item_reference'    => BMO_SLM_ITEM,
-        'url'               => $full_url,
-        'domain_name'       => $host_only,
-        'registered_domain' => $full_url,
-    ];
-
-    wp_remote_post(BMO_SLM_SERVER, [
-        'body' => $body,
-        'timeout' => 10,
-        'sslverify' => true,
-    ]);
-}
-register_deactivation_hook(__FILE__, 'bmo_deactivate_license');
-
-// Schedule daily license check
-if ( ! wp_next_scheduled('bmo_daily_license_check') ) {
-    wp_schedule_event( time(), 'daily', 'bmo_daily_license_check' );
-}
-add_action('bmo_daily_license_check','bmo_check_license_status');
-
-// Gate plugin functionality on license status
-add_action('plugins_loaded','bmo_maybe_disable_plugin', 5);
-function bmo_maybe_disable_plugin() {
-    $status = get_option('bmo_license_status', 'invalid');
-    
-    if ($status === 'success') {
-        return; // Plugin should be enabled
-    } elseif ($status === 'expired') {
-        $msg = 'Your license has expired. Please renew to continue using Bulk Meta Optimizer.';
-    } elseif ($status === 'limit_reached') {
-        $msg = 'You\'ve reached the maximum number of activations for this license.';
-    } else {
-        $msg = 'A valid license is required to use Bulk Meta Optimizer. Please enter your license key in Settings.';
-    }
-    
-    // show an admin notice
-    add_action('admin_notices', function() use($msg){
-        echo "<div class='notice notice-error'><p>{$msg}</p></div>";
-    });
-    
-    // Don't completely stop the plugin - let it load so users can access settings
-    // The core functionality is already gated in the init() method
-}
+// SLM functions removed - Freemius will handle all licensing automatically
