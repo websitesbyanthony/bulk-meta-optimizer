@@ -24,47 +24,57 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-// Create a helper function to access the SDK.
-function bmo_fs() {
-    global $bmo_fs;
+if ( function_exists( 'bmo_fs' ) ) {
+    bmo_fs()->set_basename( true, __FILE__ );
+} else {
+    /**
+     * DO NOT REMOVE THIS IF, IT IS ESSENTIAL FOR THE
+     * `function_exists` CALL ABOVE TO PROPERLY WORK.
+     */
+    if ( ! function_exists( 'bmo_fs' ) ) {
+        // Create a helper function for easy SDK access.
+        function bmo_fs() {
+            global $bmo_fs;
 
-    if ( ! isset( $bmo_fs ) ) {
-        // Include Freemius SDK.
-        require_once dirname(__FILE__) . '/freemius/start.php';
+            if ( ! isset( $bmo_fs ) ) {
+                // Include Freemius SDK.
+                require_once dirname( __FILE__ ) . '/vendor/freemius/start.php';
+                $bmo_fs = fs_dynamic_init( array(
+                    'id'                  => '20513',
+                    'slug'                => 'bulk-meta-optimizer',
+                    'type'                => 'plugin',
+                    'public_key'          => 'pk_9d097101016ae589e835e7b0cad9e',
+                    'is_premium'          => true,
+                    // If your plugin is a serviceware, set this option to false.
+                    'has_premium_version' => true,
+                    'has_addons'          => false,
+                    'has_paid_plans'      => true,
+                    // Automatically removed in the free version. If you're not using the
+                    // auto-generated free version, delete this line before uploading to wp.org.
+                    'wp_org_gatekeeper'   => 'OA7#BoRiBNqdf52FvzEf!!074aRLPs8fspif$7K1#4u4Csys1fQlCecVcUTOs2mcpeVHi#C2j9d09fOTvbC0HloPT7fFee5WdS3G',
+                    'menu'                => array(
+                        'support'        => false,
+                    ),
+                ) );
+            }
 
-        $bmo_fs = fs_dynamic_init( array(
-            'id'                  => '15999',  // TODO: Replace with your actual plugin ID from Freemius
-            'slug'                => 'bulk-meta-optimizer',
-            'type'                => 'plugin',
-            'public_key'          => 'pk_YOUR_PUBLIC_KEY_HERE', // TODO: Replace with your actual public key
-            'is_premium'          => false, // Set to true if this is a premium plugin
-            'is_premium_only'     => false, // Set to true if you don't offer a free version
-            'has_addons'          => false,
-            'has_paid_plans'      => true,
-            'menu'                => array(
-                'slug'           => 'ai-content-optimizer',
-                'override_exact' => true,
-                'first-path'     => 'admin.php?page=ai-content-optimizer',
-                'support'        => false,
-            ),
-        ) );
+            return $bmo_fs;
+        }
+
+        // Init Freemius.
+        bmo_fs();
+        // Signal that SDK was initiated.
+        do_action( 'bmo_fs_loaded' );
     }
 
-    return $bmo_fs;
+    require_once __DIR__ . '/restore-defaults.php';
+
+    // Initialize the plugin
+    function ai_content_optimizer_init() {
+        AI_Content_Optimizer::get_instance();
+    }
+    add_action('plugins_loaded', 'ai_content_optimizer_init');
 }
-
-// Init Freemius.
-bmo_fs();
-// Signal that SDK was initiated.
-do_action( 'bmo_fs_loaded' );
-
-require_once __DIR__ . '/restore-defaults.php';
-
-// Initialize the plugin
-function ai_content_optimizer_init() {
-    AI_Content_Optimizer::get_instance();
-}
-add_action('plugins_loaded', 'ai_content_optimizer_init');
 
 class AI_Content_Optimizer {
     
